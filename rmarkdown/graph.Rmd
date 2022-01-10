@@ -1,0 +1,1340 @@
+---
+title: |
+  確率分布の作図
+author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
+date: "`r paste('2022/01/08',  format(Sys.time(), '%Y/%m/%d'), sep = ' - ')`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_section: true
+    toc: true
+    toc_depth: 4
+    keep_tex: false
+header-includes:
+  - \usepackage{bookmark}
+  - \usepackage{xltxtra}
+  - \usepackage{zxjatype}
+  - \usepackage[ipa]{zxjafont}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, error = FALSE, warning = FALSE, # メッセージを非表示
+  fig.align = "center", # 画像を中央揃え
+  fig.width = 5, fig.height = 4, # 画像のサイズ
+  dev = "cairo_pdf", dev.args = list(family = "ipaexg"), # {ggplot2}に日本語を組み込む場合の対処
+  class.source = "numberLines lineAnchors", # ソースを番号付けする
+  class.output = "numberLines lineAnchors chunkout" # 出力を番号付けする
+)
+```
+
+```{r}
+# レンダリング日時
+Sys.time()
+```
+
+\newpage
+
+
+# 確率分布
+
+
+## 離散確率分布
+
+
+### ベルヌーイ分布
+
+　ベルヌーイ分布(Bernoulli Distribution)の計算と作図を行います。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r}
+# 利用するパッケージ
+library(tidyverse)
+library(gganimate)
+```
+
+　分布の変化をアニメーション(gif画像)で確認するのに`gganimate`パッケージを利用します。\
+\
+
+
+#### 定義式の確認
+
+\ 
+
+　コインの裏表やくじの当たり外れのように、2値をとる変数の確率分布をベルヌーイ分布と言います。\
+　例えば、コインを投げて表なら1、裏なら0である変数を$x$とします。$x$が0か1の値をとることを$x \in \{0,1\}$で表します。ちなみに、コインを1回投げて表が1回出ることを$x = 1$、表が1回も出ない(裏が出る)ことを$x = 0$で表していると理解しておくと、次の二項分布との関係が分かりやすくなります。\
+　$x = 1$となる(表が出る)確率を$\phi$を使って表すことにします。$0 \leq \phi \leq 1$であり、$x = 0$となる(裏が出る)確率は$1 - \phi$になります。\
+
+　ベルヌーイ分布は、パラメータ$\phi$を用いて次の式で定義されます。
+
+$$
+\mathrm{Bern}(x | \phi)
+    = \phi^x (1 - \phi)^{(1 - x)}
+$$
+
+　この式は、コインが表つまり$x = 1$のとき
+
+$$
+\begin{aligned}
+\mathrm{Bern}(x = 1 | \phi)
+   &= \phi^1
+      (1 - \phi)^{1-1} \\
+   &= \phi * 1 \\
+   &= \phi
+\end{aligned}
+$$
+
+となり、またコインが裏つまり$x = 0$のときは
+
+$$
+\begin{aligned}
+\mathrm{Bern}(x = 0 | \phi)
+   &= \phi^0
+      (1 - \phi)^{1-0} \\
+   &= 1 * (1 - \phi) \\
+   &= 1 - \phi
+\end{aligned}
+$$
+
+となります。$x^0 = 1$です。\
+　このように、$x$の値に対応した確率となるように式が定義されています。\
+\
+
+　ベルヌーイ分布の対数をとると
+
+$$
+\log \mathrm{Bern}(x | \phi)
+    = x \log \phi
+      + (1 - x) \log (1 - \phi)
+$$
+
+となります。対数の性質より$\log x^a = a \log x$です。\
+
+　ベルヌーイ分布の平均と分散は、次の式で計算できます。詳しくは「統計量の導出」を参照してください。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \phi
+\\
+\mathbb{V}[x]
+   &= \phi (1 - \phi)
+\end{aligned}
+$$
+
+\ 
+
+　これらの計算を行いグラフを作成します。\
+\
+
+
+#### 確率の計算
+
+\ 
+
+　ベルヌーイ分布に従う確率を計算する方法をいくつか確認します。\
+\
+
+　パラメータを設定します。
+
+```{r}
+# パラメータを指定
+phi <- 0.3
+
+# 確率変数の値を指定
+x <- 0
+```
+
+　ベルヌーイ分布のパラメータ$0 \leq \phi \leq 1$と確率変数がとり得る値$x \in \{0, 1\}$を指定します。設定した値に従う確率を計算します。\
+
+　まずは、定義式から確率を計算します。
+
+```{r}
+# 定義式により確率を計算
+prob <- phi^x * (1 - phi)^(1 - x)
+prob
+```
+
+　ベルヌーイ分布の定義式
+
+$$
+p(x | \phi)
+    = \phi^x (1 - \phi)^{(1 - x)}
+$$
+
+で計算します。\
+　対数をとった定義式から計算します。
+
+```{r}
+# 対数をとった定義式により確率を計算
+ln_prob <- x * log(phi) + (1 - x) * log(1 - phi)
+prob <- exp(ln_prob)
+prob; ln_prob
+```
+
+　対数をとった定義式
+
+$$
+\log p(x | \phi)
+    = x \log \phi
+      + (1 - x) \log (1 - \phi)
+$$
+
+を計算します。計算結果の指数をとると確率が得られます。
+
+$$
+p(x | \phi)
+    = \exp \Bigr(
+          \log p(x | \phi)
+      \Bigr)
+$$
+
+　指数と対数の性質より$\exp(\log x) = x$です。\
+
+　次は、関数を使って確率を計算します。\
+　二項分布の確率関数`dbinom()`を使って計算します。
+
+```{r}
+# 二項分布の関数により確率を計算
+prob <- dbinom(x = x, size = 1, prob = phi)
+prob
+```
+
+　試行回数の引数`size`に`1`を指定することで、ベルヌーイ分布の確率を計算できます。\
+　成功回数の引数`x`に`x`、成功確率の引数`prob`に`phi`を指定します。\
+
+　`log = TRUE`を指定すると対数をとった確率を返します。
+
+```{r}
+# 二項分布の対数をとった関数により確率を計算
+ln_prob <- dbinom(x = x, size = 1, prob = phi, log = TRUE)
+prob <- exp(ln_prob)
+prob; ln_prob
+```
+
+　計算結果の指数をとると確率が得られます。\
+
+　以降の計算は、変数とパラメータをベクトルに変換しておく必要があります。
+
+```{r}
+# ベクトルに変換
+phi_v <- c(1 - phi, phi)
+x_v <- c(1 - x, x)
+phi_v; x_v
+```
+
+　$x = 0$となる確率$1 - \phi$と、$x = 1$となる確率$\phi$を持つベクトルを作成して`phi_v`とします。\
+　$x = 0$のとき$1 - x = 1$、$x = 1$のとき$1 - x = 0$となるのを利用して、one-hotベクトル(1-of-K符号化法)の$x$を作成して`x_v`とします。\
+
+　多項分布の確率関数`dmultinom()`を使って計算します。
+
+```{r}
+# 多項分布の関数により確率を計算
+prob <- dmultinom(x = x_v, size = 1, prob = phi_v)
+prob
+```
+
+　二項分布と同様に、試行回数の引数を`size = 1`として、出現頻度の引数`x`に`x`、出現確率の引数`prob`に`phi_v`を指定します。\
+
+　`log = TRUE`を指定すると対数をとった確率を返します。
+
+```{r}
+# 多項分布の対数をとった関数により確率を計算
+ln_prob <- dmultinom(x = x_v, size = 1, prob = phi_v, log = TRUE)
+prob <- exp(ln_prob)
+prob; ln_prob
+```
+
+　計算結果の指数をとると確率が得られます。\
+
+　最後に、スライス機能を使って確率を取り出します。
+
+```{r}
+# インデックスにより確率を抽出
+prob <- phi_v[x+1]
+prob
+```
+
+　`x`が`0`となる確率は`phi_v`の1番目の要素で、`1`となる確率は`phi_v`の2番目の要素なので、`x`の値に対応するパラメータのインデックスは`x + 1`になります。\
+\
+
+
+#### 統計量の計算
+
+\ 
+
+　ベルヌーイ分布の平均と分散を計算します。\
+\
+
+　平均を計算します。
+
+```{r}
+# 平均を計算
+E_x <- phi
+E_x
+```
+
+　ベルヌーイ分布の平均は、次の式で計算できます。
+
+$$
+\mathbb{E}[x]
+    = \phi
+$$
+
+　分散を計算します。
+
+```{r}
+# 分散を計算
+V_x <- phi * (1 - phi)
+V_x
+```
+
+　ベルヌーイ分布の分散は、次の式で計算できます。
+
+$$
+\mathbb{V}[x]
+    = \phi (1 - \phi)
+$$
+
+\ 
+
+
+#### グラフの作成
+
+\ 
+
+　`ggplot2`パッケージを利用してベルヌーイ分布のグラフを作成します。\
+\
+
+　ベルヌーイ分布の確率変数$x$がとり得る値ごとの確率を計算します。
+
+```{r}
+# パラメータを指定
+phi <- 0.3
+
+# ベルヌーイ分布の情報を格納
+prob_df <- tidyr::tibble(
+  x = 0:1, # 確率変数
+  probability = c(1 - phi, phi) # 確率
+)
+prob_df
+```
+
+　$x$がとり得る値`0, 1`と、それに対応する確率`1 - phi, phi`をデータフレームに格納します。\
+
+　ベルヌーイ分布のグラフを作成します。
+
+```{r}
+# ベルヌーイ分布を作図
+ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
+  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 分布
+#  geom_vline(xintercept = E_x, color = "orange", size = 1, linetype = "dashed") + # 平均
+#  geom_vline(xintercept = E_x - sqrt(V_x), color = "orange", size = 1, linetype = "dotted") + # 平均 - 標準偏差
+#  geom_vline(xintercept = E_x + sqrt(V_x), color = "orange", size = 1, linetype = "dotted") + # 平均 + 標準偏差
+  scale_x_continuous(breaks = 0:1, labels = 0:1) + # x軸目盛
+  labs(title = "Bernoulli Distribution", 
+       subtitle = paste0("phi=", phi)) # ラベル
+```
+
+　パラメータの値そのままですが、これがベルヌーイ分布のグラフです。\
+\
+
+
+#### パラメータと分布の形状の関係
+
+\ 
+
+　続いて、パラメータ$\phi$の値を少しずつ変更して、分布の変化をアニメーションで確認します。
+
+```{r}
+# 作図用のphiの値を作成
+phi_vals <- seq(from = 0, to = 1, by = 0.01)
+
+# phiの値ごとに分布を計算
+anime_prob_df <- tidyr::tibble()
+for(phi in phi_vals) {
+  # ベルヌーイ分布の情報を格納
+  tmp_prob_df <- tidyr::tibble(
+    x = 0:1, # 確率変数
+    probability = c(1 - phi, phi), # 確率
+    parameter = paste0("phi=", phi) %>% 
+      as.factor() # フレーム切替用のラベル
+  )
+  
+  # 結果を結合
+  anime_prob_df <- rbind(anime_prob_df, tmp_prob_df)
+}
+head(anime_prob_df)
+```
+
+　$\phi$がとり得る値を作成して`phi_vals`とします。\
+　`phi_vals`の値ごとに確率を計算して、`anime_prob_df`に追加していきます。\
+
+　gif画像を作成します。
+
+```{r, eval=FALSE}
+# アニメーション用のベルヌーイ分布を作図
+anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = x, y = probability)) + # データ
+  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 分布
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_x_continuous(breaks = 0:1, labels = 0:1) + # x軸目盛
+  labs(title = "Bernoulli Distribution", 
+       subtitle = "{current_frame}") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_prob_graph, nframes = length(phi_vals), fps = 100)
+
+```
+
+　(定義のままですが、)パラメータ$\phi$の値が大きくなるほど、$x = 0$となる確率が下がり、$x = 1$となる確率が上がるのを確認できます。\
+\
+
+
+#### 乱数の生成
+
+\ 
+
+　ベルヌーイ分布の乱数を生成してヒストグラムを確認します。\
+\
+
+　パラメータを指定して、ベルヌーイ分布に従う乱数を生成します。
+
+```{r}
+# パラメータを指定
+phi <- 0.3
+
+# データ数を指定
+N <- 1000
+
+# ベルヌーイ分布に従う乱数を生成
+x_n <- rbinom(n = N, size = 1, prob = phi)
+x_n[1:5]
+```
+
+　二項分布の乱数生成関数`rbinom()`の試行回数の引数`size `に`1`を指定することで、ベルヌーイ分布に従う乱数を生成できます。\
+　データ数(サンプルサイズ)の引数`n`に`N`、成功確率の引数`prob`に`phi`を指定します。\
+
+　サンプルの値を集計します。
+
+```{r}
+# 乱数を集計して格納
+freq_df <- tidyr::tibble(
+  x = 0:1, # 確率変数
+  frequency = c(sum(x_n == 0), sum(x_n == 1)), # 度数
+  proportion = frequency / N # 構成比
+)
+freq_df
+```
+
+　`x_n`に含まれる`0`の要素数は、`sum(x_n == 0)`で得られます。値が`1`の要素数も同様に求めて、データフレームに格納します。\
+　また、得られた頻度`frequency`をデータ数`N`で割り、`0`と`1`の構成比を計算します。\
+
+　ヒストグラムを作成します。
+
+```{r}
+# サンプルのヒストグラムを作成
+ggplot(data = freq_df, mapping = aes(x = x, y = frequency)) + # データ
+  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # ヒストグラム
+  scale_x_continuous(breaks = 0:1, labels = 0:1) + # x軸目盛
+  labs(title = "Bernoulli Distribution", 
+       subtitle = paste0("phi=", phi, ", N=", N, "=(", sum(x_n == 0), ", ", sum(x_n == 1), ")")) # ラベル
+```
+
+\ 
+
+　構成比を分布と重ねて描画します。
+
+```{r}
+# サンプルの構成比を作図
+ggplot() + 
+  geom_bar(data = freq_df, mapping = aes(x = x, y = proportion), 
+           stat = "identity", position = "dodge", fill = "#00A968") + # 構成比
+  geom_bar(data = prob_df, mapping = aes(x = x, y = probability), 
+           stat = "identity", position = "dodge", alpha = 0, color = "darkgreen", linetype = "dashed") + # 真の分布
+  scale_x_continuous(breaks = 0:1, labels = 0:1) + # x軸目盛
+  labs(title = "Bernoulli Distribution", 
+       subtitle = paste0("phi=", phi, ", N=", N, "=(", sum(x_n == 0), ", ", sum(x_n == 1), ")")) # ラベル
+```
+
+　データ数が十分に増えると分布に形が近づきます。\
+\
+
+　サンプルサイズとヒストグラムの変化をアニメーションで確認します。
+
+```{r, eval=FALSE}
+# データ数を指定
+N <- 100
+
+# 乱数を1つずつ生成
+x_n <- rep(NA, times = N)
+anime_freq_df <- tidyr::tibble()
+anime_data_df <- tidyr::tibble()
+anime_prob_df <- tidyr::tibble()
+for(n in 1:N) {
+  # ベルヌーイ分布に従う乱数を生成
+  x_n[n] <- rbinom(n = 1, size = 1, prob = phi)
+  
+  # ラベル用のテキストを作成
+  label_text <- paste0(
+    "phi=", phi, ", N=", n, "=(", sum(x_n[1:n] == 0), ", ", sum(x_n[1:n] == 1), ")"
+  )
+  
+  # n個の乱数を集計して格納
+  tmp_freq_df <- tidyr::tibble(
+    x = 0:1, # 確率変数
+    frequency = c(sum(x_n[1:n] == 0), sum(x_n[1:n] == 1)), # 度数
+    proportion = frequency / n, # 構成比
+    parameter = as.factor(label_text) # フレーム切替用のラベル
+  )
+  
+  # n番目の乱数を格納
+  tmp_data_df <- tidyr::tibble(
+    x = x_n[n], # サンプル
+    parameter = as.factor(label_text) # フレーム切替用のラベル
+  )
+  
+  # n回目のラベルを付与
+  tmp_prob_df <- prob_df %>% 
+    mutate(parameter = as.factor(label_text))
+  
+  # 結果を結合
+  anime_freq_df <- rbind(anime_freq_df, tmp_freq_df)
+  anime_data_df <- rbind(anime_data_df, tmp_data_df)
+  anime_prob_df <- rbind(anime_prob_df, tmp_prob_df)
+}
+```
+
+　乱数を1つず生成して、結果を`anime_***_df`に追加していきます。
+
+　ヒストグラムのアニメーションを作成します。
+
+```{r, eval=FALSE}
+# アニメーション用のサンプルのヒストグラムを作成
+anime_hist_graph <- ggplot() + 
+  geom_bar(data = anime_freq_df, mapping = aes(x = x, y = frequency), 
+           stat = "identity", position = "dodge", fill = "#00A968") + # ヒストグラム
+  geom_point(data = anime_data_df, mapping = aes(x = x, y = 0), 
+             color = "orange", size= 5) + # サンプル
+  scale_x_continuous(breaks = 0:1, labels = 0:1) + # x軸目盛
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Binomial Distribution", 
+       subtitle = "{current_frame}") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_hist_graph, nframes = N, fps = 100)
+```
+
+\ 
+
+　構成比のアニメーションを作成します。
+
+```{r, eval=FALSE}
+# アニメーション用のサンプルの構成比を作図
+anime_prop_graph <- ggplot() + 
+  geom_bar(data = anime_freq_df, mapping = aes(x = x, y = proportion), 
+           stat = "identity", position = "dodge", fill = "#00A968") + # 構成比
+  geom_bar(data = anime_prob_df, mapping = aes(x = x, y = probability), 
+           stat = "identity", position = "dodge", alpha = 0, color = "darkgreen", linetype = "dashed") + # 真の分布
+  geom_point(data = anime_data_df, mapping = aes(x = x, y = 0), 
+             color = "orange", size= 5) + # サンプル
+  scale_x_continuous(breaks = 0:1, labels = 0:1) + # x軸目盛
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Binomial Distribution", 
+       subtitle = "{current_frame}") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_prop_graph, nframes = N, fps = 100)
+```
+
+　サンプルが増えるに従って、真の分布に近付いていくのを確認できます。\
+
+　以上で、ベルヌーイ分布を確認できました。\
+\
+
+
+### 二項分布
+
+
+　二項分布の計算と作図を行います。\
+\
+
+　利用する関数を読み込みます。
+
+```{r}
+# 利用するパッケージ
+library(tidyverse)
+library(gganimate)
+```
+
+\ 
+
+
+#### 定義式の確認
+
+\ 
+
+　まずは、二項分布の定義式を確認します。\
+\
+
+　二項分布は、次の式で定義されます。
+
+$$
+\mathrm{Binom}(x | N, \phi)
+    = \frac{N!}{(N - x)! x!} \phi^x (1 - \phi)^{N-x}
+$$
+
+　この式の対数をとると、次の式になります。
+
+$$
+\begin{aligned}
+\log \mathrm{Binom}(x | N, \phi)
+   &= \log N! - \log (N - x)! - \log x! \\
+   &\quad
+      + x \log \phi + (N - x) \log (1 - \phi)
+\end{aligned}
+$$
+
+　平均と分散は、次の式で計算できます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x_v]
+   &= \phi_v
+\\
+\mathbb{V}[x_v]
+   &= \phi_v (1 - \phi_v)
+\end{aligned}
+$$
+
+\ 
+
+　これらの計算を行いグラフを作成します。\
+\
+
+
+#### 確率の計算
+
+\ 
+
+　二項分布に従う確率を計算する方法をいくつか確認します。\
+\
+
+　パラメータを設定します。
+
+```{r}
+# パラメータを指定
+phi <- 0.3
+
+# 試行回数を指定
+M <- 10
+
+# 確率変数の値を指定:(x <= M)
+x <- 3
+```
+
+　二項分布のパラメータ$0 \leq \phi \leq 1$、試行回数$M$、確率変数がとり得る値$x \in \{0, 1, \cdots, M\}$を指定します。設定した値に従う確率を計算します。\
+
+　まずは、定義式から確率を計算します。
+
+```{r}
+# 定義式により確率を計算
+C <- gamma(M + 1) / gamma(M - x + 1) / gamma(x + 1)
+prob <- C * phi^x * (1 - phi)^(M - x)
+prob
+```
+
+　二項分布の定義式
+
+$$
+\begin{aligned}
+C_{\mathrm{Bin}}
+   &= \frac{N!}{(N - x)! x!}
+\\
+p(x | \phi)
+   &= C_{\mathrm{Bin}} \phi^x (1 - \phi)^{N-x}
+\end{aligned}
+$$
+
+で計算します。$C_{\mathrm{Bin}}$は、二項分布の正規化係数です。\
+　対数をとった定義式から計算します。
+
+```{r}
+# 対数をとった定義式により確率を計算
+ln_C <- lgamma(M + 1) - lgamma(M - x + 1) - lgamma(x + 1)
+ln_prob <- ln_C + x * log(phi) + (M - x) * log(1 - phi)
+prob <- exp(ln_prob)
+prob; ln_prob
+```
+
+　対数をとった定義式
+
+$$
+\begin{aligned}
+\log C_{\mathrm{Bin}}
+   &= \log N! - \log (N - x)! - \log x!
+\\
+\log p(x | \phi)
+   &= \log C_{\mathrm{Bin}}
+      + x \log \phi
+      + (N - x) \log (1 - \phi)
+\end{aligned}
+$$
+
+を計算します。計算結果の指数をとると確率が得られます。
+
+$$
+p(x | \phi)
+    = \exp \Bigr(
+          \log p(x | \phi)
+      \Bigr)
+$$
+
+\ 
+
+　次は、関数を使って確率を計算します。\
+　二項分布の確率関数`dbinom()`を使って計算します。
+
+```{r}
+# 二項分布の関数により確率を計算
+prob <- dbinom(x = x, size = M, prob = phi)
+prob
+```
+
+　成功回数の引数`x`に`x`、試行回数の引数`size`に`M`、成功確率の引数`prob`に`phi`を指定します。\
+　`log = TRUE`を指定すると対数をとった確率を返します。
+
+```{r}
+# 二項分布の対数をとった関数により確率を計算
+ln_prob <- dbinom(x = x, size = M, prob = phi, log = TRUE)
+prob <- exp(ln_prob)
+prob; ln_prob
+```
+
+　計算結果の指数をとると確率が得られます。\
+
+　以降の計算は、変数とパラメータをベクトル形式にしておく必要があります。
+
+```{r}
+# ベクトルに変換
+phi_v <- c(1 - phi, phi)
+x_v <- c(M - x, x)
+phi_v; x_v
+```
+
+　成功しない確率$1 - \phi$と成功確率$\phi$を持つベクトルを作成して`phi_v`とします。\
+　失敗回数$M - x$と成功回数$x$を持つベクトルを作成して`x_v`とします。\
+
+　多項分布の確率関数`dmultinom()`を使って計算します。
+
+```{r}
+# 多項分布の関数により確率を計算
+prob <- dmultinom(x = x_v, size = M, prob = phi_v)
+prob
+```
+
+　出現頻度の引数`x`に`x_v`、試行回数の引数を`size = M`、出現確率の引数`prob`に`phi_v`を指定します。\
+　`log = TRUE`を指定すると対数をとった確率を返します。
+
+```{r}
+# 多項分布の対数をとった関数により確率を計算
+ln_prob <- dmultinom(x = x_v, size = M, prob = phi_v, log = TRUE)
+prob <- exp(ln_prob)
+prob; ln_prob
+```
+
+　計算結果の指数をとると確率が得られます。\
+\
+
+
+#### 統計量の計算
+
+\ 
+
+　二項分布の平均と分散を計算します。\
+\
+
+　平均を計算します。
+
+```{r}
+# 平均を計算
+E_x <- M * phi
+E_x
+```
+
+　二項分布の平均は、次の式で計算できます。
+
+$$
+\mathbb{E}[x]
+    = M \phi
+$$
+
+　分散を計算します。
+
+```{r}
+# 分散を計算
+V_x <- M * phi * (1 - phi)
+V_x
+```
+
+　二項分布の分散は、次の式で計算できます。
+
+$$
+\mathbb{V}[x]
+    = M \phi (1 - \phi)
+$$
+
+\ 
+
+
+#### グラフの作成
+
+\ 
+
+　`ggplot2`パッケージを利用してベルヌーイ分布のグラフを作成します。\
+\
+
+　二項分布の確率を計算します。
+
+```{r}
+# パラメータを指定
+phi <- 0.3
+
+# 試行回数を指定
+M <- 10
+
+# 作図用のxの値を作成
+x_vals <- 0:M
+
+# 二項分布の情報を格納
+prob_df <- tidyr::tibble(
+  x = x_vals, # 確率変数
+  probability = dbinom(x = x_vals, size = M, prob = phi) # 確率
+)
+head(prob_df)
+```
+
+　$x$がとり得る値`0:1`と、それに対応する確率をデータフレームに格納します。\
+
+　二項分布のグラフを作成します。
+
+```{r}
+# 二項分布のグラフを作成
+ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
+  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 分布
+#  geom_vline(xintercept = E_x, color = "orange", size = 1, linetype = "dashed") + # 平均
+#  geom_vline(xintercept = E_x - sqrt(V_x), color = "orange", size = 1, linetype = "dotted") + # 平均 - 標準偏差
+#  geom_vline(xintercept = E_x + sqrt(V_x), color = "orange", size = 1, linetype = "dotted") + # 平均 + 標準偏差
+  scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
+  labs(title = "Binomial Distribution", 
+       subtitle = paste0("phi=", phi, ", M=", M)) # ラベル
+```
+
+　二項分布のグラフを描画できました。\
+\
+
+
+#### パラメータと分布の形状の関係
+
+\ 
+
+　パラメータ$\phi$を少しずつ変更して、分布の変化をアニメーションで確認します。
+
+```{r}
+# 作図用のphiの値を作成
+phi_vals <- seq(from = 0, to = 1, by = 0.01)
+
+# phiの値ごとに分布を計算
+anime_prob_df <- tidyr::tibble()
+for(phi in phi_vals) {
+  # 二項分布の情報を格納
+  tmp_prob_df <- tidyr::tibble(
+    x = x_vals, # 確率変数
+    probability = dbinom(x = x_vals, size = M, prob = phi), # 確率
+    parameter = paste0("phi=", phi, ", M=", M) %>% 
+      as.factor() # フレーム切替用のラベル
+  )
+  
+  # 結果を結合
+  anime_prob_df <- rbind(anime_prob_df, tmp_prob_df)
+}
+head(anime_prob_df)
+```
+
+　`phi_vals`の値ごとに確率を計算して、`anime_prob_df`に追加していきます。\
+
+　gif画像を作成します。
+
+```{r, eval=FALSE}
+# アニメーション用の二項分布を作図
+anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = x, y = probability)) + # データ
+  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 分布
+  scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Binomial Distribution", 
+       subtitle = "{current_frame}") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_prob_graph, nframes = length(phi_vals), fps = 100)
+```
+
+　パラメータ$\phi$の値が大きくなるほど、成功回数$x$が大きいほど確率が上がるのを確認できます。\
+\
+
+　続いて、$\phi$を固定して$M$を変更してみます。
+
+```{r}
+# パラメータを指定
+phi <- 0.3
+
+# 試行回数の最大値を指定
+M_max <- 100
+
+# Mの値ごとに確率を計算
+anime_prob_df <- tidyr::tibble()
+for(M in 1:M_max) {
+  # 作図用のxの値を作成
+  x_vals <- 0:M
+  
+  # 二項分布の情報を格納
+  tmp_prob_df <- tidyr::tibble(
+    x = x_vals, # 表の回数
+    prob = dbinom(x = x_vals, size = M, prob = phi), # 確率
+    parameter = paste0("phi=", phi, ", M=", M) %>% 
+      as.factor() # フレーム切替用ラベル
+  )
+  
+  # 計算結果を結合
+  anime_prob_df <- rbind(anime_prob_df, tmp_prob_df)
+}
+head(anime_prob_df)
+```
+
+
+
+```{r, eval=FALSE}
+# アニメーション用の二項分布のグラフを作成
+anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = x, y = prob)) + # データ
+  geom_bar(stat = "identity", position = "dodge", fill = "#00A968", color = "#00A968") + # 棒グラフ
+#  scale_x_continuous(breaks = 0:M_max, labels = 0:M_max) + # x軸目盛
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Binomial Distribution", 
+       subtitle = "{current_frame}") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_prob_graph, nframes = M_max, fps = 100)
+```
+
+　試行回数が増えるに従って、山が移動しているのが分かります。\
+\
+
+
+#### 乱数の生成
+
+\ 
+
+　二項分布の乱数を生成してヒストグラムを確認します。\
+\
+
+　パラメータを指定して、二項分布に従う乱数を生成します。
+
+```{r}
+# パラメータを指定
+phi <- 0.3
+
+# 試行回数を指定
+M <- 10
+
+# データ数を指定
+N <- 1000
+
+# 二項分布に従う乱数を生成
+x_n <- rbinom(n = N, size = M, prob = phi)
+x_n[1:5]
+```
+
+　二項分布の乱数生成関数`rbinom()`のデータ数(サンプルサイズ)の引数`n`に`N`、試行回数の引数`size `に`1`、成功確率の引数`prob`に`phi`を指定します。\
+
+　作図用にデータフレームに格納します。
+
+```{r}
+# 乱数を集計して格納
+freq_df <- tidyr::tibble(x = x_n) %>% # 乱数を格納
+  dplyr::count(x, name = "frequency") %>% # 頻度を測定
+  dplyr::right_join(tidyr::tibble(x = 0:M), by = "x") %>% # 確率変数列を追加
+  dplyr::mutate(frequency = tidyr::replace_na(frequency, 0)) %>% # サンプルにない場合のNAを0に置換
+  dplyr::mutate(proportion = frequency / N) # 構成比を計算
+head(freq_df)
+```
+
+　`x_n`に含まれる`0`の要素数は、`sum(x_n == 0)`で得られます。値が`1`の要素数も同様に求めて、データフレームに格納します。\
+　また、得られた頻度`frequency`をデータ数`N`で割り、`0`と`1`の構成比を計算します。\
+
+　ヒストグラムを作成します。
+
+```{r}
+# サンプルのヒストグラムを作成
+ggplot(data = freq_df, mapping = aes(x = x, y = frequency)) + # データ
+  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # ヒストグラム
+  scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
+  labs(title = "Binomial Distribution", 
+       subtitle = paste0("phi=", phi, ", M=", M, 
+                         ", N=", N, "=(", paste0(freq_df[["frequency"]], collapse = ", "), ")")) # ラベル
+```
+
+\ 
+
+　構成比を分布と重ねて描画します。
+
+```{r}
+# サンプルの構成比を作図
+ggplot() + 
+  geom_bar(data = freq_df, mapping = aes(x = x, y = proportion), 
+           stat = "identity", position = "dodge", fill = "#00A968") + # 構成比
+  geom_bar(data = prob_df, mapping = aes(x = x, y = probability), 
+           stat = "identity", position = "dodge", alpha = 0, color = "darkgreen", linetype = "dashed") + # 真の分布
+  scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
+  labs(title = "Binomial Distribution", 
+       subtitle = paste0("phi=", phi, ", M=", M, 
+                         ", N=", N, "=(", paste0(freq_df[["frequency"]], collapse = ", "), ")")) # ラベル
+```
+
+　データ数が十分に増えると分布のグラフに形が近づきます。\
+\
+
+　サンプルサイズとヒストグラムの変化をアニメーションで確認します。
+
+```{r, eval=FALSE}
+# データ数を指定
+N <- 100
+
+# 乱数を1つずつ生成
+x_n <- rep(NA, times = N)
+anime_freq_df <- tidyr::tibble()
+anime_data_df <- tidyr::tibble()
+anime_prob_df <- tidyr::tibble()
+for(n in 1:N) {
+  # 二項分布に従う乱数を生成
+  x_n[n] <- rbinom(n = 1, size = M, prob = phi)
+  
+  # n個の乱数を集計して格納
+  tmp_freq_df <- tidyr::tibble(x = x_n[1:n]) %>% # 乱数を格納
+    dplyr::count(x, name = "frequency") %>% # 頻度を測定
+    dplyr::right_join(tidyr::tibble(x = 0:M), by = "x") %>% # 確率変数列を追加
+    dplyr::mutate(frequency = tidyr::replace_na(frequency, 0)) %>% # サンプルにない場合のNAを0に置換
+    dplyr::mutate(proportion = frequency / n) # 構成比を計算
+  
+  # ラベル用のテキストを作成
+  label_text <- paste0(
+    "phi=", phi, ", N=", n, "=(", paste0(tmp_freq_df[["frequency"]], collapse = ", "), ")"
+  )
+  
+  # フレーム切替用のラベルを付与
+  tmp_freq_df <- tmp_freq_df %>% 
+    dplyr::mutate(parameter = as.factor(label_text))
+  
+  # n番目の乱数を格納
+  tmp_data_df <- tidyr::tibble(
+    x = x_n[n], 
+    parameter = as.factor(label_text) # フレーム切替用のラベル
+  )
+  
+  # n回目のラベルを付与
+  tmp_prob_df <- prob_df %>% 
+    dplyr::mutate(parameter = as.factor(label_text))
+  
+  # 結果を結合
+  anime_freq_df <- rbind(anime_freq_df, tmp_freq_df)
+  anime_data_df <- rbind(anime_data_df, tmp_data_df)
+  anime_prob_df <- rbind(anime_prob_df, tmp_prob_df)
+}
+```
+
+　乱数を1つず生成して、結果を`anime_***_df`に追加していきます。
+
+　ヒストグラムのアニメーションを作成します。
+
+```{r, eval=FALSE}
+# アニメーション用のサンプルのヒストグラムを作成
+anime_hist_graph <- ggplot() + 
+  geom_bar(data = anime_freq_df, mapping = aes(x = x, y = frequency), 
+           stat = "identity", position = "dodge", fill = "#00A968") + # ヒストグラム
+  geom_point(data = anime_data_df, mapping = aes(x = x, y = 0), 
+             color = "orange", size= 5) + # サンプル
+  scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Binomial Distribution", 
+       subtitle = "{current_frame}") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_hist_graph, nframes = N, fps = 100)
+```
+
+\ 
+
+　構成比のアニメーションを作成します。
+
+```{r, eval=FALSE}
+# アニメーション用のサンプルの構成比を作図
+anime_prop_graph <- ggplot() + 
+  geom_bar(data = anime_freq_df, mapping = aes(x = x, y = proportion), 
+           stat = "identity", position = "dodge", fill = "#00A968") + # 構成比
+  geom_bar(data = anime_prob_df, mapping = aes(x = x, y = probability), 
+           stat = "identity", position = "dodge", alpha = 0, color = "darkgreen", linetype = "dashed") + # 真の分布
+  geom_point(data = anime_data_df, mapping = aes(x = x, y = 0), 
+             color = "orange", size= 5) + # サンプル
+  scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Binomial Distribution", 
+       subtitle = "{current_frame}") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_prop_graph, nframes = N, fps = 100)
+```
+
+　サンプルが増えるに従って、真の分布に近付いていくのを確認できます。\
+
+　以上で、ベルヌーイ分布を確認できました。\
+\
+
+
+
+
+<br>
+
+
+### カテゴリ分布
+
+#### 定義式の確認
+
+\ 
+
+　まずは、カテゴリ分布の定義式を確認します。\
+\
+
+　カテゴリ分布は、次の式で定義されます。
+
+$$
+\mathrm{Categorical}(\boldsymbol{x} | \boldsymbol{\phi})
+  = \prod_{v=1}^V
+        \phi_v^{x_v}
+$$
+
+　この式の対数をとると、次の式になります。
+
+$$
+\log \mathrm{Categorical}(\boldsymbol{x} | \boldsymbol{\phi})
+  = \sum_{v=1}^V
+        x_v \log \phi_v
+$$
+
+　平均と分散は、次の式で計算できます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x_v]
+   &= \phi_v
+\\
+\mathbb{V}[x_v]
+   &= \phi_v (1 - \phi_v)
+\end{aligned}
+$$
+
+\ 
+
+　これらの計算を行いグラフを作成します。\
+\
+
+
+
+
+\ 
+
+
+### 多項分布
+
+
+#### 定義式の確認
+
+\ 
+
+　まずは、多項分布の定義式を確認します。\
+\
+
+　多項分布は、次の式で定義されます。
+
+$$
+\mathrm{Mult}(\boldsymbol{x} | N, \boldsymbol{\phi})
+  = \frac{
+        N!
+    }{
+        x_1! x_2! \cdots x_V!
+    }
+    \prod_{v=1}^V
+        \phi_v^{x_v}
+$$
+
+　この式の対数をとると、次の式になります。
+
+$$
+\log \mathrm{Mult}(\boldsymbol{x} | N, \boldsymbol{\phi})
+  = \log N!
+    + \sum_{v=1}^V \Bigl\{
+        x_v \log \phi_v
+        - \log x_v!
+      \Bigr\}
+$$
+
+　平均と分散は、次の式で計算できます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x_v]
+   &= N \phi_v
+\\
+\mathbb{V}[x_v]
+   &= N \phi_v
+      (1 - \phi_v)
+\end{aligned}
+$$
+
+\ 
+
+　これらの計算を行いグラフを作成します。\
+\
+
+
+
+
+## 連続確率分布
+
+
+
+### ベータ分布
+
+
+
+#### 定義式の確認
+
+\ 
+
+　まずは、ベータ分布の定義式を確認します。\
+\
+
+　ベータ分布は、次の式で定義されます。
+
+$$
+\mathrm{Beta}(\phi | \alpha, \beta)
+  = \frac{
+        \Gamma(\alpha + \beta)
+    }{
+        \Gamma(\alpha) \Gamma(\beta)
+    }
+    \phi^{\alpha-1}
+    (1 - \phi)^{\beta-1}
+$$
+
+　この式の対数をとると、次の式になります。
+
+$$
+\log \mathrm{Beta}(\phi | \alpha, \beta)
+  = \log \Gamma(\alpha + \beta)
+    - \log \Gamma(\alpha) - \log \Gamma(\beta)
+    + (\alpha-1) \log \phi
+    + (\beta - 1) \log (1 - \phi)
+$$
+
+　平均と分散は、次の式で計算できます。
+
+$$
+\begin{aligned}
+\mathbb{E}[\phi]
+   &= \frac{\alpha}{\alpha + \beta}
+\\
+\mathbb{V}[\phi]
+   &= \frac{
+          \alpha \beta
+      }{
+          (\alpha + \beta)^2
+          (\alpha + \beta + 1)
+      }
+\end{aligned}
+$$
+
+\ 
+
+　これらの計算を行いグラフを作成します。\
+\
+
+
+
+
+\ 
+
+
+
+\ 
+
+
+### ディリクレ分布
+
+
+#### 定義式の確認
+
+\ 
+
+　まずは、ベータ分布の定義式を確認します。\
+\
+
+　ベータ分布は、次の式で定義されます。
+
+$$
+\mathrm{Dir}(\boldsymbol{\phi} | \boldsymbol{\beta})
+  = \frac{
+        \Gamma(\sum_{v=1}^V \beta_v)
+    }{
+        \prod_{v=1}^V \Gamma(\beta_v)
+    }
+    \prod_{v=1}^V \phi_v^{\beta_v-1}
+$$
+
+　この式の対数をとると、次の式になります。
+
+$$
+\log \mathrm{Dir}(\boldsymbol{\phi} | \boldsymbol{\beta})
+  = \log \Gamma \Bigl(
+        \sum_{v=1}^V \beta_v
+    \Bigr)
+    + \sum_{v=1}^V \left\{
+        \log \phi_v^{\beta_v-1}
+        - \log \Gamma(\beta_v)
+    \right\}
+$$
+
+　平均と分散は、次の式で計算できます。
+
+$$
+\begin{aligned}
+\mathbb{E}[\phi_v]
+   &= \frac{\beta_v}{\hat{\beta}}
+\\
+\mathbb{V}[\phi_v]
+   &= \frac{
+         \beta_v (\hat{\beta}-\beta_v)
+     }{
+         \hat{\beta}^2 (\hat{\beta} + 1)
+     }
+\end{aligned}
+$$
+
+\ 
+
+　これらの計算を行いグラフを作成します。\
+\
+
+
+
+
+
