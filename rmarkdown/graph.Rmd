@@ -520,7 +520,7 @@ anime_hist_graph <- ggplot() +
              color = "orange", size= 5) + # サンプル
   scale_x_continuous(breaks = 0:1, labels = 0:1) + # x軸目盛
   gganimate::transition_manual(parameter) + # フレーム
-  labs(title = "Binomial Distribution", 
+  labs(title = "Bernoulli Distribution", 
        subtitle = "{current_frame}") # ラベル
 
 # gif画像を作成
@@ -542,7 +542,7 @@ anime_prop_graph <- ggplot() +
              color = "orange", size= 5) + # サンプル
   scale_x_continuous(breaks = 0:1, labels = 0:1) + # x軸目盛
   gganimate::transition_manual(parameter) + # フレーム
-  labs(title = "Binomial Distribution", 
+  labs(title = "Bernoulli Distribution", 
        subtitle = "{current_frame}") # ラベル
 
 # gif画像を作成
@@ -557,11 +557,10 @@ gganimate::animate(anime_prop_graph, nframes = N, fps = 100)
 
 ### 二項分布
 
-
-　二項分布の計算と作図を行います。\
+　二項分布(Binomial Distribution)の計算と作図を行います。\
 \
 
-　利用する関数を読み込みます。
+　利用するパッケージを読み込みます。
 
 ```{r}
 # 利用するパッケージ
@@ -569,7 +568,8 @@ library(tidyverse)
 library(gganimate)
 ```
 
-\ 
+　分布の変化をアニメーション(gif画像)で確認するのに`gganimate`パッケージを利用します。\
+\
 
 
 #### 定義式の確認
@@ -1333,8 +1333,5 @@ $$
 
 　これらの計算を行いグラフを作成します。\
 \
-
-
-
 
 
