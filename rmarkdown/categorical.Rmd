@@ -1,0 +1,569 @@
+---
+title: |
+  確率分布の作図
+author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
+date: "`r paste('2022/01/10',  format(Sys.time(), '%Y/%m/%d'), sep = ' - ')`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_section: true
+    toc: true
+    toc_depth: 4
+    keep_tex: false
+header-includes:
+  - \usepackage{bookmark}
+  - \usepackage{xltxtra}
+  - \usepackage{zxjatype}
+  - \usepackage[ipa]{zxjafont}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, error = FALSE, warning = FALSE, # メッセージを非表示
+  fig.align = "center", # 画像を中央揃え
+  fig.width = 5, fig.height = 4, # 画像のサイズ
+  dev = "cairo_pdf", dev.args = list(family = "ipaexg"), # {ggplot2}に日本語を組み込む場合の対処
+  class.source = "numberLines lineAnchors", # ソースを番号付けする
+  class.output = "numberLines lineAnchors chunkout" # 出力を番号付けする
+)
+```
+
+```{r}
+# レンダリング日時
+Sys.time()
+```
+
+\newpage
+
+# カテゴリ分布
+
+　カテゴリ分布(Categorical Distribution)の計算と作図を行います。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r}
+# 利用するパッケージ
+library(tidyverse)
+library(gganimate)
+```
+
+　分布の変化をアニメーション(gif画像)で確認するのに`gganimate`パッケージを利用します。不要であれば省略してください。\
+\
+
+
+## 定義式の確認
+
+　サイコロのように複数の離散値$1, 2, \cdots, V$から1つの値をとる変数の確率分布をカテゴリ分布と言います。\
+　サイコロの出目(得られたクラス)が$v$のとき、$v$番目の要素$x_v$が1でそれ以外の要素が0の$V$次元ベクトル$\mathbf{x} = (x_1, \cdots, x_V)$で表します。$\mathbf{x}$の各要素$x_v$が0か1の値をとることを$x_v \in \{0, 1\}$で表します。また、1つの要素のみが1なので$\sum_{v=1}^V x_v = 1$になります。\
+　$x_v = 1$(クラス$v$・出目が$v$)となる確率を$\phi_v$で表すことにします。同様に、$\mathbf{x}$の各要素に対応する確率をまとめて、$\boldsymbol{\phi} = (\phi_1, \cdots, \phi_V)$と表記します。$\boldsymbol{\phi}$各要素は確率の定義より、$0 \leq \phi_v \leq 1$、$\sum_{v=1}^V \phi_v = 1$の条件を満たす必要があります。\
+
+　カテゴリ分布は、パラメータ$\boldsymbol{\phi}$を用いて次の式で定義されます。
+
+$$
+\mathrm{Cat}(\boldsymbol{x} | \boldsymbol{\phi})
+  = \prod_{v=1}^V
+        \phi_v^{x_v}
+$$
+
+　この式は、例えばサイコロの出目が3、つまり$V = 6, x_3 = 1$のとき
+
+$$
+\begin{aligned}
+\mathrm{Cat}(x_3 = 1 | \boldsymbol{\phi})
+   &= \prod_{v=1}^6
+          \phi_v^{x_v}
+\\
+   &= \phi_1^0 * \phi_2^0 * \phi_3^1 * \phi_4^0 * \phi_5^0 * \phi_6^0
+\\
+   &= 1 * 1 * \phi_3 * 1 * 1 * 1
+\\
+   &= \phi_3
+\end{aligned}
+$$
+
+となります。$x^0 = 1$です。\
+　このように、$x_v$に対応した確率$\phi_v$となるように式が定義されています。\
+
+　また、クラス数が$V = 2$のとき、$\boldsymbol{\phi} = (\phi_1, \phi_2)$なので
+
+$$
+\begin{aligned}
+\sum_{v=1}^2 \phi_v
+   &= 1 \\
+\phi_1 + \phi_2
+   &= 1 \\
+\phi_2
+   &= 1 - \phi_1
+\end{aligned}
+$$
+
+となります。同様に、$\mathbf{x} = (x_1, x_2)$なので
+
+$$
+\begin{aligned}
+\sum_{v=1}^2 x_v
+   &= 1 \\
+x_1 + x_2
+   &= 1 \\
+x_2
+   &= 1 - x_1
+\end{aligned}
+$$
+
+となります。よって、$V = 2$のときのカテゴリ分布は
+
+$$
+\begin{aligned}
+\mathrm{Cat}(x | \phi_1, \phi_2)
+   &= \prod_{v=1}^2
+          \phi_v^{x_v} \\
+   &= \phi_1^{x_1} * \phi_2^{x_2} \\
+   &= \phi_1^{x_1} (1 - \phi_1)^{1 - x_1}
+        = \mathrm{Bern}(x | \phi_1)
+\end{aligned}
+$$
+
+ベルヌーイ分布と等しくなります。\
+
+　カテゴリ分布の対数をとると
+
+$$
+\log \mathrm{Cat}(\boldsymbol{x} | \boldsymbol{\phi})
+  = \sum_{v=1}^V
+        x_v \log \phi_v
+$$
+
+となります。対数の性質より$\log x^a = a \log x$です。\
+
+　カテゴリ分布のクラス$v$における平均と分散は、次の式で計算できます。詳しくは「統計量の導出」を参照してください。
+
+$$
+\begin{aligned}
+\mathbb{E}[x_v]
+   &= \phi_v
+\\
+\mathbb{V}[x_v]
+   &= \phi_v (1 - \phi_v)
+\end{aligned}
+$$
+
+\ 
+
+　これらの計算を行いグラフを作成します。\
+\
+
+
+## 確率の計算
+
+　カテゴリ分布に従う確率を計算する方法をいくつか確認します。\
+\
+
+　パラメータを設定します。
+
+```{r}
+# パラメータを指定
+phi_v <- c(0.2, 0.4, 0.1, 0.3)
+
+# 確率変数の値を指定
+x_v <- c(0, 1, 0, 0)
+```
+
+　カテゴリ分布のパラメータ$\boldsymbol{\phi} = (\phi_1, \cdots, \phi_V)$、$0 \leq \phi_v \leq$、$\sum_{v=1}^V \phi_v = 1$を指定します。\
+　確率変数がとり得る値$\mathbf{x} = (x_1, \cdots, x_V)$、$x_v \in \{0, 1\}$、$\sum_{v=1}^V x_v = 1$を指定します。\
+
+　まずは、定義式から確率を計算します。
+
+```{r}
+# 定義式により確率を計算
+prob <- prod(phi_v^x_v)
+prob
+```
+
+　カテゴリ分布の定義式
+
+$$
+p(\boldsymbol{x} | \boldsymbol{\phi})
+  = \prod_{v=1}^V
+        \phi_v^{x_v}
+$$
+
+で計算します。\
+
+　対数をとった定義式から確率を計算します。
+
+```{r}
+# 対数をとった定義式により確率を計算
+log_prob <- sum(x_v * log(phi_v))
+prob <- exp(log_prob)
+prob; log_prob
+```
+
+　対数をとった定義式
+
+$$
+\log p(\boldsymbol{x} | \boldsymbol{\phi})
+  = \sum_{v=1}^V
+        x_v \log \phi_v
+$$
+
+を計算します。計算結果の指数をとると確率が得られます。
+
+$$
+p(x | \phi)
+    = \exp \Bigr(
+          \log p(x | \phi)
+      \Bigr)
+$$
+
+　指数と対数の性質より$\exp(\log x) = x$です。\
+
+　次は、関数を使って確率を計算します。\
+　多項分布の確率関数`dmultinom()`を使って計算します。
+
+```{r}
+# 多項分布の関数により確率を計算
+prob <- dmultinom(x = x_v, size = 1, prob = phi_v)
+prob
+```
+
+　試行回数の引数`size`に`1`を指定することで、カテゴリ分布の確率を計算できます。\
+　出現頻度の引数`x`に`x_v`、出現確率の引数`prob`に`phi_v`を指定します。\
+
+　`log = TRUE`を指定すると対数をとった確率を返します。
+
+```{r}
+# 多項分布の対数をとった関数により確率を計算
+log_prob <- dmultinom(x = x_v, size = 1, prob = phi_v, log = TRUE)
+prob <- exp(log_prob)
+prob; log_prob
+```
+
+　計算結果の指数をとると確率が得られます。\
+
+　最後に、スライス機能を使って確率を取り出します。
+
+```{r}
+# インデックスにより確率を抽出
+v <- which(x_v == 1)
+prob <- phi_v[v]
+prob
+```
+
+　`which()`を使って、`x_v`から値が`1`の要素のインデックスを検索して`v`とします。\
+　`phi_v`の`v`番目の要素を抽出します。\
+\
+
+
+## 統計量の計算
+
+　カテゴリ分布の平均と分散を計算します。\
+\
+
+　クラス$v$の平均を計算します。
+
+```{r}
+# クラス番号を指定
+v <- 1
+
+# 平均を計算
+E_x <- phi_v[v]
+E_x
+```
+
+　カテゴリ分布の平均は、次の式で計算できます。
+
+$$
+\mathbb{E}[x_v]
+    = \phi_v
+$$
+
+　クラス$v$の分散を計算します。
+
+```{r}
+# 分散を計算
+V_x <- phi_v[v] * (1 - phi_v[v])
+V_x
+```
+
+　カテゴリ分布の分散は、次の式で計算できます。
+
+$$
+\mathbb{V}[x_v]
+    = \phi_v (1 - \phi_v)
+$$
+
+\ 
+
+
+## グラフの作成
+
+　`ggplot2`パッケージを利用してカテゴリ分布のグラフを作成します。\
+\
+
+　カテゴリ分布の確率変数がとり得るクラス$v$と対応する確率をデータフレームに格納します。
+
+```{r}
+# パラメータを指定
+phi_v <- c(0.2, 0.4, 0.1, 0.3)
+
+# クラス数を取得
+V <- length(phi_v)
+
+# カテゴリ分布の情報を格納
+prob_df <- tidyr::tibble(
+  v = 1:V, # クラス
+  probability = phi_v # 確率
+)
+head(prob_df)
+```
+
+　$\mathbf{x}$によって表されるクラス番号`1:V`と、各クラスに対応する確率`phi_v`をデータフレームに格納します。\
+
+　カテゴリ分布のグラフを作成します。
+
+```{r}
+# カテゴリ分布のグラフを作成
+ggplot(data = prob_df, mapping = aes(x = v, y = probability)) + # データ
+  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 棒グラフ
+  scale_x_continuous(breaks = 0:V, labels = 0:V) + # x軸目盛
+  labs(title = "Categorical Distribution", 
+       subtitle = paste0("phi=(", paste0(phi_v, collapse = ", "), ")")) # ラベル
+```
+
+　パラメータの値そのままですが、これがカテゴリ分布のグラフです。\
+\
+
+
+## パラメータと分布の形状の関係
+
+　続いて、パラメータ$\phi_v$の値を少しずつ変更して、分布の変化をアニメーションで確認します。
+
+```{r}
+# 作図用のphi_1の値を作成
+phi_vals <- seq(from = 0, to = 1, by = 0.01)
+
+# クラス数を指定
+V <- 3
+
+# phiの値ごとに分布を計算
+anime_prob_df <- tidyr::tibble()
+for(phi in phi_vals) {
+  # phi_1以外の割り当てを指定
+  phi_v <- c(phi, (1 - phi) * 0.6, (1 - phi) * 0.4)
+  
+  # 二項分布の情報を格納
+  tmp_prob_df <- tidyr::tibble(
+    v = 1:V, # クラス
+    probability = phi_v, # 確率
+    parameter = paste0("phi=(", paste0(round(phi_v, 2), collapse = ", "), ")") %>% 
+      as.factor() # フレーム切替用のラベル
+  )
+  
+  # 結果を結合
+  anime_prob_df <- rbind(anime_prob_df, tmp_prob_df)
+}
+head(anime_prob_df)
+```
+
+　$\phi_1$がとり得る値を作成して`phi_vals`とします。\
+　`for()`ループを使って`phi_vals`の値ごとに`phi_v`を更新して、`anime_prob_df`に追加していきます。$\phi_1$以外の確率の和$1 - \phi_1$を他のクラスの確率として割り振ります。\
+
+　gif画像を作成します。
+
+```{r, eval=FALSE}
+# アニメーション用の二項分布を作図
+anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = v, y = probability)) + # データ
+  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 分布
+  scale_x_continuous(breaks = 0:V, labels = 0:V) + # x軸目盛
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Categorical Distribution", 
+       subtitle = "{current_frame}") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_prob_graph, nframes = length(phi_vals), fps = 100)
+```
+
+　(定義のままですが、)パラメータ$\phi_1$の値が大きいほど、$x_1 = 1$となる確率が高く、他のクラスとなる確率が低いを確認できます。\
+\
+
+
+## 乱数の生成
+
+　カテゴリ分布の乱数を生成してヒストグラムを確認します。\
+\
+
+　パラメータを指定して、カテゴリ分布に従う乱数を生成します。
+
+```{r}
+# パラメータを指定
+phi_v <- c(0.2, 0.4, 0.1, 0.3)
+
+# クラス数を取得
+V <- length(phi_v)
+
+# データ数を指定
+N <- 1000
+
+# カテゴリ分布に従う乱数を生成
+x_nv <- rmultinom(n = N, size = 1, prob = phi_v) %>% 
+  t()
+x_nv[1:5, ]
+```
+
+　多項分布の乱数生成関数`rmultinom()`の試行回数の引数`size `に`1`を指定することで、カテゴリ分布に従う乱数を生成できます。\
+　データ数(サンプルサイズ)の引数`n`に`N`、成功確率の引数`prob`に`phi_v`を指定します。\
+
+　各データに割り当てられたクラス番号を抽出します。
+
+```{r}
+# インデックスを抽出
+x_n <- which(x = t(x_nv) == 1, arr.ind = TRUE)[, "row"]
+x_n[1:5]
+```
+
+　`which()`を使って、`x_nv`の各行から値が`1`の列番号を抽出できます。ここでは`x_n`は使いません。\
+
+　サンプルの値を集計します。
+
+```{r}
+# 乱数を集計して格納
+freq_df <- tidyr::tibble(
+  v = 1:V, # クラス
+  frequency = colSums(x_nv), # 頻度
+  proportion = frequency / N
+)
+head(freq_df)
+```
+
+　`x_nv`の列ごとに和をとると、各クラスの出現頻度(各クラスが割り当てられたデータ数)を得られます。\
+　また、得られた頻度`frequency`をデータ数`N`で割り、`1`から`V`の構成比を計算します。\
+
+　ヒストグラムを作成します。
+
+```{r}
+# サンプルのヒストグラムを作成
+ggplot(data = freq_df, mapping = aes(x = v, y = frequency)) + # データ
+  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 棒グラフ
+  scale_x_continuous(breaks = 0:V, labels = 0:V) + # x軸目盛
+  labs(title = "Categorical Distribution", 
+       subtitle = paste0("phi=(", paste0(phi_v, collapse = ", "), ")", 
+                         ", N=", N, "=(", paste0(colSums(x_nv), collapse = ", "), ")")) # ラベル
+```
+
+\ 
+
+　構成比を分布と重ねて描画します。
+
+```{r}
+# サンプルの構成比を作図
+ggplot() + 
+  geom_bar(data = freq_df, mapping = aes(x = v, y = proportion), 
+           stat = "identity", position = "dodge", fill = "#00A968") + # 構成比
+  geom_bar(data = prob_df, mapping = aes(x = v, y = probability), 
+           stat = "identity", position = "dodge", alpha = 0, color = "darkgreen", linetype = "dashed") + # 真の分布
+  scale_x_continuous(breaks = 0:V, labels = 0:V) + # x軸目盛
+  labs(title = "Categorical Distribution", 
+       subtitle = paste0("phi=(", paste0(phi_v, collapse = ", "), ")", 
+                         ", N=", N, "=(", paste0(colSums(x_nv), collapse = ", "), ")")) # ラベル
+```
+
+　データ数が十分に増えると分布のグラフに形が近づきます。\
+\
+
+　サンプルサイズとヒストグラムの変化をアニメーションで確認します。
+
+```{r}
+# データ数を指定
+N <- 100
+
+# 乱数を1つずつ生成
+x_nv <- matrix(NA, nrow = N, ncol = V)
+anime_freq_df <- tidyr::tibble()
+anime_data_df <- tidyr::tibble()
+anime_prob_df <- tidyr::tibble()
+for(n in 1:N) {
+  # カテゴリ分布に従う乱数を生成
+  x_nv[n, ] <- rmultinom(n = 1, size = 1, prob = phi_v) %>% 
+    as.vector()
+  
+  # ラベル用のテキストを作成
+  label_text <- paste0(
+    "phi=(", paste0(phi_v, collapse = ", "), ")", 
+    ", N=", n, "=(", paste0(colSums(x_nv, na.rm = TRUE), collapse = ", "), ")"
+  )
+  
+  # n個の乱数を集計して格納
+  tmp_freq_df <- tidyr::tibble(
+    v = 1:V, # クラス
+    frequency = colSums(x_nv, na.rm = TRUE), # 頻度
+    proportion = frequency / n, # 割合
+    parameter = as.factor(label_text) # フレーム切替用のラベル
+  )
+  
+  # n番目の乱数を格納
+  tmp_data_df <- tidyr::tibble(
+    v = which(x_nv[n, ] == 1), # サンプルのクラス番号
+    parameter = as.factor(label_text) # フレーム切替用のラベル
+  )
+  
+  # n回目のラベルを付与
+  tmp_prob_df <- prob_df %>% 
+    dplyr::mutate(parameter = as.factor(label_text))
+  
+  # 結果を結合
+  anime_freq_df <- rbind(anime_freq_df, tmp_freq_df)
+  anime_data_df <- rbind(anime_data_df, tmp_data_df)
+  anime_prob_df <- rbind(anime_prob_df, tmp_prob_df)
+}
+head(anime_freq_df)
+```
+
+　乱数を1つず生成して、結果を`anime_***_df`に追加していきます。
+
+　ヒストグラムのアニメーションを作成します。
+
+```{r, eval=FALSE}
+# アニメーション用のサンプルのヒストグラムを作成
+anime_freq_graph <- ggplot() + # データ
+  geom_bar(data = anime_freq_df, mapping = aes(x = v, y = frequency), 
+           stat = "identity", position = "dodge", fill = "#00A968") + # ヒストグラム
+  geom_point(data = anime_data_df, mapping = aes(x = v, y = 0), 
+             color = "orange", size = 5) + # サンプル
+  scale_x_continuous(breaks = 0:V, labels = 0:V) + # x軸目盛
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Categorical Distribution", 
+       subtitle = "{current_frame}") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_freq_graph, nframes = N, fps = 100)
+```
+
+\ 
+
+　構成比のアニメーションを作成します。
+
+```{r, eval=FALSE}
+# アニメーション用のサンプルの構成比を作図
+anime_prop_graph <- ggplot() + # データ
+  geom_bar(data = anime_freq_df, mapping = aes(x = v, y = proportion), 
+           stat = "identity", position = "dodge", fill = "#00A968") + # 構成比
+  geom_bar(data = anime_prob_df, mapping = aes(x = v, y = probability), 
+           stat = "identity", position = "dodge", alpha = 0, color = "darkgreen", linetype = "dashed") + # 真の分布
+  geom_point(data = anime_data_df, mapping = aes(x = v, y = 0), 
+             color = "orange", size = 5) + # 乱数
+  scale_x_continuous(breaks = 0:V, labels = 0:V) + # x軸目盛
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Categorical Distribution", 
+       subtitle = "{current_frame}") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_prop_graph, nframes = N, fps = 100)
+```
+
+　サンプルが増えるに従って、真の分布に近付いていくのを確認できます。\
+
+　以上で、カテゴリ分布を確認できました。\
+\
+
