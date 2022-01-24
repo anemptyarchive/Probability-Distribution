@@ -3,9 +3,10 @@
 
 # 利用するパッケージ
 library(tidyverse)
+library(gganimate)
 
 
-### 確率の計算 -----
+# 確率の計算 -------------------------------------------------------------------
 
 # パラメータを指定
 phi_v <- c(0.2, 0.4, 0.1, 0.3)
@@ -38,7 +39,7 @@ prob <- phi_v[v]
 prob
 
 
-### 統計量の計算 -----
+# 統計量の計算 ------------------------------------------------------------------
 
 # パラメータを指定
 phi_v <- c(0.2, 0.4, 0.1, 0.3)
@@ -55,7 +56,7 @@ V_x <- phi_v[v] * (1 - phi_v[v])
 V_x
 
 
-### グラフの作成 -----
+# グラフの作成 ------------------------------------------------------------------
 
 # パラメータを指定
 phi_v <- c(0.2, 0.4, 0.1, 0.3)
@@ -71,13 +72,13 @@ prob_df <- tidyr::tibble(
 
 # カテゴリ分布のグラフを作成
 ggplot(data = prob_df, mapping = aes(x = v, y = probability)) + # データ
-  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 棒グラフ
+  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 分布
   scale_x_continuous(breaks = 0:V, labels = 0:V) + # x軸目盛
   labs(title = "Categorical Distribution", 
        subtitle = paste0("phi=(", paste0(phi_v, collapse = ", "), ")")) # ラベル
 
 
-### パラメータと分布の形状の関係：アニメーション -----
+# パラメータと分布の形状の関係：アニメーション --------------------------------------------------
 
 # 作図用のphi_1の値を作成
 phi_vals <- seq(from = 0, to = 1, by = 0.01)
@@ -91,7 +92,7 @@ for(phi in phi_vals) {
   # phi_1以外の割り当てを指定
   phi_v <- c(phi, (1 - phi) * 0.6, (1 - phi) * 0.4)
   
-  # 二項分布の情報を格納
+  # カテゴリ分布の情報を格納
   tmp_prob_df <- tidyr::tibble(
     v = 1:V, # クラス
     probability = phi_v, # 確率
@@ -103,7 +104,7 @@ for(phi in phi_vals) {
   anime_prob_df <- rbind(anime_prob_df, tmp_prob_df)
 }
 
-# アニメーション用の二項分布を作図
+# アニメーション用のカテゴリ分布を作図
 anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = v, y = probability)) + # データ
   geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 分布
   scale_x_continuous(breaks = 0:V, labels = 0:V) + # x軸目盛
@@ -115,9 +116,9 @@ anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = v, y = probab
 gganimate::animate(anime_prob_graph, nframes = length(phi_vals), fps = 100)
 
 
-### 乱数の生成 -----
+# 乱数の生成 -------------------------------------------------------------------
 
-## 乱数の可視化
+### ・乱数の可視化 -----
 
 # パラメータを指定
 phi_v <- c(0.2, 0.4, 0.1, 0.3)
@@ -132,14 +133,14 @@ N <- 1000
 x_nv <- rmultinom(n = N, size = 1, prob = phi_v) %>% 
   t()
 
-# インデックスを抽出
+# クラス番号を抽出
 x_n <- which(x = t(x_nv) == 1, arr.ind = TRUE)[, "row"]
 
 # 乱数を集計して格納
 freq_df <- tidyr::tibble(
   v = 1:V, # クラス
   frequency = colSums(x_nv), # 頻度
-  proportion = frequency / N
+  proportion = frequency / N # 構成比
 )
 
 # サンプルのヒストグラムを作成
@@ -149,6 +150,12 @@ ggplot(data = freq_df, mapping = aes(x = v, y = frequency)) + # データ
   labs(title = "Categorical Distribution", 
        subtitle = paste0("phi=(", paste0(phi_v, collapse = ", "), ")", 
                          ", N=", N, "=(", paste0(colSums(x_nv), collapse = ", "), ")")) # ラベル
+
+# カテゴリ分布の情報を格納
+prob_df <- tidyr::tibble(
+  v = 1:V, # クラス
+  probability = phi_v # 確率
+)
 
 # サンプルの構成比を作図
 ggplot() + 
@@ -162,7 +169,7 @@ ggplot() +
                          ", N=", N, "=(", paste0(colSums(x_nv), collapse = ", "), ")")) # ラベル
 
 
-## アニメーションによる可視化
+### ・アニメーションによる可視化 -----
 
 # データ数を指定
 N <- 100
@@ -230,7 +237,7 @@ anime_prop_graph <- ggplot() + # データ
   geom_bar(data = anime_prob_df, mapping = aes(x = v, y = probability), 
            stat = "identity", position = "dodge", alpha = 0, color = "darkgreen", linetype = "dashed") + # 真の分布
   geom_point(data = anime_data_df, mapping = aes(x = v, y = 0), 
-             color = "orange", size = 5) + # 乱数
+             color = "orange", size = 5) + # サンプル
   scale_x_continuous(breaks = 0:V, labels = 0:V) + # x軸目盛
   gganimate::transition_manual(parameter) + # フレーム
   labs(title = "Categorical Distribution", 

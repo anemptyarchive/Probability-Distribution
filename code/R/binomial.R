@@ -3,9 +3,10 @@
 
 # 利用するパッケージ
 library(tidyverse)
+library(gganimate)
 
 
-### 確率の計算 -----
+# 確率の計算 -------------------------------------------------------------------
 
 # パラメータを指定
 phi <- 0.3
@@ -27,31 +28,31 @@ prob <- C * phi^x * (1 - phi)^(M - x)
 prob
 
 # 対数をとった定義式により確率を計算
-ln_C <- lgamma(M + 1) - lgamma(M - x + 1) - lgamma(x + 1)
-ln_prob <- ln_C + x * log(phi) + (M - x) * log(1 - phi)
-prob <- exp(ln_prob)
-prob; ln_prob
+log_C <- lgamma(M + 1) - lgamma(M - x + 1) - lgamma(x + 1)
+log_prob <- log_C + x * log(phi) + (M - x) * log(1 - phi)
+prob <- exp(log_prob)
+prob; log_prob
 
 # 二項分布の関数により確率を計算
 prob <- dbinom(x = x, size = M, prob = phi)
 prob
 
 # 二項分布の対数をとった関数により確率を計算
-ln_prob <- dbinom(x = x, size = M, prob = phi, log = TRUE)
-prob <- exp(ln_prob)
-prob; ln_prob
+log_prob <- dbinom(x = x, size = M, prob = phi, log = TRUE)
+prob <- exp(log_prob)
+prob; log_prob
 
 # 多項分布の関数により確率を計算
 prob <- dmultinom(x = x_v, size = M, prob = phi_v)
 prob
 
 # 多項分布の対数をとった関数により確率を計算
-ln_prob <- dmultinom(x = x_v, size = M, prob = phi_v, log = TRUE)
-prob <- exp(ln_prob)
-prob; ln_prob
+log_prob <- dmultinom(x = x_v, size = M, prob = phi_v, log = TRUE)
+prob <- exp(log_prob)
+prob; log_prob
 
 
-### 統計量の計算 -----
+# 統計量の計算 -------------------------------------------------------------------
 
 # パラメータを指定
 phi <- 0.3
@@ -68,7 +69,7 @@ V_x <- M * phi * (1 - phi)
 V_x
 
 
-### グラフの作成 -----
+# グラフの作成 ------------------------------------------------------------------
 
 # パラメータを指定
 phi <- 0.3
@@ -88,15 +89,28 @@ prob_df <- tidyr::tibble(
 # 二項分布のグラフを作成
 ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
   geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 分布
-#  geom_vline(xintercept = E_x, color = "orange", size = 1, linetype = "dashed") + # 平均
-#  geom_vline(xintercept = E_x - sqrt(V_x), color = "orange", size = 1, linetype = "dotted") + # 平均 - 標準偏差
-#  geom_vline(xintercept = E_x + sqrt(V_x), color = "orange", size = 1, linetype = "dotted") + # 平均 + 標準偏差
   scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
   labs(title = "Binomial Distribution", 
        subtitle = paste0("phi=", phi, ", M=", M)) # ラベル
 
 
-### パラメータと分布の形状の関係:並べて比較 -----
+# 補助線用の統計量を計算
+E_x <- M * phi
+V_x <- M * phi * (1 - phi)
+s_x <- sqrt(V_x)
+
+# 二項分布のグラフを作成
+ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
+  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 分布
+  geom_vline(xintercept = E_x, color = "orange", size = 1, linetype = "dashed") + # 平均
+  geom_vline(xintercept = E_x - s_x, color = "orange", size = 1, linetype = "dotted") + # 平均 - 標準偏差
+  geom_vline(xintercept = E_x + s_x, color = "orange", size = 1, linetype = "dotted") + # 平均 + 標準偏差
+  scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
+  labs(title = "Binomial Distribution", 
+       subtitle = paste0("phi=", phi, ", M=", M)) # ラベル
+
+
+# パラメータと分布の形状の関係:並べて比較 ----------------------------------------------------
 
 # パラメータを指定
 phi_vals <- c(0.1, 0.33, 0.5, 0.8, 0.9)
@@ -108,7 +122,7 @@ M <- 100
 x_vals <- 0:M
 
 # phiの値ごとに分布を計算
-probs_df <- tidyr::tibble()
+res_prob_df <- tidyr::tibble()
 for(phi in phi_vals) {
   # 二項分布の情報を格納
   tmp_prob_df <- tidyr::tibble(
@@ -119,11 +133,11 @@ for(phi in phi_vals) {
   )
   
   # 結果を結合
-  probs_df <- rbind(probs_df, tmp_prob_df)
+  res_prob_df <- rbind(res_prob_df, tmp_prob_df)
 }
 
 # 二項分布のグラフを作成
-ggplot(data = probs_df, mapping = aes(x = x, y = probability, fill = parameter, color = parameter)) + # データ
+ggplot(data = res_prob_df, mapping = aes(x = x, y = probability, fill = parameter, color = parameter)) + # データ
   geom_bar(stat = "identity", position = "dodge") + # 棒グラフ
   scale_fill_manual(values = c("#FFC0CB", "#FF0000", "#FFFF00", "#EE82EE", "#7FFF00")) + # 塗りつぶし色(不必要)
   scale_color_manual(values = c("#FFC0CB", "#FF0000", "#FFFF00", "#EE82EE", "#7FFF00")) + # 枠の色(不必要)
@@ -131,12 +145,18 @@ ggplot(data = probs_df, mapping = aes(x = x, y = probability, fill = parameter, 
   labs(title = "Binomial Distribution") # タイトル
 
 
-### パラメータと分布の形状の関係：アニメーション -----
+# パラメータと分布の形状の関係：アニメーション --------------------------------------------------
 
-## phiを変更した場合
+### ・パラメータphiの影響 -----
 
 # 作図用のphiの値を作成
 phi_vals <- seq(from = 0, to = 1, by = 0.01)
+
+# 試行回数を指定
+M <- 10
+
+# 作図用のxの値を作成
+x_vals <- 0:M
 
 # phiの値ごとに分布を計算
 anime_prob_df <- tidyr::tibble()
@@ -165,7 +185,7 @@ anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = x, y = probab
 gganimate::animate(anime_prob_graph, nframes = length(phi_vals), fps = 100)
 
 
-## Mを変更した場合
+### ・試行回数Mの影響 -----
 
 # パラメータを指定
 phi <- 0.3
@@ -193,7 +213,7 @@ for(M in 1:M_max) {
 
 # アニメーション用の二項分布のグラフを作成
 anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = x, y = prob)) + # データ
-  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 棒グラフ
+  geom_bar(stat = "identity", position = "dodge", fill = "#00A968", fill = "#00A968") + # 棒グラフ
 #  scale_x_continuous(breaks = 0:M_max, labels = 0:M_max) + # x軸目盛
   gganimate::transition_manual(parameter) + # フレーム
   labs(title = "Binomial Distribution", 
@@ -203,9 +223,9 @@ anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = x, y = prob))
 gganimate::animate(anime_prob_graph, nframes = M_max, fps = 100)
 
 
-### 乱数の生成 -----
+# 乱数の生成 -------------------------------------------------------------------
 
-## 乱数の可視化
+### ・乱数の可視化 -----
 
 # パラメータを指定
 phi <- 0.3
@@ -234,6 +254,12 @@ ggplot(data = freq_df, mapping = aes(x = x, y = frequency)) + # データ
        subtitle = paste0("phi=", phi, ", M=", M, 
                          ", N=", N, "=(", paste0(freq_df[["frequency"]], collapse = ", "), ")")) # ラベル
 
+# 二項分布の情報を格納
+prob_df <- tidyr::tibble(
+  x = x_vals, # 確率変数
+  probability = dbinom(x = x_vals, size = M, prob = phi) # 確率
+)
+
 # サンプルの構成比を作図
 ggplot() + 
   geom_bar(data = freq_df, mapping = aes(x = x, y = proportion), 
@@ -246,7 +272,7 @@ ggplot() +
                          ", N=", N, "=(", paste0(freq_df[["frequency"]], collapse = ", "), ")")) # ラベル
 
 
-## アニメーションによる可視化
+### ・アニメーションによる可視化 -----
 
 # データ数を指定
 N <- 100

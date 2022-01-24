@@ -6,7 +6,7 @@ library(tidyverse)
 library(gganimate)
 
 
-### 確率の計算 -----
+# 確率の計算 -------------------------------------------------------------------
 
 # パラメータを指定
 phi <- 0.3
@@ -18,6 +18,7 @@ x <- 1
 phi_v <- c(1 - phi, phi)
 x_v <- c(1 - x, x)
 phi_v; x_v
+
 
 # 定義式により確率を計算
 prob <- phi^x * (1 - phi)^(1 - x)
@@ -51,7 +52,7 @@ prob <- phi_v[x+1]
 prob
 
 
-### 統計量の計算 -----
+# 統計量の計算 ------------------------------------------------------------------
 
 # パラメータを指定
 phi <- 0.3
@@ -65,7 +66,7 @@ V_x <- phi * (1 - phi)
 V_x
 
 
-### グラフの作成 -----
+# グラフの作成 ------------------------------------------------------------------
 
 # パラメータを指定
 phi <- 0.3
@@ -79,15 +80,27 @@ prob_df <- tidyr::tibble(
 # ベルヌーイ分布を作図
 ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
   geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 分布
-#  geom_vline(xintercept = E_x, color = "orange", size = 1, linetype = "dashed") + # 平均
-#  geom_vline(xintercept = E_x - sqrt(V_x), color = "orange", size = 1, linetype = "dotted") + # 平均 - 標準偏差
-#  geom_vline(xintercept = E_x + sqrt(V_x), color = "orange", size = 1, linetype = "dotted") + # 平均 + 標準偏差
+  scale_x_continuous(breaks = 0:1, labels = 0:1) + # x軸目盛
+  labs(title = "Bernoulli Distribution", 
+       subtitle = paste0("phi=", phi)) # ラベル
+
+# 補助線用の統計量を計算
+E_x <- phi
+V_x <- phi * (1 - phi)
+s_x <- sqrt(V_x)
+
+# ベルヌーイ分布を作図
+ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
+  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 分布
+  geom_vline(xintercept = E_x, color = "orange", size = 1, linetype = "dashed") + # 平均
+  geom_vline(xintercept = E_x - s_x, color = "orange", size = 1, linetype = "dotted") + # 平均 - 標準偏差
+  geom_vline(xintercept = E_x + s_x, color = "orange", size = 1, linetype = "dotted") + # 平均 + 標準偏差
   scale_x_continuous(breaks = 0:1, labels = 0:1) + # x軸目盛
   labs(title = "Bernoulli Distribution", 
        subtitle = paste0("phi=", phi)) # ラベル
 
 
-### パラメータと分布の形状の関係 -----
+# パラメータと分布の形状の関係 ----------------------------------------------------------
 
 # 作図用のphiの値を作成
 phi_vals <- seq(from = 0, to = 1, by = 0.01)
@@ -119,9 +132,9 @@ anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = x, y = probab
 gganimate::animate(anime_prob_graph, nframes = length(phi_vals), fps = 100)
 
 
-### 乱数の生成 ----
+# 乱数の生成 -------------------------------------------------------------------
 
-## 乱数の可視化
+### ・乱数の可視化 ----
 
 # パラメータを指定
 phi <- 0.3
@@ -146,6 +159,13 @@ ggplot(data = freq_df, mapping = aes(x = x, y = frequency)) + # データ
   labs(title = "Bernoulli Distribution", 
        subtitle = paste0("phi=", phi, ", N=", N, "=(", sum(x_n == 0), ", ", sum(x_n == 1), ")")) # ラベル
 
+
+# ベルヌーイ分布の情報を格納
+prob_df <- tidyr::tibble(
+  x = 0:1, # 確率変数
+  probability = c(1 - phi, phi) # 確率
+)
+
 # サンプルの構成比を作図
 ggplot() + 
   geom_bar(data = freq_df, mapping = aes(x = x, y = proportion), 
@@ -157,7 +177,7 @@ ggplot() +
        subtitle = paste0("phi=", phi, ", N=", N, "=(", sum(x_n == 0), ", ", sum(x_n == 1), ")")) # ラベル
 
 
-## アニメーションによる可視化
+### ・アニメーションによる可視化 -----
 
 # データ数を指定
 N <- 100
