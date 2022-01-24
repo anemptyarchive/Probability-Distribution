@@ -1,8 +1,8 @@
 ---
 title: |
-  確率分布の作図
+  カテゴリ分布
 author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
-date: "`r paste('2022/01/10',  format(Sys.time(), '%Y/%m/%d'), sep = ' - ')`"
+date: "`r paste('2022/01/10',  '2022/01/24', sep = ' - ')`"
 output:
   pdf_document:
     latex_engine: xelatex
@@ -36,7 +36,174 @@ Sys.time()
 
 \newpage
 
-# カテゴリ分布
+
+# カテゴリ分布の定義式
+
+　カテゴリ分布(Categorical Distribution)の定義を確認します。\
+\
+
+
+## 定義式
+
+　サイコロのように、複数の離散値から1つの値をとる変数の確率分布をカテゴリ分布と言います。\
+\
+
+　$V$種類の離散値(クラス)$1, 2, \cdots, V$からランダムに1つの値(クラス)を得ることを考えます。\
+
+　得られた値(クラス・サイコロの出目)が$v$のとき、$v$番目の要素$x_v$が1でそれ以外の要素が0の$V$次元ベクトル(要素数が$V$のベクトル)
+
+$$
+\mathbf{x}
+    = (x_1, x_2, \cdots, x_V)
+$$
+
+で表します。このようなベクトルをone-hotベクトルと言います。ちなみに、試行回数1のときの各クラスの出現回数と考えると、多項分布との関係が分かりやすくなります。\
+　$\mathbf{x}$の各要素$x_v$が0か1の値をとることを
+
+$$
+x_v \in \{0, 1\}
+$$
+
+で表します。\
+　1つの要素のみが1なので、全ての要素の和も1
+
+$$
+\sum_{v=1}^V x_v = 1
+$$
+
+になります。\
+
+　$x_v = 1$(クラス$v$・出目が$v$)となる確率を$\phi_v$で表すことにします。$V$種類のクラスに対応する確率をまとめて
+
+$$
+\boldsymbol{\phi}
+    = (\phi_1, \phi_2, \cdots, \phi_V)
+$$
+
+と表記します。\
+　$\boldsymbol{\phi}$の各要素$\phi_v$は、0から1の値をとり、全ての要素の和が1の条件
+
+$$
+0 < \phi_v < 1,\ 
+\sum_{v=1}^V \phi_v = 1
+$$
+
+を満たす必要があります。$\phi_v$が0より大きく1より小さい値をとることを$\phi_v \in (0, 1)$とも表記します。\
+\
+
+　カテゴリ分布は、パラメータ$\boldsymbol{\phi}$を用いて次の式で定義されます。
+
+$$
+\mathrm{Cat}(\boldsymbol{x} | \boldsymbol{\phi})
+  = \prod_{v=1}^V
+        \phi_v^{x_v}
+$$
+
+　例えば、サイコロの出目が3つまり$V = 6, x_3 = 1$のとき、カテゴリ分布の式は
+
+$$
+\begin{aligned}
+\mathrm{Cat}(x_3 = 1 | \boldsymbol{\phi})
+   &= \prod_{v=1}^6
+          \phi_v^{x_v}
+\\
+   &= \phi_1^0 * \phi_2^0 * \phi_3^1 * \phi_4^0 * \phi_5^0 * \phi_6^0
+\\
+   &= 1 * 1 * \phi_3 * 1 * 1 * 1
+\\
+   &= \phi_3
+\end{aligned}
+$$
+
+となります。指数の定義より$x^0 = 1$です。\
+　このように、$x_v$に対応した確率$\phi_v$となるように式が定義されています。\
+\
+
+　カテゴリ分布の対数をとると
+
+$$
+\log \mathrm{Cat}(\boldsymbol{x} | \boldsymbol{\phi})
+  = \sum_{v=1}^V
+        x_v \log \phi_v
+$$
+
+となります。対数の性質より$\log x^a = a \log x$、$\log (x y) = \log x + \log y$です。\
+\
+
+
+## 他の分布との関係
+
+　クラス数が$V = 2$のとき、$\boldsymbol{\phi} = (\phi_1, \phi_2)$なので
+
+$$
+\begin{aligned}
+\sum_{v=1}^2 \phi_v
+   &= 1 \\
+\phi_1 + \phi_2
+   &= 1 \\
+\phi_2
+   &= 1 - \phi_1
+\end{aligned}
+$$
+
+となります。また、$\mathbf{x} = (x_1, x_2)$なので
+
+$$
+\begin{aligned}
+\sum_{v=1}^2 x_v
+   &= 1 \\
+x_1 + x_2
+   &= 1 \\
+x_2
+   &= 1 - x_1
+\end{aligned}
+$$
+
+となります。よって、$V = 2$のときカテゴリ分布は
+
+$$
+\begin{aligned}
+\mathrm{Cat}(x | \phi_1, \phi_2)
+   &= \prod_{v=1}^2
+          \phi_v^{x_v} \\
+   &= \phi_1^{x_1}
+      \phi_2^{x_2} \\
+   &= \phi_1^{x_1}
+      (1 - \phi_1)^{1 - x_1}
+        = \mathrm{Bern}(x | \phi_1)
+\end{aligned}
+$$
+
+パラメータ$\phi_1$のベルヌーイ分布と等しくなります。\
+
+　つまり、ベルヌーイ分布はカテゴリ分布の特殊な形であると言えます。逆に、カテゴリ分布はベルヌーイ分布を拡張(多次元化)した形と言えます。\
+\
+
+
+## 統計量の計算式
+
+　カテゴリ分布のクラス$v$における平均と分散は、次の式で計算できます。詳しくは「統計量の導出」を参照してください。
+
+$$
+\begin{aligned}
+\mathbb{E}[x_v]
+   &= \phi_v
+\\
+\mathbb{V}[x_v]
+   &= \phi_v (1 - \phi_v)
+\end{aligned}
+$$
+
+\ 
+
+
+# カテゴリ分布の統計量の導出
+
+　青トピ攻略ノートを参照。\
+\
+
+
+# カテゴリ分布の作図
 
 　カテゴリ分布(Categorical Distribution)の計算と作図を行います。\
 \
@@ -55,11 +222,10 @@ library(gganimate)
 
 ## 定義式の確認
 
-　サイコロのように複数の離散値$1, 2, \cdots, V$から1つの値をとる変数の確率分布をカテゴリ分布と言います。\
-　サイコロの出目(得られたクラス)が$v$のとき、$v$番目の要素$x_v$が1でそれ以外の要素が0の$V$次元ベクトル$\mathbf{x} = (x_1, \cdots, x_V)$で表します。$\mathbf{x}$の各要素$x_v$が0か1の値をとることを$x_v \in \{0, 1\}$で表します。また、1つの要素のみが1なので$\sum_{v=1}^V x_v = 1$になります。\
-　$x_v = 1$(クラス$v$・出目が$v$)となる確率を$\phi_v$で表すことにします。同様に、$\mathbf{x}$の各要素に対応する確率をまとめて、$\boldsymbol{\phi} = (\phi_1, \cdots, \phi_V)$と表記します。$\boldsymbol{\phi}$各要素は確率の定義より、$0 \leq \phi_v \leq 1$、$\sum_{v=1}^V \phi_v = 1$の条件を満たす必要があります。\
+　まずは、カテゴリ分布の定義式を確認します。\
+\
 
-　カテゴリ分布は、パラメータ$\boldsymbol{\phi}$を用いて次の式で定義されます。
+　カテゴリ分布は、次の式で定義されます。詳しくは「カテゴリ分布の定義式」を参照してください。
 
 $$
 \mathrm{Cat}(\boldsymbol{x} | \boldsymbol{\phi})
@@ -67,75 +233,16 @@ $$
         \phi_v^{x_v}
 $$
 
-　この式は、例えばサイコロの出目が3、つまり$V = 6, x_3 = 1$のとき
+　ここで、$x_v$はクラス$v$が出現した回数、$\phi_v$はクラス$v$の出現確率です。\
+　確率変数の値$\mathbf{x} = (x_1, \cdots, x_V)$はone-hotベクトルで、$x_v \in \{0, 1\}$、$\sum_{v=1}^V x_v = 1$となります。パラメータ$\boldsymbol{\phi} = (\phi_1, \cdots, \phi_V)$は、$\phi_v \in (0, 1)$、$\sum_{v=1}^V \phi_v = 1$を満たす必要があります。\
 
-$$
-\begin{aligned}
-\mathrm{Cat}(x_3 = 1 | \boldsymbol{\phi})
-   &= \prod_{v=1}^6
-          \phi_v^{x_v}
-\\
-   &= \phi_1^0 * \phi_2^0 * \phi_3^1 * \phi_4^0 * \phi_5^0 * \phi_6^0
-\\
-   &= 1 * 1 * \phi_3 * 1 * 1 * 1
-\\
-   &= \phi_3
-\end{aligned}
-$$
-
-となります。$x^0 = 1$です。\
-　このように、$x_v$に対応した確率$\phi_v$となるように式が定義されています。\
-
-　また、クラス数が$V = 2$のとき、$\boldsymbol{\phi} = (\phi_1, \phi_2)$なので
-
-$$
-\begin{aligned}
-\sum_{v=1}^2 \phi_v
-   &= 1 \\
-\phi_1 + \phi_2
-   &= 1 \\
-\phi_2
-   &= 1 - \phi_1
-\end{aligned}
-$$
-
-となります。同様に、$\mathbf{x} = (x_1, x_2)$なので
-
-$$
-\begin{aligned}
-\sum_{v=1}^2 x_v
-   &= 1 \\
-x_1 + x_2
-   &= 1 \\
-x_2
-   &= 1 - x_1
-\end{aligned}
-$$
-
-となります。よって、$V = 2$のときのカテゴリ分布は
-
-$$
-\begin{aligned}
-\mathrm{Cat}(x | \phi_1, \phi_2)
-   &= \prod_{v=1}^2
-          \phi_v^{x_v} \\
-   &= \phi_1^{x_1} * \phi_2^{x_2} \\
-   &= \phi_1^{x_1} (1 - \phi_1)^{1 - x_1}
-        = \mathrm{Bern}(x | \phi_1)
-\end{aligned}
-$$
-
-ベルヌーイ分布と等しくなります。\
-
-　カテゴリ分布の対数をとると
+　この式の対数をとると、次の式になります。
 
 $$
 \log \mathrm{Cat}(\boldsymbol{x} | \boldsymbol{\phi})
   = \sum_{v=1}^V
         x_v \log \phi_v
 $$
-
-となります。対数の性質より$\log x^a = a \log x$です。\
 
 　カテゴリ分布のクラス$v$における平均と分散は、次の式で計算できます。詳しくは「統計量の導出」を参照してください。
 
@@ -170,7 +277,7 @@ phi_v <- c(0.2, 0.4, 0.1, 0.3)
 x_v <- c(0, 1, 0, 0)
 ```
 
-　カテゴリ分布のパラメータ$\boldsymbol{\phi} = (\phi_1, \cdots, \phi_V)$、$0 \leq \phi_v \leq$、$\sum_{v=1}^V \phi_v = 1$を指定します。\
+　カテゴリ分布のパラメータ$\boldsymbol{\phi} = (\phi_1, \cdots, \phi_V)$、$0 \leq \phi_v \leq 1$、$\sum_{v=1}^V \phi_v = 1$を指定します。\
 　確率変数がとり得る値$\mathbf{x} = (x_1, \cdots, x_V)$、$x_v \in \{0, 1\}$、$\sum_{v=1}^V x_v = 1$を指定します。\
 
 　まずは、定義式から確率を計算します。
@@ -353,7 +460,7 @@ for(phi in phi_vals) {
   # phi_1以外の割り当てを指定
   phi_v <- c(phi, (1 - phi) * 0.6, (1 - phi) * 0.4)
   
-  # 二項分布の情報を格納
+  # カテゴリ分布の情報を格納
   tmp_prob_df <- tidyr::tibble(
     v = 1:V, # クラス
     probability = phi_v, # 確率
@@ -373,7 +480,7 @@ head(anime_prob_df)
 　gif画像を作成します。
 
 ```{r, eval=FALSE}
-# アニメーション用の二項分布を作図
+# アニメーション用のカテゴリ分布を作図
 anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = v, y = probability)) + # データ
   geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 分布
   scale_x_continuous(breaks = 0:V, labels = 0:V) + # x軸目盛
@@ -418,7 +525,7 @@ x_nv[1:5, ]
 　各データに割り当てられたクラス番号を抽出します。
 
 ```{r}
-# インデックスを抽出
+# クラス番号を抽出
 x_n <- which(x = t(x_nv) == 1, arr.ind = TRUE)[, "row"]
 x_n[1:5]
 ```
