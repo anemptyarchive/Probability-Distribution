@@ -1,0 +1,1154 @@
+---
+title: |
+  多項分布
+author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
+date: "`r paste('2022/01/16',  '2022/01/24', sep = ' - ')`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_section: true
+    toc: true
+    toc_depth: 4
+    keep_tex: false
+header-includes:
+  - \usepackage{bookmark}
+  - \usepackage{xltxtra}
+  - \usepackage{zxjatype}
+  - \usepackage[ipa]{zxjafont}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, error = FALSE, warning = FALSE, # メッセージを非表示
+  fig.align = "center", # 画像を中央揃え
+  fig.width = 5, fig.height = 4, # 画像のサイズ
+  dev = "cairo_pdf", dev.args = list(family = "ipaexg"), # {ggplot2}に日本語を組み込む場合の対処
+  class.source = "numberLines lineAnchors", # ソースを番号付けする
+  class.output = "numberLines lineAnchors chunkout" # 出力を番号付けする
+)
+```
+
+```{r}
+# レンダリング日時
+Sys.time()
+```
+
+\newpage
+
+
+# 多項分布の定義式
+
+　多項分布(Multinomial Distribution)の定義を確認します。\
+\
+
+
+## 定義式
+
+　サイコロのように、複数の離散値から複数の値をとる変数の確率分布を多項分布と言います。\
+\
+
+　$V$種類の離散値(クラス)$1, 2, \cdots, V$からランダムに$M$個の値(クラス)を得ることを考えます。\
+
+　試行回数を$M$、得られた値(クラス・サイコロの目)$v$の出現回数を$x_v$で表します。全てのクラスの出現回数をまとめた$V$次元ベクトル(要素数が$V$のベクトル)
+
+$$
+\mathbf{x}
+    = (x_1, x_2, \cdots, x_V)
+$$
+
+で$M$回の試行結果を表します。\
+　試行回数が$M$なので、$\mathbf{x}$の各要素$x_v$は、全て外のクラスときの0から全て同じクラスのときの$M$までの整数になります。$x_v$が$1$から$M$の値をとることを
+
+$$
+x_v \in \{1, 2, \cdots, M\}
+$$
+
+で表します。\
+　全ての要素(クラス1が出た回数$x_1$からクラス$V$が出た回数$x_V$)の和も$M$
+
+$$
+\sum_{v=1}^V x_v
+    = M
+$$
+
+になります。\
+
+　1回の試行においてクラス$v$となる確率を$\phi_v$で表すことにします。$V$種類のクラスに対応する確率をまとめて
+
+$$
+\boldsymbol{\phi}
+    = (\phi_1, \phi_2, \cdots, \phi_V),\ 
+$$
+
+と表記します。\
+　$\boldsymbol{\phi}$の各要素$\phi_v$は、0から1の値をとり、全ての要素の和が1の条件
+
+$$
+0 < \phi_v < 1,\ 
+\sum_{v=1}^V \phi_v = 1
+$$
+
+を満たす必要があります。$\phi_v$が0より大きく1より小さい値をとることを$\phi_v \in (0, 1)$とも表記します。\
+\
+
+　多項分布は、パラメータ$\boldsymbol{\phi}$を用いて次の式で定義されます。
+
+$$
+\mathrm{Mult}(\boldsymbol{x} | M, \boldsymbol{\phi})
+    = \frac{M!}{x_1! x_2! \cdots x_V!}
+      \prod_{v=1}^V
+          \phi_v^{x_v}
+$$
+
+　ここで
+
+$$
+\binom{M}{x_1, x_2, \cdots, x_V}
+    = \frac{M!}{x_1! x_2! \cdots x_V!}
+$$
+
+
+は、$M$個の対象を$V$個のグループに分ける場合の数を表します。\
+
+　例えば、サイコロ($V = 6$)を3回振って($M = 3$で)1の目が2回・4の目が1回出た($x_1 = 2, x_4 = 1$で他の要素は0となる)とき
+
+$$
+\binom{3}{2, 0, 0, 1, 0, 0}
+    = \frac{3!}{2! 0! 0! 1! 0! 0!}
+    = 3
+$$
+
+となります。これは、3回の試行結果(出目)の組み合わせが「1・1・4」「1・4・1」「4・1・1」の3通りであることを求めています。\
+
+　また、$V = 6, M = 3, \mathbf{x} = (2, 0, 0, 1, 0, 0)$のとき、多項分布の式は
+
+$$
+\begin{aligned}
+\mathrm{Mult}(\boldsymbol{x} | M, \boldsymbol{\phi})
+   &= \frac{3!}{2! 0! 0! 1! 0! 0!}
+      \prod_{v=1}^6
+          \phi_v^{x_v}
+\\
+   &= 3
+      * \phi_1^{2} * \phi_2^{0} * \phi_3^{0}
+      * \phi_4^{1} * \phi_5^{0} * \phi_6^{0}
+\\
+   &= 3 * \phi_1^{2} * 1 * 1 * \phi_4 * 1 * 1
+\\
+   &= 3 \phi_1^{2} \phi_4
+\end{aligned}
+$$
+
+「3通りの組み合わせ」と「1が2回出る確率$\phi_1^2$」と「4が1回出る確率$\phi_4$」の積となります。指数の定義より$x^0 = 1$です。\
+　このように、$\mathbf{x}$の値に対応した確率となるように式が定義されています。\
+\
+
+　多項分布の対数をとると
+
+$$
+\log \mathrm{Mult}(\boldsymbol{x} | N, \boldsymbol{\phi})
+  = \log M!
+    + \sum_{v=1}^V \Bigl\{
+        x_v \log \phi_v
+        - \log x_v!
+      \Bigr\}
+$$
+
+となります。対数の性質より$\log x^a = a \log x$、$\log (x y) = \log x + \log y$です。\
+\
+
+
+## 他の分布との関係
+
+　クラス数が2で試行回数が1、つまり$V = 2, M = 1$のとき、$\mathbf{x} = (x_1, x_2)$なので
+
+$$
+\begin{aligned}
+\sum_{v=1}^2 x_v
+   &= 1 \\
+x_1 + x_2
+   &= 1 \\
+x_2
+   &= 1 - x_1
+\end{aligned}
+$$
+
+となります。また、$\boldsymbol{\phi} = (\phi_1, \phi_2)$なので
+
+$$
+\begin{aligned}
+\sum_{v=1}^2 \phi_v
+   &= 1 \\
+\phi_1 + \phi_2
+   &= 1 \\
+\phi_2
+   &= 1 - \phi_1
+\end{aligned}
+$$
+
+となります。よって、$V = 2, M = 1$のとき多項分布は
+
+$$
+\begin{aligned}
+\mathrm{Mult}(\boldsymbol{x} | M = 1, \boldsymbol{\phi})
+   &= \frac{1!}{x_1! x_2!}
+      \prod_{v=1}^2 \phi_v^{x_v} \\
+   &= \frac{1!}{1! 0!}
+      \phi_1^{x_1} \phi_2^{x_2} \\
+   &= \phi_1^{x_1}
+      (1 - \phi_1)^{1-x_1}
+    = \mathrm{Bern}(x_1 | \phi_1)
+\end{aligned}
+$$
+
+パラメータ$\phi_1$のベルヌーイ分布と等しくなります。階乗の定義より$0! = 1$なので、$x_1, x_2$のどちらが1であっても組み合わせの項は1になります。\
+
+　続いて、$V = 2$の場合を考えます。$\mathbf{x} = (x_1, x_2)$なので
+
+$$
+\begin{aligned}
+\sum_{v=1}^2 x_v
+   &= M
+\\
+x_1 + x_2
+   &= M
+\\
+x_2
+   &= M - x_1
+\end{aligned}
+$$
+
+となります。よって、$V = 2$のとき多項分布は
+
+$$
+\begin{aligned}
+\mathrm{Mult}(\boldsymbol{x} | M, \phi_1, \phi_2)
+   &= \frac{M!}{x_1! x_2!}
+      \prod_{v=1}^2 \phi_v^{x_v}
+\\
+   &= \frac{M!}{x_1! x_2!}
+      \phi_1^{x_1} \phi_2^{x_2}
+\\
+   &= \frac{M!}{x_1! (M - x_1)!}
+      \phi_1^{x_1}
+      (1 - \phi_1)^{M-x_1}
+    = \mathrm{Bin}(x_1 | M, \phi_1)
+\end{aligned}
+$$
+
+パラメータ$\phi_1$の二項分布と等しくなります。\
+
+　最後に、$M = 1$の場合を考えます。$M = 1$のとき、$\mathbf{x}$は1つの要素が1で他の要素は0なので、多項分布は
+
+$$
+\begin{aligned}
+\mathrm{Mult}(\boldsymbol{x} | M = 1, \boldsymbol{\phi})
+   &= \frac{1!}{x_1! x_2! \cdots x_V!}
+      \prod_{v=1}^V \phi_v^{x_v}
+\\
+   &= \frac{1!}{0! \cdots 1! \cdots 0!}
+      \prod_{v=1}^V \phi_v^{x_v}
+\\
+   &= \prod_{v=1}^V \phi_v^{x_v}
+    = \mathrm{Cat}(\boldsymbol{x} | \boldsymbol{\phi})
+\end{aligned}
+$$
+
+カテゴリ分布と等しくなります。\
+
+　つまり、ベルヌーイ分布・二項分布・カテゴリ分布は多項分布の特殊な形であると言えます。逆に、多項分布はベルヌーイ分布・二項分布・カテゴリ分布を拡張(多次元化・多試行化)した形であると言えます。\
+\
+
+
+## 統計量の計算式
+
+　多項分布のクラス$v$における平均と分散は、次の式で計算できます。詳しくは「統計量の導出」を参照してください。
+
+$$
+\begin{aligned}
+\mathbb{E}[x_v]
+   &= N \phi_v
+\\
+\mathbb{V}[x_v]
+   &= N \phi_v
+      (1 - \phi_v)
+\end{aligned}
+$$
+
+\ 
+
+# 多項分布の統計量の導出
+
+　青トピ攻略ノートを参照。\
+\
+
+
+# 多項分布の作図
+
+　多項分布(Multinomial Distribution)の計算と作図を行います。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r}
+# 利用するパッケージ
+library(tidyverse)
+library(barplot3d)
+library(gganimate)
+```
+
+　分布の変化をアニメーション(gif画像)で確認するのに`gganimate`パッケージを利用します。不要であれば省略してください。\
+\
+
+
+## 定義式の確認
+
+　まずは、多項分布の定義式を確認します。\
+\
+
+　多項分布は、次の式で定義されます。詳しくは「多項分布の定義式」を参照してください。
+
+$$
+\mathrm{Mult}(\boldsymbol{x} | M, \boldsymbol{\phi})
+  = \frac{
+        M!
+    }{
+        x_1! x_2! \cdots x_V!
+    }
+    \prod_{v=1}^V
+        \phi_v^{x_v}
+$$
+
+　ここで、$x_v$はクラス$v$が出現した回数、$M$は試行回数、$\phi_v$はクラス$v$の出現確率です。  
+　確率変数の値$\mathbf{x} = (x_1, \cdots, x_V)$は、$x_v \in \{1, \cdots, V\}$、$\sum_{v=1}^V x_v = M$となります。パラメータ$\boldsymbol{\phi} = (\phi_1, \cdots, \phi_V)$は、$\phi_v \in (0, 1)$、$\sum_{v=1}^V \phi_v = 1$を満たす必要があります。\
+
+　この式の対数をとると、次の式になります。
+
+$$
+\log \mathrm{Mult}(\boldsymbol{x} | N, \boldsymbol{\phi})
+  = \log M!
+    + \sum_{v=1}^V \Bigl\{
+        x_v \log \phi_v
+        - \log x_v!
+      \Bigr\}
+$$
+
+　多項分布のクラス$v$における平均と分散は、次の式で計算できます。詳しくは「統計量の導出」を参照してください。
+
+$$
+\begin{aligned}
+\mathbb{E}[x_v]
+   &= N \phi_v
+\\
+\mathbb{V}[x_v]
+   &= N \phi_v
+      (1 - \phi_v)
+\end{aligned}
+$$
+
+\ 
+
+　これらの計算を行いグラフを作成します。\
+\
+
+
+## 確率の計算
+
+　多項分布に従う確率を計算する方法をいくつか確認します。\
+\
+
+　パラメータを設定します。
+
+```{r}
+# パラメータを指定
+phi_v <- c(0.3, 0.5, 0.2)
+
+# 確率変数の値を指定
+x_v <- c(2, 3, 1)
+
+# データ数を計算
+M <- sum(x_v)
+```
+
+　多項分布のパラメータ$\boldsymbol{\phi} = (\phi_1, \cdots, \phi_V)$、$0 \leq \phi_v \leq 1$、$\sum_{v=1}^V \phi_v = 1$、試行回数$M$、確率変数がとり得る値$\mathbf{x} = (x_1, \cdots, x_V)$、$x_v \in \{0, 1, \cdots, M\}$、$\sum_{v=1}^V x_v = M$を指定します。設定した値に従う確率を計算します。\
+
+　まずは、定義式から確率を計算します。
+
+```{r}
+# 定義式により確率を計算
+C <- gamma(M + 1) / prod(gamma(x_v + 1))
+prob <- C * prod(phi_v^x_v)
+prob
+```
+
+　多項分布の定義式
+
+$$
+\begin{aligned}
+C_{\mathrm{Mul}}
+   &= M!
+      \prod_{v=1}^V
+          \frac{1}{x_v!}
+\\
+p(\mathbf{x} | M, \boldsymbol{\phi})
+   &= C_{\mathrm{Mul}}
+      \prod_{v=1}^V
+          \phi_v^{x_v}
+\end{aligned}
+$$
+
+で計算します。$C_{\mathrm{Mul}}$は、多項分布の正規化係数です。\
+　階乗$x!$の計算は、ガンマ関数$\Gamma(x + 1) = x!$に置き換えて計算します。ガンマ関数は、`gamma()`で計算できます。\
+
+　対数をとった定義式から計算します。
+
+```{r}
+# 対数をとった定義式により確率を計算
+log_C <- lgamma(M + 1) - sum(lgamma(x_v + 1))
+log_prob <- log_C + sum(x_v * log(phi_v))
+prob <- exp(log_prob)
+prob; log_prob
+```
+
+　対数をとった定義式
+
+$$
+\begin{aligned}
+\log C_{\mathrm{Mul}}
+   &= \log M!
+      - \sum_{v=1}^V
+          \log x_v!
+\\
+\log p(\mathbf{x} | M, \boldsymbol{\phi})
+   &= \log C_{\mathrm{Mul}}
+      + \sum_{v=1}^V
+          x_v \log \phi_v
+\end{aligned}
+$$
+
+を計算します。計算結果の指数をとると確率が得られます。
+
+$$
+p(\mathbf{x} | M, \boldsymbol{\phi})
+    = \exp \Bigr(
+          \log p(\mathbf{x} | M, \boldsymbol{\phi})
+      \Bigr)
+$$
+
+　指数と対数の性質より$\exp(\log x) = x$です。\
+
+　次は、関数を使って確率を計算します。\
+　多項分布の確率関数`dmultinom()`を使って計算します。
+
+```{r}
+# 多項分布の関数により確率を計算
+prob <- dmultinom(x = x_v, size = M, prob = phi_v)
+prob
+```
+
+　出現頻度の引数`x`に`x_v`、試行回数の引数を`size = M`、出現確率の引数`prob`に`phi_v`を指定します。\
+
+　`log = TRUE`を指定すると対数をとった確率を返します。
+
+```{r}
+# 多項分布の対数をとった関数により確率を計算
+log_prob <- dmultinom(x = x_v, size = M, prob = phi_v, log = TRUE)
+prob <- exp(log_prob)
+prob; log_prob
+```
+
+　計算結果の指数をとると確率が得られます。\
+\
+
+
+## 統計量の計算
+
+　多項分布の平均と分散を計算します。\
+\
+
+　クラス$v$の平均を計算します。
+
+```{r}
+# クラス番号を指定
+v <- 1
+
+# クラスvの平均を計算
+E_x <- M * phi_v[v]
+E_x
+```
+
+　多項分布の平均は、次の式で計算できます。
+
+$$
+\mathbb{E}[x_v]
+    = N \phi_v
+$$
+
+　クラス$v$の分散を計算します。
+
+```{r}
+# クラスvの分散を計算
+V_x <- M * phi_v[v] * (1 - phi_v[v])
+V_x
+```
+
+　多項分布の分散は、次の式で計算できます。
+
+$$
+\mathbb{V}[x_v]
+    = N \phi_v
+      (1 - \phi_v)
+$$
+
+\ 
+
+
+## グラフの作成
+
+　多項分布のグラフを作成します。\
+\
+
+　多項分布の確率変数がとり得る値$\mathbf{x} = (x_1, x_2, x_3)$を作成します。ここでは3次元のグラフで描画するため$V = 3$とします。
+
+```{r}
+# パラメータを指定
+phi_v <- c(0.3, 0.5, 0.2)
+
+# 試行回数を指定
+M <- 10
+
+# 作図用のxの値を作成
+x_vals <- 0:M
+
+# 作図用のxの点を作成
+x_points <- tidyr::tibble(
+  x_1 = rep(x = x_vals, times = M + 1), # 確率変数の成分1
+  x_2 = rep(x = x_vals, each = M + 1) # 確率変数の成分2
+) %>% 
+  dplyr::mutate(
+    x_3 = dplyr::if_else(condition = x_1 + x_2 < M, true = M - (x_1 + x_2), false = 0)
+  ) %>% # 確率変数の成分3
+  as.matrix()
+head(x_points)
+```
+
+　$\mathbf{x}$の各要素$x_v$がとり得る値`0`から`M`の整数を`x_vals`とします。\
+　`x_vals`の全ての組み合わせを持つように$x_1, x_2$を作成します。そして、$x_1 + x_2 + x_3 = M$となるように$x_3$の値を決めます。ただし、$x_1 + x_2 > M$となる場合は、$x_3 = 0$とします。\
+
+　$\mathbf{x}$の点ごとの確率を計算します。
+
+```{r}
+# 確率変数の組み合わせごとに確率を計算
+prob_df <- tidyr::tibble()
+for(i in 1:nrow(x_points)) {
+  # 確率変数の値を取得
+  x_v <- x_points[i, ]
+  
+  # 多項分布の情報を格納
+  tmp_df <- tidyr::tibble(
+    x_1 = x_v[1], # 確率変数の成分1
+    x_2 = x_v[2], # 確率変数の成分2
+    x_3 = x_v[3] # 確率変数の成分3
+  ) %>% 
+    dplyr::mutate(
+      probability = dplyr::if_else(
+        sum(x_v) == M, true = dmultinom(x = x_v, size = sum(x_v), prob = phi_v), false = 0
+      ) # (size = Mにすべきだけど何故かエラーになる)
+    ) # 確率
+  
+  # 結果を結合
+  prob_df <- rbind(prob_df, tmp_df)
+}
+head(prob_df)
+```
+
+　`x_points`の各行を取り出し、確率を計算してデータフレームに格納します。ただし、`x_points`は$x_1 + x_2 > M$の値を含みます。$\mathbf{x}$がとり得ない値は計算できないため、`dplyr::if_else()`で`0`とします。\
+\
+
+
+### ggplot2による作図
+
+　`ggplot2`パッケージを利用して多項分布のグラフを作成します。\
+\
+
+　ヒートマップで可視化します。
+
+```{r}
+# カテゴリ分布のグラフを作成
+ggplot(data = prob_df, mapping = aes(x = x_1, y = x_2, fill = probability)) + # データ
+  geom_tile() + # ヒートマップ
+  scale_fill_gradientn(colors = c("blue", "green", "yellow", "red")) + # グラデーション
+  scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
+  scale_y_continuous(breaks = 0:M, labels = 0:M) + # y軸目盛
+  coord_fixed(ratio = 1) + # アスペクト比
+  labs(title = "Multinomial Distribution", 
+       subtitle = paste0("phi=(", paste0(phi_v, collapse = ", "), "), M=", M), 
+       x = expression(x[1]), y = expression(x[2])) # ラベル
+```
+
+　$x_1 + x_2 + x_3 = M$なので$x_3 = M - (x_1 + x_2)$、$\phi_1 + \phi_2 + \phi_3 = 1$なので$\phi_3 = 1 - (\phi_1 + \phi_2)$で表現できます(求まります)。つまり、$x_1, x_2$と$M$の値が分かれば分布の情報が得られます。\
+　よって、$x_1$をx軸、$x_2$をy軸、各点の確率をヒートマップとして、$V = 3$の多項分布を表します。\
+
+　$x_1 + x_2 + x_3 > M$となる$\mathbf{x}$(右上の範囲)はとり得ない値なので、確率が0になっています。\
+
+　平均と標準偏差の補助線を引きます。
+
+```{r}
+# 補助線用の統計量を計算
+E_x1 <- M * phi_v[1]
+V_x1 <- M * phi_v[1] * (1 - phi_v[1])
+s_x1 <- sqrt(V_x1)
+E_x2 <- M * phi_v[2]
+V_x2 <- M * phi_v[2] * (1 - phi_v[2])
+s_x2 <- sqrt(V_x2)
+
+# カテゴリ分布のグラフを作成
+ggplot(data = prob_df, mapping = aes(x = x_1, y = x_2, fill = probability)) + # データ
+  geom_tile() + # ヒートマップ
+  geom_vline(xintercept = E_x1, color = "orange", size = 1, linetype = "dashed") + # 平均
+  geom_vline(xintercept = E_x1 - s_x1, color = "orange", size = 1, linetype = "dotted") + # 平均 - 標準偏差
+  geom_vline(xintercept = E_x1 + s_x1, color = "orange", size = 1, linetype = "dotted") + # 平均 + 標準偏差
+  geom_hline(yintercept = E_x2, color = "orange", size = 1, linetype = "dashed") + # 平均
+  geom_hline(yintercept = E_x2 - s_x2, color = "orange", size = 1, linetype = "dotted") + # 平均 - 標準偏差
+  geom_hline(yintercept = E_x2 + s_x2, color = "orange", size = 1, linetype = "dotted") + # 平均 + 標準偏差
+  scale_fill_gradientn(colors = c("blue", "green", "yellow", "red")) + # グラデーション
+  scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
+  scale_y_continuous(breaks = 0:M, labels = 0:M) + # y軸目盛
+  coord_fixed(ratio = 1) + # アスペクト比
+  labs(title = "Multinomial Distribution", 
+       subtitle = paste0("phi=(", paste0(phi_v, collapse = ", "), "), M=", M), 
+       x = expression(x[1]), y = expression(x[2])) # ラベル
+```
+
+　各軸$x_1, x_2$の平均(破線)が交差する点が確率の最大値であるのが分かります。\
+　また、平均を中心に標準偏差の範囲(破線)で山が高く(赤に近い色に)なっているのが分かります。\
+\
+
+
+### barplot3dによる作図
+
+　`barplot3d`パッケージを利用して多項分布を3D棒グラフで可視化します。\
+\
+
+　y軸($x_2$)の値ごとに色付けした3D棒グラフを作成します。
+
+```{r}
+# インデックスによる色付けを作成
+rainbow_vec <- rep(rainbow(M + 1), each = M + 1)
+rainbow_vec[1:15]
+```
+
+　この例では、$x_1$の値ごとに別の色にします。\
+　`rainbow()`を使って、$x_2$の要素数$M + 1$個のカラーコードを作成します。作成した色ごとに$x_1$の要素数$M + 1$個ずつ複製します。\
+
+
+```{r, eval=FALSE}
+# カテゴリ分布のグラフを作成
+barplot3d::barplot3d(
+  rows = M + 1, cols = M + 1, z = prob_df[["probability"]], 
+  topcolors = rainbow_vec, sidecolors = rainbow_vec, alpha = 0.1, 
+  xlabels = as.character(0:M), ylabels = as.character(0:M), 
+  xsub = "x1", ysub = "x2", zsub = "probability", 
+  scalexy = 0.01, theta = 30, phi = 30
+)
+```
+
+　行数の引数`rows`と列数の引数`cols`に`M + 1`を指定します。また、z軸の値(棒グラフの高さ)の引数`z`にデータフレームに格納した確率`prob_df[["probability"]]`を指定します。\
+　上の面の色の引数`topcolors`、側面の色の引数`sidecolors`、辺の色の引数`linecolors`にカラーコードを指定します。また、`alpha`で透過度を指定できます。\
+　軸目盛の引数`xlabels, ylabels`に`0`から`M`の整数を文字列で指定します。`xsub, ysub, zsub`は軸ラベルの引数です。\
+　`scalexy`でグラフの幅、`theta`で垂直方向の`phi`で水平方向の表示アングルを調整できます。\
+
+　確率に応じて色付けした3D棒グラフを作成します。
+
+```{r}
+# 確率による色付けを作成
+p <- prob_df[["probability"]]
+heat_idx <- round((1 - p / max(p)) * 100) + 1
+heat_vec <- heat.colors(101)[heat_idx]
+p[11:20]; heat_idx[11:20]; heat_vec[11:20]
+```
+
+　`heat.colors()`は、赤・黄・白の順に変化するカラーコードを返します。確率が小さいほど白に近い色で、大きいほど赤に近い色となるように色付けします。\
+　`p / max(p)`で、`p`の最大値が`1`となるように変換します。最小値は`0`です。`1 - p / max(p)`で、大小関係を入れ替えます。`100`を掛けて`round()`で小数点以下を丸めることで、`0`から`100`の整数にします。最後に、`1`を足すことで、確率`p`に従う`1`から`101`の整数になります。これをインデックス`heat_idx`として使います。\
+　`heat.colors(101)`で101個のカラーコードに作成します。`heat_idx`添字としてカラーコードを取り出すことで、確率に応じた色を取り出せます。\
+
+
+```{r, eval=FALSE}
+# カテゴリ分布のグラフを作成
+barplot3d::barplot3d(
+  rows = M + 1, cols = M + 1, z = prob_df[["probability"]], 
+  topcolors = heat_vec, sidecolors = heat_vec, alpha = 0.1, 
+  xlabels = as.character(0:M), ylabels = as.character(0:M), 
+  xsub = "x1", ysub = "x2", zsub = "probability", 
+  scalexy = 0.01, theta = 30, phi = 30
+)
+```
+
+　多項分布のグラフを描画できました。`barplot3d`の出力は別ウィンドウで表示され、マウスでアングルやサイズを操作できます。\
+
+　図を保存する場合は`rgl`パッケージを利用します。
+
+```{r, eval=FALSE}
+# 利用するパッケージ
+library(rgl)
+
+# ウィンドウサイズを指定:(左, 上, 右, 下)
+rgl::par3d(windowRect=c(0, 100, 600, 700))
+
+# ウィンドウのスクリーンショットを保存
+rgl::rgl.snapshot("Multinomial_3dbar.png")
+
+# ウィンドウを閉じる
+rgl::rgl.close()
+```
+
+　`par3d()`でウィンドウのサイズを変更し、`rgl.snapshot()`で図を保存します。`rgl.close()`でウィンドウを閉じます。\
+\
+
+
+## パラメータと分布の形状の関係
+
+　続いて、パラメータ$\phi_v$の値を少しずつ変更して、分布の変化をアニメーションで確認します。
+
+```{r}
+# 作図用のphiの値を作成
+phi_vals <- seq(from = 0, to = 1, by = 0.01)
+
+# phiの値ごとに分布を計算
+anime_prob_df <- tidyr::tibble()
+for(phi in phi_vals) {
+  # phi_1以外の割り当てを指定
+  phi_v <- c(phi, (1 - phi) * 0.6, (1 - phi) * 0.4)
+  
+  # 確率変数の組み合わせごとに確率を計算
+  tmp_prob_df <- tidyr::tibble()
+  for(i in 1:nrow(x_points)) {
+    # 確率変数の値を取得
+    x_v <- x_points[i, ]
+    
+    # 多項分布の情報を格納
+    tmp_df <- tidyr::tibble(
+      x_1 = x_v[1], # 確率変数の成分1
+      x_2 = x_v[2], # 確率変数の成分2
+      x_3 = x_v[3] # 確率変数の成分3
+    ) %>% 
+      dplyr::mutate(
+        probability = dplyr::if_else(
+          sum(x_v) == M, true = dmultinom(x = x_v, size = sum(x_v), prob = phi_v), false = 0
+        ) # (size = Mにすべきだけど何故かエラーになる)
+      ) # 確率
+    
+    # 結果を結合
+    tmp_prob_df <- rbind(tmp_prob_df, tmp_df)
+  }
+  
+  # フレーム切替用のラベルを付与
+  tmp_prob_df <- tmp_prob_df %>% 
+    dplyr::mutate(
+      parameter = paste0("phi=(", paste0(round(phi_v, 2), collapse = ", "), "), M=", M) %>% 
+        as.factor()
+    )
+  
+  # 結果を結合
+  anime_prob_df <- rbind(anime_prob_df, tmp_prob_df)
+}
+head(anime_prob_df)
+```
+
+　$\phi_1$がとり得る値を作成して`phi_vals`とします。\
+　`for()`ループを使って`phi_vals`の値ごとに`phi_v`を更新して、`anime_prob_df`に追加していきます。$\phi_1$以外の確率の和$1 - \phi_1$を他のクラスの確率として割り振ります。\
+
+　gif画像を作成します。
+
+```{r, eval=FALSE}
+# 最大値を指定
+p_max <- 0.15
+
+# アニメーション用の多項分布を作図
+anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = x_1, y = x_2, fill = probability)) + # データ
+  geom_tile() + # ヒートマップ
+  scale_fill_gradientn(colors = c("blue", "green", "yellow", "red"), limits = c(0, p_max)) + # グラデーション
+  scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
+  scale_y_continuous(breaks = 0:M, labels = 0:M) + # y軸目盛
+  coord_fixed(ratio = 1) + # アスペクト比
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Multinomial Distribution", 
+       subtitle = "{current_frame}", 
+       x = expression(x[1]), y = expression(x[2])) # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_prob_graph, nframes = length(phi_vals), fps = 100)
+```
+
+　$\phi_2$の値が大きいほど$x_2$が大きく、$\phi_1$が大きくなるほど$x_1$が大きい確率が高くなるのを確認できます。\
+\
+
+　続いて、$\boldsymbol{\phi}$を固定して$M$を変更してみます。
+
+```{r}
+# パラメータを指定
+phi_v <- c(0.3, 0.5, 0.2)
+
+# 試行回数の最大値を指定
+M_max <- 25
+
+# Mの値ごとに分布を計算
+anime_prob_df <- tidyr::tibble()
+for(M in 1:M_max) {
+  # 数値型に変換
+  M <- as.numeric(M)
+  
+  # 作図用のxの値を作成
+  x_vals <- 0:M
+  
+  # 作図用のxの点を作成
+  x_points <- tidyr::tibble(
+    x_1 = rep(x = x_vals, times = M + 1), # 確率変数の成分1
+    x_2 = rep(x = x_vals, each = M + 1) # 確率変数の成分2
+  ) %>% 
+    dplyr::mutate(
+      x_3 = dplyr::if_else(condition = x_1 + x_2 < M, true = M - (x_1 + x_2), false = 0)
+    ) %>% # 確率変数の成分3
+    as.matrix()
+  
+  # 確率変数の組み合わせごとに確率を計算
+  tmp_prob_df <- tidyr::tibble()
+  for(i in 1:nrow(x_points)) {
+    # 確率変数の値を取得
+    x_v <- x_points[i, ]
+    
+    # 多項分布の情報を格納
+    tmp_df <- tidyr::tibble(
+      x_1 = x_v[1], # 確率変数の成分1
+      x_2 = x_v[2], # 確率変数の成分2
+      x_3 = x_v[3] # 確率変数の成分3
+    ) %>% 
+      dplyr::mutate(
+        probability = dplyr::if_else(
+          sum(x_v) == M, true = dmultinom(x = x_v, size = sum(x_v), prob = phi_v), false = 0
+        ) # (xize = Mにすべきだけど何故かエラーになる)
+      ) # 確率
+    
+    # 結果を結合
+    tmp_prob_df <- rbind(tmp_prob_df, tmp_df)
+  }
+  
+  # フレーム切替用のラベルを付与
+  tmp_prob_df <- tmp_prob_df %>% 
+    dplyr::mutate(
+      parameter = paste0("phi=(", paste0(round(phi_v, 2), collapse = ", "), "), M=", M) %>% 
+        as.factor()
+    )
+  
+  # 結果を結合
+  anime_prob_df <- rbind(anime_prob_df, tmp_prob_df)
+  
+  # 途中経過を表示
+  print(paste0("M=", M, " (", round(M / M_max * 100, 2), "%)"))
+}
+```
+
+　`for()`ループを使って`1:M_max`の値ごとに確率を計算して、`anime_prob_df`に追加していきます。\
+
+　gif画像を作成します。
+
+```{r, eval=FALSE}
+# 最大値を指定
+p_max <- 0.15
+
+# アニメーション用の多項分布を作図
+anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = x_1, y = x_2, fill = probability)) + # データ
+  geom_tile() + # ヒートマップ
+  scale_fill_gradientn(colors = c("blue", "green", "yellow", "red"), limits = c(0, p_max)) + # グラデーション
+  coord_fixed(ratio = 1) + # アスペクト比
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Multinomial Distribution", 
+       subtitle = "{current_frame}", 
+       x = expression(x[1]), y = expression(x[2])) # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_prob_graph, nframes = M_max, fps = 100)
+```
+
+　試行回数$M$が増えるのに従って、$x_1, x_2$が大きいほど確率が高くなる(山が右上に移動する)のを確認できます。ただし、$x_v$がとり得る値の範囲`x_vals`も広がっていくため、全体における相対的な山の位置は変わりません。\
+\
+
+
+## 乱数の生成
+
+　多項分布の乱数を生成してヒストグラムを確認します。\
+\
+
+　パラメータを指定して、多項分布に従う乱数を生成します。
+
+```{r}
+# パラメータを指定
+phi_v <- c(0.3, 0.5, 0.2)
+
+# クラス数を取得
+V <- length(phi_v)
+
+# 試行回数を指定
+M <- 10
+
+# データ数を指定
+N <- 10000
+
+# 多項分布に従う乱数を生成
+x_nv <- rmultinom(n = N, size = M, prob = phi_v) %>% 
+  t()
+x_nv[1:5, ]
+```
+
+　多項分布の乱数生成関数`rmultinom()`のデータ数(サンプルサイズ)の引数`n`に`N`、試行回数の引数`size `に`M`、出現確率の引数`prob`に`phi_v`を指定します。\
+
+　サンプルの値を集計します。
+
+```{r}
+# 作図用のxの値を作成
+x_vals <- 0:M
+
+# 作図用のxの点を作成
+x_df <- tidyr::tibble(
+  x_1 = rep(x = x_vals, times = M + 1), # 確率変数の成分1
+  x_2 = rep(x = x_vals, each = M + 1) # 確率変数の成分2
+) %>% 
+  dplyr::mutate(
+    x_3 = dplyr::if_else(condition = x_1 + x_2 < M, true = M - (x_1 + x_2), false = 0)
+  ) # 確率変数の成分3
+
+# 乱数を集計して格納
+freq_df <- tidyr::tibble(
+  x_1 = x_nv[, 1], # 確率変数の成分1
+  x_2 = x_nv[, 2] # 確率変数の成分2
+) %>% # 乱数を格納
+  dplyr::count(x_1, x_2, name = "frequency") %>% # 乱数を集計
+  dplyr::right_join(x_df, by = c("x_1", "x_2")) %>% # 確率変数の全ての組み合わせを結合
+  dplyr::select(x_1, x_2, x_3, frequency) %>% # 頻度を測定
+  dplyr::mutate(frequency = tidyr::replace_na(frequency, 0)) %>% # サンプルにない場合のNAを0に置換
+  dplyr::mutate(proportion = frequency / N) %>%  # 構成比を計算
+  dplyr::arrange(x_2, x_1) # 昇順に並び替え:(barplot3d用)
+head(freq_df)
+```
+
+　サンプリングした値`x_nv`の1列目と2列目をデータフレームに格納します。\
+　`count()`で重複する値をカウントします。\
+　サンプル`x_nv`にない値はデータフレームに保存されないため、`0`から`M`の全ての組み合わせを持つデータフレーム`x_df`を作成し、`right_join()`で結合します。\
+　サンプルにない場合は頻度列`frequency`が欠損値`NA`になるので、`replace_na()`で`0`に置換します。\
+　得られた頻度`frequency`をデータ数`N`で割り、各値の構成比を計算して`proportion`列とします。\
+　`barplot3d`ではx軸とy軸の値が順番に並んでいる必要があるため、`arrange()`で`x_1, x_2`列を昇順に並び替えます。「グラフの作成」で作成したy軸の値ごとに色付けした棒グラフを見ると分かるように、$x_2 = 0$の$x_1 = 0$から$x_1 = M$の順に描画され、次に$x_2 = 1$の$x_1 = 0, \cdots, M$と描画され、$x_1 = M, x_2 = M$が最後の点になります。これに対応するように並び替えるには`arrange(x_2, x_1)`と指定する必要があります。\
+\
+
+
+### ggplot2による作図
+
+　出現頻度をヒートマップで可視化します。
+
+```{r}
+# サンプルのヒストグラムを作成
+ggplot(data = freq_df, mapping = aes(x = x_1, y = x_2, fill = frequency)) + # データ
+  geom_tile() + # ヒストグラム
+  scale_fill_gradientn(colors = c("blue", "green", "yellow", "red")) + # グラデーション
+  scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
+  scale_y_continuous(breaks = 0:M, labels = 0:M) + # y軸目盛
+  coord_fixed(ratio = 1) + # アスペクト比
+  labs(title = "Multinomial Distribution", 
+       subtitle = paste0("phi=(", paste0(phi_v, collapse = ", "), "), M=", M, ", N=", N), 
+       x = expression(x[1]), y = expression(x[2])) # ラベル
+```
+
+\ 
+
+　構成比を分布と重ねて描画します。
+
+```{r}
+# 構成比と確率の最大値を取得
+p_max <- max(freq_df[["proportion"]], prob_df[["probability"]])
+
+# サンプルの構成比を作図
+ggplot() + 
+  geom_tile(data = freq_df, mapping = aes(x = x_1, y = x_2, fill = proportion), 
+            alpha = 0.9) + # 構成比
+  geom_tile(data = prob_df, mapping = aes(x = x_1, y = x_2, color = probability), 
+            alpha = 0, size = 1, linetype = "dashed") + # 真の分布
+  scale_fill_gradientn(colors = c("blue", "green", "yellow", "red"), limits = c(0, p_max)) + # タイルのグラデーション
+  scale_color_gradientn(colors = c("blue", "green", "yellow", "red"), limits = c(0, p_max)) + # 枠線のグラデーション
+  scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
+  scale_y_continuous(breaks = 0:M, labels = 0:M) + # y軸目盛
+  coord_fixed(ratio = 1) + # アスペクト比
+  guides(color = FALSE) + # 凡例
+  labs(title = "Multinomial Distribution", 
+       subtitle = paste0("phi=(", paste0(phi_v, collapse = ", "), "), M=", M, ", N=", N), 
+       x = expression(x[1]), y = expression(x[2])) # ラベル
+```
+
+　真の分布を破線で表示します。データ数が十分に増えると分布のグラフに形が近づきます。\
+\
+
+
+### barplot3dによる作図
+
+　サンプルの頻度と分布のそれぞれの値に応じたカラーコードを作成します。
+
+```{r, eval=FALSE}
+# サンプルの構成比による色付けを作成
+p <- freq_df[["proportion"]]
+heat_idx <- round((1 - p / max(p)) * 100) + 1
+heat_prop <- heat.colors(101)[heat_idx]
+
+# 分布の確率による色付けを作成
+p <- prob_df[["probability"]]
+heat_idx <- round((1 - p / max(p)) * 100) + 1
+heat_prob <- heat.colors(101)[heat_idx]
+heat_prop[1:10]; heat_prob[1:10]
+```
+
+\ 
+
+　出現頻度を3D棒グラフで可視化します。
+
+```{r, eval=FALSE}
+# サンプルのヒストグラムを作成
+barplot3d::barplot3d(
+  rows = M + 1, cols = M + 1, z = freq_df[["frequency"]], 
+  topcolors = heat_prop, sidecolors = heat_prop, alpha = 0.1, 
+  xlabels = as.character(0:M), ylabels = as.character(0:M), 
+  xsub = "x1", ysub = "x2", zsub = "frequency", 
+  scalexy = 100, theta = 30, phi = 30
+)
+```
+
+\ 
+
+　構成比を描画します。
+
+```{r, eval=FALSE}
+# サンプルの構成比を作図
+barplot3d::barplot3d(
+  rows = M + 1, cols = M + 1, z = freq_df[["proportion"]], 
+  topcolors = heat_prop, sidecolors = heat_prop, linecolors = heat_prob, alpha = 0.1, 
+  xlabels = as.character(0:M), ylabels = as.character(0:M), 
+  xsub = "x1", ysub = "x2", zsub = "proportion", 
+  scalexy = 0.01, theta = 30, phi = 30
+)
+```
+
+　辺の色は元の分布の確率によって色付けしています。\
+\
+
+
+### アニメーションによる可視化
+
+　サンプルサイズとヒストグラムの変化をアニメーションで確認します。
+
+```{r}
+# データ数を指定
+N <- 300
+
+# z軸の最大値を指定
+p_max <- 0.1
+
+# 乱数を1つずつ生成
+x_nv <- matrix(NA, nrow = N, ncol = V)
+anime_freq_df <- tidyr::tibble()
+anime_data_df <- tidyr::tibble()
+anime_prob_df <- tidyr::tibble()
+for(n in 1:N) {
+  # 多項分布に従う乱数を生成
+  x_nv[n, ] <- rmultinom(n = 1, size = M, prob = phi_v)
+  
+  # n個の乱数を集計して格納
+  tmp_freq_df <- tidyr::tibble(
+    x_1 = x_nv[, 1], # 確率変数の成分1
+    x_2 = x_nv[, 2] # 確率変数の成分2
+  ) %>% # 乱数を格納
+    dplyr::count(x_1, x_2, name = "frequency") %>% # 乱数を集計
+    dplyr::right_join(prob_df, by = c("x_1", "x_2")) %>% # 確率変数の全ての組み合わせを結合
+    dplyr::select(x_1, x_2, frequency) %>% # 頻度を測定
+    dplyr::mutate(frequency = tidyr::replace_na(frequency, 0)) %>% # サンプルにない場合のNAを0に置換
+    dplyr::mutate(proportion = frequency / n) # 構成比を計算
+  
+  # ラベル用のテキストを作成
+  label_text <- paste0("phi=(", paste0(phi_v, collapse = ", "), "), M=", M, ", N=", n)
+  
+  # フレーム切替用のラベルを付与
+  tmp_freq_df <- tmp_freq_df %>% 
+    dplyr::mutate(parameter = as.factor(label_text))
+  
+  # n番目の乱数を格納
+  tmp_data_df <- tidyr::tibble(
+    x_1 = x_nv[n, 1], # サンプルの成分1
+    x_2 = x_nv[n, 2], # サンプルの成分2
+    parameter = as.factor(label_text) # フレーム切替用のラベル
+  )
+  
+  # n回目のラベルを付与
+  tmp_prob_df <- prob_df %>% 
+    dplyr::mutate(parameter = as.factor(label_text))
+  
+  # 結果を結合
+  anime_freq_df <- rbind(anime_freq_df, tmp_freq_df)
+  anime_data_df <- rbind(anime_data_df, tmp_data_df)
+  anime_prob_df <- rbind(anime_prob_df, tmp_prob_df)
+}
+head(anime_freq_df)
+```
+
+　乱数を1つず生成して、結果を`anime_***_df`に追加していきます。
+
+　ヒストグラムのアニメーションを作成します。
+
+```{r, eval=FALSE}
+# アニメーション用のサンプルのヒストグラムを作成
+anime_freq_graph <- ggplot() + # データ
+  geom_tile(data = anime_freq_df, mapping = aes(x = x_1, y = x_2, fill = frequency)) + # ヒストグラム
+  geom_point(data = anime_data_df, mapping = aes(x = x_1, y = x_2), 
+             color = "orange", size = 5) + 
+  scale_fill_gradientn(colors = c("blue", "green", "yellow", "red")) + # グラデーション
+  scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
+  scale_y_continuous(breaks = 0:M, labels = 0:M) + # y軸目盛
+  coord_fixed(ratio = 1) + # アスペクト比
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Multinomial Distribution", 
+       subtitle = "{current_frame}", 
+       x = expression(x[1]), y = expression(x[2])) # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_freq_graph, nframes = N, fps = 100)
+```
+
+\ 
+
+　構成比のアニメーションを作成します。
+
+```{r, eval=FALSE}
+# アニメーション用のサンプルの構成比を作成
+anime_prop_graph <- ggplot() + # データ
+  geom_tile(data = anime_freq_df, mapping = aes(x = x_1, y = x_2, fill = proportion), 
+            alpha = 0.9) + # 構成比
+  geom_tile(data = anime_prob_df, mapping = aes(x = x_1, y = x_2, color = probability), 
+            alpha = 0, size = 0.7, linetype = "dashed") + # 真の分布
+  geom_point(data = anime_data_df, mapping = aes(x = x_1, y = x_2), 
+             color = "orange", size = 5) + # 真の分布
+  scale_fill_gradientn(colors = c("blue", "green", "yellow", "red"), limits = c(0, p_max)) + # タイルのグラデーション
+  scale_color_gradientn(colors = c("blue", "green", "yellow", "red"), limits =c(0, p_max)) + # 枠線のグラデーション
+  scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
+  scale_y_continuous(breaks = 0:M, labels = 0:M) + # y軸目盛
+  coord_fixed(ratio = 1) + # アスペクト比
+  guides(color = FALSE) + # 凡例
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Multinomial Distribution", 
+       subtitle = "{current_frame}", 
+       x = expression(x[1]), y = expression(x[2])) # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_prop_graph, nframes = N, fps = 100)
+```
+
+　サンプルが増えるに従って、真の分布に近付いていくのを確認できます(？)。(最大値`p_max`を越えたらグレーになるのをなんとかしたい。)\
+
+　以上で、多項分布を確認できました。\
+\
+
+
