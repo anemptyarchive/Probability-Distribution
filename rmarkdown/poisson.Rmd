@@ -1,0 +1,513 @@
+---
+title: |
+  ポアソン分布
+author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
+date: "`r paste('2022/01/25', '2022/01/26'), sep = ' - ')`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_section: true
+    toc: true
+    toc_depth: 4
+    keep_tex: false
+header-includes:
+  - \usepackage{bookmark}
+  - \usepackage{xltxtra}
+  - \usepackage{zxjatype}
+  - \usepackage[ipa]{zxjafont}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, error = FALSE, warning = FALSE, # メッセージを非表示
+  fig.align = "center", # 画像を中央揃え
+  fig.width = 5, fig.height = 4, # 画像のサイズ
+  dev = "cairo_pdf", dev.args = list(family = "ipaexg"), # {ggplot2}に日本語を組み込む場合の対処
+  class.source = "numberLines lineAnchors", # ソースを番号付けする
+  class.output = "numberLines lineAnchors chunkout" # 出力を番号付けする
+)
+```
+
+```{r}
+# レンダリング日時
+Sys.time()
+```
+
+\newpage
+
+
+# ポアソン分布の定義式
+
+# ポアソン分布の統計量の導出
+
+# ポアソン分布の作図
+
+　ポアソン分布(Poisson Distribution)の計算と作図を行います。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r}
+# 利用するパッケージ
+library(tidyverse)
+library(gganimate)
+```
+
+　分布の変化をアニメーション(gif画像)で確認するのに`gganimate`パッケージを利用します。不要であれば省略してください。\
+\
+
+
+## 定義式の確認
+
+　まずは、ポアソン分布の定義式を確認します。\
+\
+
+　ポアソン分布は、次の式で定義されます。
+
+$$
+\mathrm{Poi}(x | \lambda)
+    = \frac{\lambda^x}{x!}
+      e^{-\lambda}
+$$
+
+　ここで、$x$は単位時間における事象の発生回数、$\lambda$は発生回数の期待値です。\
+　確率変数の値$x$は0以上の整数となります。パラメータ$\lambda$は、$\lambda > 0$を満たす必要があります。\
+
+　この式の対数をとると、次の式になります。
+
+$$
+\log \mathrm{Poi}(x | \lambda)
+    = x \log \lambda
+      - \log x!
+      - \lambda
+$$
+
+　ポアソン分布の平均と分散は、どちらもパラメータ$\lambda$になります。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \lambda
+\\
+\mathbb{V}[x]
+   &= \lambda
+\end{aligned}
+$$
+
+\ 
+
+
+## 確率の計算
+
+　ポアソン分布に従う確率を計算する方法をいくつか確認します。\
+\
+
+　パラメータを設定します。
+
+```{r}
+# パラメータを指定
+lambda <- 4
+
+# 確率変数の値を指定
+x <- 2
+```
+
+　ポアソン分布のパラメータ$\lambda > 0$、確率変数がとり得る値(非負の整数)$x$を指定します。設定した値に従う確率を計算します。\
+
+　まずは、定義式から確率を計算します。
+
+```{r}
+# 定義式により確率を計算
+prob <- lambda^x / gamma(x + 1) * exp(-lambda)
+prob
+```
+
+　ポアソン分布の定義式
+
+$$
+\mathrm{Poi}(x | \lambda)
+    = \frac{\lambda^x}{x!}
+      \exp(-\lambda)
+$$
+
+で計算します。\
+　階乗$x!$の計算は、ガンマ関数$\Gamma(x + 1) = x!$に置き換えて計算します。ガンマ関数は、`gamma()`で計算できます。\
+
+　対数をとった定義式から計算します。
+
+```{r}
+# 対数をとった定義式により確率を計算
+log_prob <- x * log(lambda) - lgamma(x + 1) - lambda
+prob <- exp(log_prob)
+prob; log_prob
+```
+
+　対数をとった定義式
+
+$$
+\log \mathrm{Poi}(x | \lambda)
+    = x \log \lambda
+      - \log x!
+      - \lambda
+$$
+
+を計算します。計算結果の指数をとると確率が得られます。
+
+$$
+\mathrm{Poi}(x | \lambda)
+    = \exp \Bigl(
+          \log \mathrm{Poi}(x | \lambda)
+      \Bigr)
+$$
+
+　指数と対数の性質より$\exp(\log x) = x$です。\
+
+　次は、関数を使って確率を計算します。\
+　ポアソン分布の確率関数`dpois()`を使って計算します。
+
+```{r}
+# ポアソン分布の関数により確率を計算
+prob <- dpois(x = x, lambda = lambda)
+prob
+```
+
+　変数の引数`x`に`x`、パラメータの引数`lambda`に`lambda`を指定します。\
+
+　`log = TRUE`を指定すると対数をとった確率を返します。
+
+```{r}
+# ポアソン分布の対数をとった関数により確率を計算
+log_prob <- dpois(x = x, lambda = lambda, log = TRUE)
+prob <- exp(log_prob)
+prob; log_prob
+```
+
+　計算結果の指数をとると確率が得られます。\
+\
+
+
+## 統計量の計算
+
+　ポアソン分布の平均と分散を計算します。\
+\
+
+　平均を計算します。
+
+```{r}
+# 定義式により平均を計算
+E_x <- lambda
+E_x
+```
+
+　ポアソン分布の平均は$\lambda$です。
+
+$$
+\mathbb{E}[x]
+    = \lambda
+$$
+
+　分散を計算します。
+
+```{r}
+# 定義式により分散を計算
+V_x <- lambda
+V_x
+```
+
+　ポアソン分布の分散も$\lambda$です。
+
+$$
+\mathbb{V}[x]
+    = \lambda
+$$
+
+\ 
+
+
+## 分布の可視化
+
+　`ggplot2`パッケージを利用してポアソン分布のグラフを作成します。\
+\
+
+　ポアソン分布の確率変数がとり得る値$x$ごとの確率を計算します。
+
+```{r}
+# パラメータを指定
+lambda <- 4
+
+# 作図用のxの点を作成
+x_vals <- seq(from = 0, to = ceiling(lambda) * 4)
+
+# ポアソン分布を計算
+prob_df <- tidyr::tibble(
+  x = x_vals, # 確率変数
+  probability = dpois(x = x_vals, lambda = lambda) # 確率
+)
+head(prob_df)
+```
+
+　$x$がとり得る値を作成して`x_vals`とします。この例では、`0`から`lambda`の`4`倍を範囲とします。ただし、$x$は0以上の整数なので、`ceiling()`で`lambda`を切り上げて使います。\
+　`x_vals`の各要素に対応する確率を求めてデータフレームに格納します。\
+
+　ポアソン分布のグラフを作成します。
+
+```{R}
+# ポアソン分布を作図
+ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
+  geom_bar(stat = "identity", fill = "#00A968") + # 棒グラフ
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  labs(title = "Poisson Distribution", 
+       subtitle = paste0("lambda=", lambda)) # ラベル
+```
+
+\ 
+
+　この分布に平均と標準偏差を重ねて表示します。
+
+```{r}
+# 統計量の計算
+E_x <- lambda
+s_x <- sqrt(lambda)
+
+# 統計量を重ねたポアソン分布を作図
+ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
+  geom_bar(stat = "identity", fill = "#00A968") + # 分布
+  geom_vline(xintercept = E_x, color = "orange", size = 1, linetype = "dashed") + # 平均
+  geom_vline(xintercept = E_x - s_x, color = "orange", size = 1, linetype = "dotted") + # 平均 - 標準偏差
+  geom_vline(xintercept = E_x + s_x, color = "orange", size = 1, linetype = "dotted") + # 平均 + 標準偏差
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  labs(title = "Poisson Distribution", 
+       subtitle = paste0("lambda=", lambda)) # ラベル
+```
+
+　平均(破線)となる確率が最大なのを確認できます。また、点線で平均を中心に標準偏差の範囲を示しています。\
+
+　ポアソン分布のグラフを描画できました。\
+\
+
+
+## パラメータと分布の形状の関係
+
+　続いて、パラメータ$\lambda$の値を少しずつ変更して、分布の変化をアニメーションで確認します。
+
+```{r}
+# lambdaとして利用する値を指定
+lambda_vals <- seq(from = 0, to = 10, by = 0.1)
+#length(lambda_vals) # フレーム数
+
+# 作図用のxの点を作成
+x_vals <- seq(from = 0, to = ceiling(max(lambda_vals)) * 2)
+
+# lambdaの値ごとに分布を計算
+anime_prob_df <- tidyr::tibble()
+for(lambda in lambda_vals) {
+  # ポアソン分布を計算
+  tmp_prob_df <- tidyr::tibble(
+    x = x_vals, # 確率変数
+    probability = dpois(x = x_vals, lambda = lambda), # 確率
+    parameter = paste0("lambda=", lambda) %>% 
+      as.factor() # フレーム切替用のラベル
+  )
+  
+  # 計算結果を結合
+  anime_prob_df <- rbind(anime_prob_df, tmp_prob_df)
+}
+head(anime_prob_df)
+```
+
+　$\lambda$がとり得る値を作成して`lambda_vals`とします。\
+　`for()`ループを使って`lambda_vals`の値ごとに確率を計算して、`anime_prob_df`に追加していきます。\
+
+　gif画像を作成します。
+
+```{r, eval=FALSE}
+# アニメーション用のポアソン分布を作図
+anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = x, y = probability)) + # データ
+  geom_bar(stat = "identity", fill = "#00A968") + # 棒グラフ
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  labs(title = "Poisson Distribution", 
+       subtitle = "{current_frame}") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_prob_graph, nframes = length(lambda_vals), fps = 100)
+```
+
+　$\lambda$が大きくなるに従って、$x$が大きいほど確率が高くなる(山が右に移動する)のを確認できます。\
+\
+
+
+## 乱数の生成
+
+　ポアソン分布の乱数を生成してヒストグラムを確認します。\
+\
+
+　パラメータを指定して、ポアソン分布に従う乱数を生成します。
+
+```{r}
+# パラメータを指定
+lambda <- 4
+
+# 作図用のxの点を作成
+x_vals <- seq(from = 0, to = ceiling(lambda) * 4)
+
+# ポアソン分布を計算
+prob_df <- tidyr::tibble(
+  x = x_vals, # 確率変数
+  probability = dpois(x = x_vals, lambda = lambda) # 確率
+)
+
+# データ数(サンプルサイズ)を指定
+N <- 1000
+
+# ポアソン分布に従う乱数を生成
+x_n <- rpois(n = N, lambda = lambda)
+x_n[1:10]
+```
+
+　ポアソン分布の乱数生成関数`rpois()`のデータ数(サンプルサイズ)の引数`n`に`N`、パラメータの引数`lambda`に`lmanda`を指定します。\
+
+　サンプルを集計します。
+
+```{r}
+# 乱数を集計して格納
+freq_df <- tidyr::tibble(x = x_n) %>% # 乱数を格納
+  dplyr::count(x, name = "frequency") %>% # 頻度を測定
+  dplyr::mutate(proportion = frequency / N) # 構成比を計算
+head(freq_df)
+```
+
+　サンプリングした値`x_n`をデータフレームに格納します。\
+　`count()`で重複する値をカウントします。\
+　得られた頻度`frequency`をデータ数`N`で割り、各値の構成比を計算して`proportion`列とします。\
+
+　ヒストグラムを作成します。
+
+```{r}
+# サンプルのヒストグラムを作成
+ggplot(data = freq_df, mapping = aes(x = x, y = frequency)) + # データ
+  geom_bar(stat = "identity", fill = "#00A968") + # ヒストグラム
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  labs(title = "Poisson Distribution", 
+       subtitle = paste0("lambda=", lambda)) # ラベル
+```
+
+\ 
+
+　構成比を分布の重ねて描画します。
+
+```{r}
+# サンプルの構成比を作図
+ggplot() + 
+  geom_bar(data = freq_df, mapping = aes(x = x, y = proportion), 
+           stat = "identity", fill = "#00A968") + # 構成比
+  geom_bar(data = prob_df, mapping = aes(x = x, y = probability), 
+           stat = "identity", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  labs(title = "Poisson Distribution", 
+       subtitle = paste0("lambda=", lambda)) # ラベル
+```
+
+　データ数が十分に増えると元の分布(破線のグラフ)に形が近付きます。\
+\
+
+　サンプルサイズとヒストグラムの変化をアニメーションで確認します。
+
+```{r}
+# フレーム数を指定
+N_frame <- 100
+
+# 乱数を1つずつ生成
+x_n <- rep(NA, times = N_frame)
+anime_freq_df <- tidyr::tibble()
+anime_data_df <- tidyr::tibble()
+anime_prob_df <- tidyr::tibble()
+for(n in 1:N_frame) {
+  # ポアソン分布に従う乱数を生成
+  x_n[n] <- rpois(n = 1, lambda = lambda)
+  
+  # 乱数を集計して格納
+  tmp_freq_df <- tidyr::tibble(x = x_n[1:n]) %>% # 乱数を格納
+    dplyr::count(x, name = "frequency") %>% # 頻度を集計
+    dplyr::full_join(tidyr::tibble(x = x_vals), by = "x") %>% # サンプルにない値を補完
+    dplyr::mutate(frequency = tidyr::replace_na(frequency, 0)) %>% # サンプルにない場合のNAを0に置換
+    dplyr::mutate(proportion = frequency / n) # 構成比を計算
+
+  # ラベル用のテキストを作成
+  label_text <- paste0(
+    "lambda=", lambda, ", N=", n, "=(", paste0(tmp_freq_df[["frequency"]], collapse = ", "), ")"
+  )
+  
+  # フレーム切替用のラベルを付与
+  tmp_freq_df <- tmp_freq_df %>% 
+    dplyr::mutate(parameter = as.factor(label_text))
+  
+  # n番目の乱数を格納
+  tmp_data_df <- tidyr::tibble(
+    x = x_n[n], # サンプル
+    parameter = as.factor(label_text) # フレーム切替用のラベル
+  )
+  
+  # n回目のラベルを付与
+  tmp_prob_df <- prob_df %>% 
+    dplyr::mutate(parameter = as.factor(label_text))
+  
+  # 結果を結合
+  anime_freq_df <- rbind(anime_freq_df, tmp_freq_df)
+  anime_data_df <- rbind(anime_data_df, tmp_data_df)
+  anime_prob_df <- rbind(anime_prob_df, tmp_prob_df)
+}
+head(anime_freq_df)
+```
+
+　乱数を1つずつ生成して、結果を`anime_***_df`に追加していきます。\
+
+　先ほどの集計処理に、サンプル`x_n`にない値のカウント(行)を追加する処理を行っています。\
+　`x_vals`の値を持つデータフレームを作成し、`full_join()`で結合します。\
+　サンプルにない場合は頻度列`frequency`が欠損値`NA`になるので、`replace_na()`で`0`に置換します。\
+
+　ヒストグラムのアニメーションを作成します。
+
+```{r, eval=FALSE}
+# アニメーション用のサンプルのヒストグラムを作成
+anime_freq_graph <- ggplot() + 
+  geom_bar(data = anime_freq_df, mapping = aes(x = x, y = frequency), 
+           stat = "identity", fill = "#00A968") + # ヒストグラム
+  geom_point(data = anime_data_df, mapping = aes(x = x, y = 0), 
+             color = "orange", size = 5) + # サンプル
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  labs(title = "Poisson Distribution", 
+       subtitle = "{current_frame}") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_freq_graph, nframes = N_frame, fps = 100)
+```
+
+\ 
+
+　構成比のアニメーションを作成します。
+
+```{r, eval=FALSE}
+# アニメーション用のサンプルの構成比を作図
+anime_prop_graph <- ggplot() + 
+  geom_bar(data = anime_freq_df, mapping = aes(x = x, y = proportion), 
+           stat = "identity", fill = "#00A968") + # 構成比
+  geom_bar(data = anime_prob_df, mapping = aes(x = x, y = probability), 
+           stat = "identity", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
+  geom_point(data = anime_data_df, mapping = aes(x = x, y = 0), 
+             color = "orange", size = 5) + # サンプル
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  ylim(c(-0.01, 0.5)) + # y軸の表示範囲
+   labs(title = "Poisson Distribution", 
+       subtitle = "{current_frame}") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_prop_graph, nframes = N_frame, fps = 100)
+```
+
+　サンプルが増えるに従って、元の分布に近付くのを確認できます。\
+\
+
