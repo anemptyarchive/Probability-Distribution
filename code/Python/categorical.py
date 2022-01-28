@@ -68,7 +68,7 @@ phi_v = np.array([0.2, 0.4, 0.1, 0.3])
 # クラス数を取得
 V = len(phi_v)
 
-# 作図用のxの値を作成
+# 作図用のクラス番号を作成
 v_vals = np.arange(1, V + 1)
 
 # 分布を計算
@@ -82,14 +82,56 @@ probability = multinomial.pmf(x=np.identity(V), n=1, p=phi_v)
 # カテゴリ分布を作図
 plt.figure(figsize=(12, 8)) # 図の設定
 plt.bar(x=v_vals, height=probability, color='#00A968') # 棒グラフ
-plt.xlabel('x') # x軸ラベル
+plt.xlabel('v') # x軸ラベル
 plt.ylabel('probability') # y軸ラベル
 plt.suptitle('Categorical Distribution', fontsize=20) # 図タイトル
 plt.title('$\phi=(' + ', '.join([str(phi) for phi in phi_v]) + ')$', loc='left') # タイトル
-plt.xticks(ticks=ｖ_vals) # x軸目盛
-#plt.legend() # 凡例
+plt.xticks(ticks=v_vals) # x軸目盛
 plt.grid() # グリッド線
 plt.show() # 描画
+
+#%%
+
+### パラメータと分布の形状の関係
+
+# 作図用のphi_1の値を作成
+phi_vals = np.arange(start=0.0, stop=1.0, step=0.01)
+
+# クラス数を指定
+V = 3
+
+# 作図用のクラス番号を作成
+v_vals = np.arange(1, V + 1)
+
+# 図を初期化
+fig = plt.figure(figsize=(12, 8))
+
+# 作図処理を関数として定義
+def update(i):
+    # 前フレームのグラフを初期化
+    plt.cla()
+    
+    # i回目のphi_1の値を取得
+    phi_1 = phi_vals[i]
+    
+    # phi_1以外の割り当てを指定
+    phi_v = np.array([phi_1, (1.0 - phi_1) * 0.6, (1.0 - phi_1) * 0.4])
+    
+    # カテゴリ分布を作図
+    plt.bar(x=v_vals, height=phi_v, color='#00A968', zorder=1) # 棒グラフ
+    plt.xlabel('v') # x軸ラベル
+    plt.ylabel('Probability') # y軸ラベル
+    plt.suptitle('Categorical Distribution', fontsize=20) # 図タイトル
+    plt.title('$\phi=(' + ', '.join([str(phi) for phi in np.round(phi_v, 2)]) + ')$', loc='left') # タイトル
+    plt.xticks(ticks=v_vals) # x軸目盛
+    plt.grid() # グリッド線
+    plt.ylim(-0.1, 1.1) # y軸の表示範囲
+
+# gif画像を作成
+anime_prob = FuncAnimation(fig, update, frames=len(phi_vals), interval=100)
+
+# gif画像を保存
+anime_prob.save('ProbabilityDistribution/Categorical_prob.gif')
 
 #%%
 
@@ -106,6 +148,9 @@ N = 1000
 # カテゴリ分布に従う乱数を生成
 x_nv = np.random.multinomial(n=1, pvals=phi_v, size=N)
 
+# クラス番号を抽出
+x_n = np.where(x_nv == 1)[1]
+
 # 乱数を集計
 frequency = np.sum(x_nv, axis=0)
 
@@ -113,26 +158,26 @@ frequency = np.sum(x_nv, axis=0)
 
 # サンプルのヒストグラムを作成
 plt.figure(figsize=(12, 8)) # 図の設定
-plt.bar(x=x_vals, height=frequency, color='#00A968') # ヒストグラム
-plt.xlabel('x') # x軸ラベル
+plt.bar(x=v_vals, height=frequency, color='#00A968') # ヒストグラム
+plt.xlabel('v') # x軸ラベル
 plt.ylabel('frequency') # y軸ラベル
 plt.suptitle('Bernoulli Distribution', fontsize=20) # 図タイトル
 plt.title('$\phi=(' + ', '.join([str(phi) for phi in phi_v]) + ')' + 
           ', N=' + str(N) +'=(' + ', '.join([str(f) for f in frequency]) + ')$', loc='left') # タイトル
-plt.xticks(ticks=x_vals) # x軸目盛
+plt.xticks(ticks=v_vals) # x軸目盛
 plt.grid() # グリッド線
 plt.show() # 描画
 
 # サンプルの構成比を作図
 plt.figure(figsize=(12, 8)) # 図の設定
-plt.bar(x=x_vals, height=probability, color='white', edgecolor='green', linestyle='--') # 分布
-plt.bar(x=x_vals, height=frequency / N, color='#00A968', alpha=0.8) # 構成比
-plt.xlabel('x') # x軸ラベル
+plt.bar(x=v_vals, height=probability, color='white', edgecolor='green', linestyle='--') # 分布
+plt.bar(x=v_vals, height=frequency / N, color='#00A968', alpha=0.8) # 構成比
+plt.xlabel('v') # x軸ラベル
 plt.ylabel('proportion') # y軸ラベル
 plt.suptitle('Bernoulli Distribution', fontsize=20) # 図タイトル
 plt.title('$\phi=(' + ', '.join([str(phi) for phi in phi_v]) + ')' + 
           ', N=' + str(N) +'=(' + ', '.join([str(f) for f in frequency]) + ')$', loc='left') # タイトル
-plt.xticks(ticks=x_vals) # x軸目盛
+plt.xticks(ticks=v_vals) # x軸目盛
 plt.grid() # グリッド線
 plt.show() # 描画
 
@@ -161,22 +206,22 @@ def update(n):
     x_val = np.where(x_nv[n] == 1)[0][0] + 1
     
     # サンプルのヒストグラムを作成
-    plt.bar(x=x_vals, height=frequency, color='#00A968', zorder=1) # ヒストグラム
+    plt.bar(x=v_vals, height=frequency, color='#00A968', zorder=1) # ヒストグラム
     plt.scatter(x=x_val, y=0.0, color='orange', s=100, zorder=2) # サンプル
-    plt.xlabel('x') # x軸ラベル
+    plt.xlabel('v') # x軸ラベル
     plt.ylabel('frequency') # y軸ラベル
     plt.suptitle('Categorical Distribution', fontsize=20) # 図タイトル
     plt.title('$\phi=(' + ', '.join([str(phi) for phi in phi_v]) + ')' + 
               ', N=' + str(n + 1) +'=(' + ', '.join([str(f) for f in frequency]) + ')$', loc='left') # タイトル
-    plt.xticks(ticks=x_vals) # x軸目盛
+    plt.xticks(ticks=v_vals) # x軸目盛
     plt.grid() # グリッド線
     plt.ylim(-1.0, y_max + 1.0) # y軸の表示範囲
 
 # gif画像を作成
-anime_hist = FuncAnimation(fig, update, frames=N, interval=100)
+anime_freq = FuncAnimation(fig, update, frames=N, interval=100)
 
 # gif画像を保存
-anime_hist.save('ProbabilityDistribution/Categorical_hist.gif')
+anime_freq.save('ProbabilityDistribution/Categorical_freq.gif')
 
 #%%
 
@@ -195,15 +240,15 @@ def update(n):
     x_val = np.where(x_nv[n] == 1)[0][0] + 1
     
     # サンプルの構成比を作成
-    plt.bar(x=x_vals, height=probability, color='white', edgecolor='green', linestyle='--', zorder=1) # 分布
-    plt.bar(x=x_vals, height=frequency / (n + 1), color='#00A968', alpha=0.8, zorder=2) # 構成比
+    plt.bar(x=v_vals, height=probability, color='white', edgecolor='green', linestyle='--', zorder=1) # 分布
+    plt.bar(x=v_vals, height=frequency / (n + 1), color='#00A968', alpha=0.8, zorder=2) # 構成比
     plt.scatter(x=x_val, y=0.0, color='orange', s=100, zorder=3) # サンプル
-    plt.xlabel('x') # x軸ラベル
+    plt.xlabel('v') # x軸ラベル
     plt.ylabel('proportion') # y軸ラベル
     plt.suptitle('Categorical Distribution', fontsize=20) # 図タイトル
     plt.title('$\phi=(' + ', '.join([str(phi) for phi in phi_v]) + ')' + 
               ', N=' + str(n + 1) +'=(' + ', '.join([str(f) for f in frequency]) + ')$', loc='left') # タイトル
-    plt.xticks(ticks=x_vals) # x軸目盛
+    plt.xticks(ticks=v_vals) # x軸目盛
     plt.grid() # グリッド線
     plt.ylim(-0.1, 1.1) # y軸の表示範囲
 

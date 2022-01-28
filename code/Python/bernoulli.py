@@ -69,7 +69,7 @@ print(prob)
 phi = 0.3
 
 
-# 定義式により平均を計算
+# 平均を計算
 E_x = phi
 print(E_x)
 
@@ -99,7 +99,7 @@ phi = 0.3
 # 作図用のxの値を作成
 x_vals = np.array([0.0, 1.0])
 
-# 確率を計算
+# 分布を計算
 probability = np.array([1.0 - phi, phi])
 
 # ベルヌーイ分布を作図

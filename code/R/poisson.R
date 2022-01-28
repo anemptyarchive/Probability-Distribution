@@ -66,7 +66,7 @@ prob_df <- tidyr::tibble(
 # ポアソン分布を作図
 ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
   geom_bar(stat = "identity", fill = "#00A968") + # 棒グラフ
-  #scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   labs(title = "Poisson Distribution", 
        subtitle = paste0("lambda=", lambda)) # ラベル
 
@@ -113,7 +113,7 @@ for(lambda in lambda_vals) {
 anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = x, y = probability)) + # データ
   geom_bar(stat = "identity", fill = "#00A968") + # 棒グラフ
   gganimate::transition_manual(parameter) + # フレーム
-  #scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   labs(title = "Poisson Distribution", 
        subtitle = "{current_frame}") # ラベル
 
@@ -139,9 +139,8 @@ freq_df <- tidyr::tibble(x = x_n) %>% # 乱数を格納
   dplyr::count(x, name = "frequency") %>% # 頻度を測定
   dplyr::mutate(proportion = frequency / N) # 構成比を計算
 
-
 # 作図用のxの点を作成
-x_vals <- seq(from = 0, to = ceiling(lambda) * 4)
+x_vals <- seq(from = 0, to = max(x_n) + 3)
 
 # ポアソン分布を計算
 prob_df <- tidyr::tibble(
@@ -155,7 +154,7 @@ prob_df <- tidyr::tibble(
 # サンプルのヒストグラムを作成
 ggplot(data = freq_df, mapping = aes(x = x, y = frequency)) + # データ
   geom_bar(stat = "identity", fill = "#00A968") + # ヒストグラム
-  #scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   labs(title = "Poisson Distribution", 
        subtitle = paste0("lambda=", lambda)) # ラベル
 
@@ -165,7 +164,7 @@ ggplot() +
            stat = "identity", fill = "#00A968") + # 構成比
   geom_bar(data = prob_df, mapping = aes(x = x, y = probability), 
            stat = "identity", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
-  #scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   labs(title = "Poisson Distribution", 
        subtitle = paste0("lambda=", lambda)) # ラベル
 
@@ -224,7 +223,7 @@ anime_freq_graph <- ggplot() +
   geom_point(data = anime_data_df, mapping = aes(x = x, y = 0), 
              color = "orange", size = 5) + # サンプル
   gganimate::transition_manual(parameter) + # フレーム
-  #scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   labs(title = "Poisson Distribution", 
        subtitle = "{current_frame}") # ラベル
 
@@ -241,7 +240,7 @@ anime_prop_graph <- ggplot() +
   geom_point(data = anime_data_df, mapping = aes(x = x, y = 0), 
              color = "orange", size = 5) + # サンプル
   gganimate::transition_manual(parameter) + # フレーム
-  #scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   ylim(c(-0.01, 0.5)) + # y軸の表示範囲
   labs(title = "Poisson Distribution", 
        subtitle = "{current_frame}") # ラベル

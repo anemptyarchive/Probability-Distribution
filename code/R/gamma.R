@@ -241,7 +241,8 @@ for(n in 1:N_frame) {
 # アニメーション用のサンプルの頻度を作図
 anime_freq_graph <- ggplot() + 
   geom_histogram(data = anime_freq_df, mapping = aes(x = lambda), 
-                 fill = "#00A968") + # ヒストグラム
+                 breaks = seq(from = min(lambda_vals), to = max(lambda_vals), length.out = 30), 
+                 fill = "#00A968", color = "#00A968") + # ヒストグラム
   geom_point(data = anime_data_df, mapping = aes(x = lambda, y = 0), 
              color = "orange", size = 5) + # サンプル
   gganimate::transition_manual(parameter) + # フレーム
@@ -254,8 +255,9 @@ gganimate::animate(anime_freq_graph, nframes = N_frame, fps = 100)
 
 # アニメーション用のサンプルの密度を作図
 anime_prop_graph <- ggplot() + 
-  geom_histogram(data = anime_freq_df, mapping = aes(x = lambda, y = ..density..)
-                 , fill = "#00A968") + # ヒストグラム
+  geom_histogram(data = anime_freq_df, mapping = aes(x = lambda, y = ..density..), 
+                 breaks = seq(from = min(lambda_vals), to = max(lambda_vals), length.out = 30), 
+                 fill = "#00A968", color = "#00A968") + # ヒストグラム
   geom_line(data = anime_dens_df, mapping = aes(x = lambda, y = density), 
             color = "darkgreen", linetype = "dashed") + # 元の分布
   geom_point(data = anime_data_df, mapping = aes(x = lambda, y = 0), 
