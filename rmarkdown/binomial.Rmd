@@ -1,8 +1,7 @@
 ---
-title: |
-  二項分布
+title: "二項分布"
 author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
-date: "`r paste('2022/01/09', '2022/01/24', sep = ' - ')`"
+date: "`r paste('2022/01/09', '2022/02/19', sep = ' - ')`"
 output:
   pdf_document:
     latex_engine: xelatex
@@ -23,7 +22,6 @@ knitr::opts_chunk$set(
   message = FALSE, error = FALSE, warning = FALSE, # メッセージを非表示
   fig.align = "center", # 画像を中央揃え
   fig.width = 5, fig.height = 4, # 画像のサイズ
-  dev = "cairo_pdf", dev.args = list(family = "ipaexg"), # {ggplot2}に日本語を組み込む場合の対処
   class.source = "numberLines lineAnchors", # ソースを番号付けする
   class.output = "numberLines lineAnchors chunkout" # 出力を番号付けする
 )
@@ -37,7 +35,7 @@ Sys.time()
 \newpage
 
 
-# 二項分布の定義式
+# 二項分布の定義式の確認
 
 　二項分布(Binomial Distribution)の定義を確認します。\
 \
@@ -51,7 +49,7 @@ Sys.time()
 　試行回数を$M$、注目する方(ここでは表とします)の回数を$x$で表します。$x$は、全て裏のときの0から全て表のときの$M$までの整数になります。$x$が0から$M$の整数をとることを
 
 $$
-x \in \{0, 1, \cdots, M\}
+x \in \{0, 1, \ldots, M\}
 $$
 
 で表します。\
@@ -165,59 +163,125 @@ $$
 \end{aligned}
 $$
 
-\ 
+　$M, \phi$が大きいほど平均が大きくなります。\
+　$M$が大きいまたは$\phi$が0.5に近いほど分散が大きくなります。\
+
+　試行回数が$M = 1$のとき、ベルヌーイ分布の平均・分散と一致します。\
+\
+
+
+# 二項分布の定義式の導出
+
+　二項分布(Binomial Distribution)の定義式を導出します。\
+\
+
+
+# 二項分布のモーメント母関数の導出
+
+　二項分布(Binomial Distribution)のモーメント母関数(積率母関数)を導出します。二項分布については「定義式の確認」を参照してください。\
+\
+
+　モーメント母関数は、$e^{tx}$の期待値として定義されます。$e$はネイピア数です。
+
+$$
+\begin{aligned}
+M(t)
+   &= \mathbb{E}[e^{tx}]
+\\
+   &= \sum_{x=0}^M
+          e^{tx}
+          \mathrm{Bin}(x | M, \phi)
+\\
+   &= \sum_{x=0}^M
+          e^{tx}
+          {}_MC_x \phi^x (1 - \phi)^{M-x}
+\end{aligned}
+$$
+
+　ここで、$\mathrm{Bin}(x | M, \phi)$は二項分布を表し、$x$は成功回数、$M$は試行回数、$\phi$は成功確率です。\
+　$e^{tx} = (e^t)^x$と$\phi^x$をまとめます。
+
+$$
+M(t)
+    = \sum_{x=0}^M
+          {}_MC_x (\phi e^t)^x (1 - \phi)^{M-x}
+$$
+
+　二項定理$(a + b)^n = \sum_{r=0}^n {}_nC_r a^r b^{n-r}$の形をしているので、右辺から左辺の式に変形します。
+
+$$
+M(t)
+    = (\phi e^t + 1 - \phi)^M
+$$
+
+　モーメント母関数が得られました。\
+\
+
+
+# 二項分布の特性関数の導出
+
+　二項分布(Binomial Distribution)の特性関数を導出します。二項分布については「定義式の確認」を参照してください。\
+\
+
+　特性関数は、$e^{itx}$の期待値として定義されます。$e$はネイピア数、$i$は虚数単位です。
+
+$$
+\begin{aligned}
+\varphi(t)
+   &= \mathbb{E}[e^{itx}]
+\\
+   &= \sum_{x=0}^M
+          e^{itx}
+          \mathrm{Bin}(x | M, \phi)
+\\
+   &= \sum_{x=0}^M
+          e^{itx}
+          {}_MC_x \phi^x (1 - \phi)^{M-x}
+\end{aligned}
+$$
+
+　ここで、$\mathrm{Bin}(x | M, \phi)$は二項分布を表し、$x$は成功回数、$M$は試行回数、$\phi$は成功確率です。\
+　$e^{itx} = (e^{it})^x$と$\phi^x$をまとめます。
+
+$$
+\varphi(t)
+    = \sum_{x=0}^M
+          {}_MC_x (\phi e^{it})^x (1 - \phi)^{M-x}
+$$
+
+　二項定理$(a + b)^n = \sum_{r=0}^n {}_nC_r a^r b^{n-r}$の形をしているので、右辺から左辺の式に変形します。
+
+$$
+\varphi(t)
+    = (\phi e^{it} + 1 - \phi)^M
+$$
+
+　特性関数が得られました。モーメント母関数の$t$を$it$に置き換えた式と一致します。\
+\
 
 
 # 二項分布の統計量の導出
 
-　青トピ攻略ノートを参照。\
+　二項分布(Binomial Distribution)の平均(期待値)と分散を導出します。二項分布については「定義式の確認」を参照してください。\
 \
 
 
-# 二項分布の作図
+## 定義式から導出
 
-　二項分布(Binomial Distribution)の計算と作図を行います。\
-\
+　定義式を利用して、平均と分散の計算式を導出します。\
 
-　利用するパッケージを読み込みます。
-
-```{r}
-# 利用するパッケージ
-library(tidyverse)
-library(gganimate)
-```
-
-　分布の変化をアニメーション(gif画像)で確認するのに`gganimate`パッケージを利用します。不要であれば省略してください。\
-\
-
-
-## 定義式の確認
-
-　まずは、二項分布の定義式を確認します。\
-\
-
-　二項分布は、次の式で定義されます。詳しくは「二項分布の定義式」を参照してください。
+　二項分布は、次の式で定義されます。
 
 $$
 \mathrm{Bin}(x | M, \phi)
     = \frac{M!}{(M - x)! x!} \phi^x (1 - \phi)^{M-x}
 $$
 
-　ここで、$x$は成功回数、$\phi$は成功確率($x$が1増える確率)です。\
-　確率変数の値$x$は、$x \in \{0, 1, \cdots, M\}$となります。パラメータ$\phi$は、$\phi \in (0, 1)$を満たす必要があります。また、失敗回数は$M - x$、失敗確率($x$が1増えない確率)は$1 - \phi$で表せます。
+　ここで、$x$は成功回数、$M$は試行回数、$\phi$は成功確率です。\
+　確率変数の値$x$は、$x \in \{0, 1, \cdots, M\}$となります。パラメータ$\phi$は、$\phi \in (0, 1)$を満たす必要があります。また、失敗回数は$M - x$、失敗確率は$1 - \phi$で表せます。
+\
 
-　この対数をとると、次の式になります。
-
-$$
-\begin{aligned}
-\log \mathrm{Bin}(x | N, \phi)
-   &= \log N! - \log (N - x)! - \log x! \\
-   &\quad
-      + x \log \phi + (N - x) \log (1 - \phi)
-\end{aligned}
-$$
-
-　二項分布の平均と分散は、次の式で計算できます。詳しくは「統計量の導出」を参照してください。
+　二項分布の平均と分散は、次の式で計算できます。
 
 $$
 \begin{aligned}
@@ -229,10 +293,763 @@ $$
 \end{aligned}
 $$
 
+　試行回数が$M = 1$のとき、ベルヌーイ分布の平均・分散と一致します。\
+
+　定義式を用いて、平均と分散の計算式を導出します。\
+\
+
+
+### 平均の計算
+
+　二項分布の平均を導出します。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+  &= \sum_{x=0}^M
+          x
+          \mathrm{Bin}(x | M, \phi)
+\\
+   &= \sum_{x=0}^M
+          x
+          {}_MC_x \phi^x (1 - \phi)^{M-x}
+\end{aligned}
+$$
+
+　$x = 0$について、0になり計算結果に影響しないので、$\sum_{x=0}^M$から取り出します。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= 0
+      {}_MC_0 \phi^0 (1 - \phi)^{M-0}
+      + \sum_{x=1}^M
+          x
+          {}_MC_x \phi^x (1 - \phi)^{M-x}
+\\
+   &= \sum_{x=1}^M
+          x
+          {}_MC_x \phi^x (1 - \phi)^{M-x}
+\end{aligned}
+$$
+
+　組み合わせの項について
+
+$$
+{}_MC_x
+    = \frac{M!}{(M - x)! x!}
+    = \frac{M}{x}
+      \frac{(M - 1)!}{\{(M - 1) - (x - 1)\}! (x - 1)!}
+    = \frac{M}{x} {}_{M-1}C_{x-1}
+$$
+
+と変形します。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \sum_{x=1}^M
+          x \frac{M}{x}
+          {}_{M-1}C_{x-1} \phi^x (1 - \phi)^{M-x}
+\\
+   &= M
+      \sum_{x=1}^M
+          {}_{M-1}C_{x-1} \phi^x (1 - \phi)^{M-x}
+\end{aligned}
+$$
+
+　総和について$\sum_{x=1}^M = \sum_{x-1=0}^{M-1}$、$1 - \phi$の指数について$M - x = (M - 1) - (x - 1)$と変形して、さらに$x' = x - 1$、$M' = M - 1$に置き換えます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= M
+      \sum_{x-1=0}^{M-1}
+          {}_{M-1}C_{x-1} \phi^x (1 - \phi)^{(M-1)-(x-1)}
+\\
+   &= M
+      \sum_{x'=0}^{M'}
+          {}_{M'}C_{x'} \phi^{x'+1} (1 - \phi)^{M'-x'}
+\end{aligned}
+$$
+
+　$\phi^{x+1} = \phi \phi^x$に分割します。
+
+$$
+\mathbb{E}[x]
+    = M \phi
+      \sum_{x'=0}^{M'}
+          {}_{M'}C_{x'} \phi^{x'} (1 - \phi)^{M'-x'}
+\tag{1}
+$$
+
+　式(1)は二項定理$(a + b)^n = \sum_{r=0}^n {}_nC_r a^r b^{n-r}$の形をしているので、右辺から左辺の式に変形します。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= M \phi
+      \Bigl\{
+          \phi + (1 - \phi)
+      \Bigr\}^{M'}
+\\
+   &= M \phi
+\end{aligned}
+$$
+
+　平均の計算式が得られました。\
+
+　次のようにも解釈できます。式(1)は試行回数$M'$・パラメータ$\phi$の二項分布になっています。
+
+$$
+\mathbb{E}[x]
+    = M \phi
+      \sum_{x'=0}^{M'}
+          \mathrm{Bin}(x' | M', \phi)
+$$
+
+　全事象$x' = 0, 1, \ldots, M'$の和なので1になります。
+
+$$
+\mathbb{E}[x]
+    = M \phi
+$$
+
+　先ほどの結果と一致しました。\
+\
+
+
+### 二乗の平均の計算
+
+　続いて、$x^2$の平均を求めます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= \sum_{x=0}^M
+          x^2
+          \mathrm{Bin}(x | M, \phi)
+\\
+   &= \sum_{x=0}^M
+          x^2
+          {}_MC_x \phi^x (1 - \phi)^{M-x}
+\end{aligned}
+$$
+
+　$x^2 = x (x - 1) + x$に分割します。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= \sum_{x=0}^M
+          \{x (x - 1) + x\}
+          {}_MC_x \phi^x (1 - \phi)^{M-x}
+\\
+   &= \sum_{x=0}^M
+          x (x - 1)
+          {}_MC_x \phi^x (1 - \phi)^{M-x}
+      + \sum_{x=0}^M
+          x
+          {}_MC_x \phi^x (1 - \phi)^{M-x}
+\end{aligned}
+$$
+
+　前の項に関して、$x = 0, 1$は0になるので取り出します。後の項は、$x$の平均なので置き換えます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= 0 (0 - 1)
+          {}_MC_0 \phi^0 (1 - \phi)^{M-0} \\
+   &\quad
+      + 1 (1 - 1)
+          {}_MC_1 \phi^1 (1 - \phi)^{M-1} \\
+   &\quad
+      + \sum_{x=2}^M
+          x (x - 1)
+          {}_MC_x \phi^x (1 - \phi)^{M-x} \\
+   &\quad
+      + \mathbb{E}[x]
+\\
+   &= \sum_{x=2}^M
+          x (x - 1)
+          {}_MC_x \phi^x (1 - \phi)^{M-x}
+      + M \phi
+\end{aligned}
+$$
+
+　組み合わせの項について
+
+$$
+{}_MC_x
+    = \frac{M!}{(M - x)! x!}
+    = \frac{M (M - 1)}{x (x - 1)}
+      \frac{(M - 2)!}{\{(M - 2) - (x - 2)\}! (x - 2)!}
+    = \frac{M (M - 1)}{x (x - 1)}
+      {}_{M-2}C_{x-2}
+$$
+
+と変形します。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= \sum_{x=2}^M
+          x (x - 1)
+          \frac{M (M - 1)}{x (x - 1)}
+          {}_{M-2}C_{x-2} \phi^x (1 - \phi)^{M-x}
+      + M \phi
+\\
+   &= M (M - 1)
+      \sum_{x=2}^M
+          {}_{M-2}C_{x-2} \phi^x (1 - \phi)^{M-x}
+      + M \phi
+\end{aligned}
+$$
+
+　総和について$\sum_{x=2}^M = \sum_{x-2=0}^{M-2}$、$1 - \phi$の指数について$M - x = (M - 2) - (x - 2)$と変形して、さらに$x' = x - 2$、$M' = M - 2$に置き換えます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= M (M - 1)
+      \sum_{x-2=0}^{M-2}
+          {}_{M-2}C_{x-2} \phi^x (1 - \phi)^{(M-2)-(x-2)}
+      + M \phi
+\\
+   &= M (M - 1)
+      \sum_{x'=0}^{M'}
+          {}_{M'}C_{x'} \phi^{x'+2} (1 - \phi)^{M'-x'}
+      + M \phi
+\end{aligned}
+$$
+
+　$\phi^{x'+2} = \phi^2 \phi^{x'}$に分割します。
+
+$$
+\mathbb{E}[x^2]
+    = M (M - 1) \phi^2
+      \sum_{x'=0}^{M'}
+          {}_{M'}C_{x'} \phi^{x'} (1 - \phi)^{M'-x'}
+      + M \phi
+\tag{2}
+$$
+
+　二項定理$(a + b)^n = \sum_{r=0}^n {}_nC_r a^r b^{n-r}$の変形を行います。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= M (M - 1) \phi^2
+      \Bigl\{
+          \phi + (1 - \phi)
+      \Bigr\}^{M'}
+      + M \phi
+\\
+   &= M (M - 1) \phi^2
+      + M \phi
+\end{aligned}
+$$
+
+　二乗の平均が求まりました。\
+
+　あるいは、式(2)を試行回数$M'$・パラメータ$\phi$の二項分布の全事象の和と考えても同じ結果が得られます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= M (M - 1) \phi^2
+      \sum_{x'=0}^{M'}
+          \mathrm{Bin}(x' | M', \phi)
+      + M \phi
+\\
+   &= M (M - 1) \phi^2
+      + M \phi
+\end{aligned}
+$$
+
 \ 
 
-　これらの計算を行いグラフを作成します。\
+
+### 分散の計算
+
+　分散は「$x$の2乗の平均」と「$x$の平均の2乗」の差で求められます。
+
+$$
+\begin{aligned}
+\mathbb{V}[x]
+   &= \mathbb{E}[x^2]
+      - (\mathbb{E}[x])^2
+\\
+   &= M (M - 1) \phi^2
+      + M \phi
+      - (M \phi)^2
+\end{aligned}
+$$
+
+　括弧を展開して、式を整理します。
+
+$$
+\begin{aligned}
+\mathbb{V}[x]
+   &= M^2 \phi^2 - M \phi^2
+      + M \phi
+      - M^2 \phi^2
+\\
+   &= M \phi (1 - \phi)
+\end{aligned}
+$$
+
+　二項分布の分散の計算式が得られました。\
 \
+
+
+## モーメント母関数から導出
+
+　モーメント母関数(積率母関数)を利用して、平均と分散の計算式を導出します。\
+
+　二項分布のモーメント母関数は、次の式になります。詳しくは「モーメント母関数の導出」を参照してください。
+
+$$
+M(t)
+    = (\phi e^t + 1 - \phi)^M
+$$
+
+　ここで、$\phi, M$は二項分布のパラメータで成功確率と試行回数、$e$はネイピア数です。\
+
+　二項分布の平均と分散は、次の式で計算できます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= M \phi
+\\
+\mathbb{V}[x]
+   &= M \phi (1 - \phi)
+\end{aligned}
+$$
+
+　試行回数が$M = 1$のとき、ベルヌーイ分布の平均・分散と一致します。\
+
+　モーメント母関数の微分を用いて、平均と分散の計算式を導出します。\
+\
+
+
+### モーメント母関数の1階微分の計算
+
+　モーメント母関数を$t$に関して微分します。
+
+$$
+\frac{d M(t)}{d t}
+    = \frac{d}{d t} \Bigl\{
+          (\phi e^t + 1 - \phi)^M
+      \Bigr\}
+$$
+
+　式全体を$g(f(x))$、丸括弧を$f(x)$として、合成関数の微分$\frac{d g(f(x))}{d x} = \frac{d g(x)}{d f(x)} \frac{d f(x)}{d x}$を行います。
+
+$$
+\begin{aligned}
+\frac{d M(t)}{d t}
+   &= M (\phi e^t + 1 - \phi)^{M-1}
+      \frac{d}{d t} \Bigl\{
+          \phi e^t + 1 - \phi
+      \Bigr\}
+\\
+   &= M (\phi e^t + 1 - \phi)^{M-1}
+      \phi e^t
+\end{aligned}
+$$
+
+　指数関数の微分は$\frac{d e^x}{d x} = e^x$です。\
+　式を整理します。
+
+$$
+\frac{d M(t)}{d t}
+    = M \phi e^t
+      (\phi e^t + 1 - \phi)^{M-1}
+$$
+
+　1階微分が求まりました。\
+\
+
+
+### モーメント母関数の2階微分の計算
+
+　続いて、モーメント母関数を$t$に関して2階微分します。1階微分$\frac{d M(t)}{d t}$を更に微分します。
+
+$$
+\begin{aligned}
+\frac{d^2 M(t)}{d t^2}
+   &= \frac{d}{d t} \frac{d M(t)}{d t} 
+\\
+   &= \frac{d}{d t} \Bigl\{
+          M \phi e^t
+          (\phi e^t + 1 - \phi)^{M-1}
+      \Bigr\}
+\end{aligned}
+$$
+
+　$t$に関する項を2つ含むので、積の微分$\frac{d f(x) g(x)}{d x} = \frac{d f(x)}{d x} g(x) + f(x) \frac{d g(x)}{d x}$を行います。
+
+$$
+\frac{d^2 M(t)}{d t^2}
+    = \frac{d}{d t} \Bigl\{
+          M \phi e^t
+      \Bigr\}
+      (\phi e^t + 1 - \phi)^{M-1}
+      + M \phi e^t
+        \frac{d}{d t} \Bigl\{
+          (\phi e^t + 1 - \phi)^{M-1}
+        \Bigr\}
+$$
+
+　前の項は指数関数の微分、後の項は合成関数の微分になります。
+
+$$
+\begin{aligned}
+\frac{d^2 M(t)}{d t^2}
+    &= M \phi e^t
+      (\phi e^t + 1 - \phi)^{M-1}
+      + M \phi e^t
+        (M - 1)
+        (\phi e^t + 1 - \phi)^{M-2}
+        \frac{d}{d t} \Bigl\{
+          \phi e^t + 1 - \phi
+        \Bigr\}
+\\
+   &= M \phi e^t
+      (\phi e^t + 1 - \phi)^{M-1}
+      + M \phi e^t
+        (M - 1)
+        (\phi e^t + 1 - \phi)^{M-2}
+        \phi e^t
+\end{aligned}
+$$
+
+　式を整理します。
+
+$$
+\frac{d^2 M(t)}{d t^2}
+    = M \phi e^t
+      (\phi e^t + 1 - \phi)^{M-1}
+      + M (M - 1) \phi^2 e^{2t}
+        (\phi e^t + 1 - \phi)^{M-2}
+$$
+
+　2階微分が求まりました。\
+\
+
+
+### 平均の計算
+
+　モーメント母関数の微分に$t = 0$を代入すると、平均が得られます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \frac{d M(0)}{d t}
+\\
+   &= M \phi e^0
+      (\phi e^0 + 1 - \phi)^{M-1}
+\\
+   &= M \phi
+\end{aligned}
+$$
+
+　0乗は$x^0 = 1$です。\
+\
+
+
+### 二乗の平均の計算
+
+　同様に、モーメント母関数の2階微分に$t = 0$を代入すると、二乗の平均が得られます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= \frac{d^2 M(0)}{d t^2}
+\\
+   &= M \phi e^0
+      (\phi e^0 + 1 - \phi)^{M-1}
+      + M \phi e^0
+        (M - 1)
+        (\phi e^0 + 1 - \phi)^{M-2}
+        \phi e^0
+\\
+   &= M \phi
+      + M (M - 1)
+        \phi^2
+\end{aligned}
+$$
+
+\ 
+
+
+### 分散の計算
+
+　分散は「$x$の2乗の平均」と「$x$の平均の2乗」の差で求められます。
+
+$$
+\begin{aligned}
+\mathbb{V}[x]
+   &= \mathbb{E}[x^2]
+      - (\mathbb{E}[x])^2
+\\
+   &= M (M - 1) \phi^2
+      + M \phi
+      - (M \phi)^2
+\end{aligned}
+$$
+
+　括弧を展開して、式を整理します。
+
+$$
+\begin{aligned}
+\mathbb{V}[x]
+   &= M^2 \phi^2 - M \phi^2
+      + M \phi
+      - M^2 \phi^2
+\\
+   &= M \phi (1 - \phi)
+\end{aligned}
+$$
+
+　二項分布の分散の計算式が得られました。\
+\
+
+
+## 特性関数から導出
+
+　特性関数を利用して、平均と分散の計算式を導出します。\
+
+　二項分布の特性関数は、次の式になります。詳しくは「特性関数の導出」を参照してください。
+
+$$
+\varphi(t)
+    = (\phi e^{it} + 1 - \phi)^M
+$$
+
+　ここで、$\phi, M$は二項分布のパラメータで成功確率と試行回数、$e$はネイピア数、$i$は虚数単位です。\
+
+　二項分布の平均と分散は、次の式で計算できます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= M \phi
+\\
+\mathbb{V}[x]
+   &= M \phi (1 - \phi)
+\end{aligned}
+$$
+
+　試行回数が$M = 1$のとき、ベルヌーイ分布の平均・分散と一致します。\
+
+　特性関数の微分を用いて、平均と分散の計算式を導出します。\
+\
+
+
+### 特性関数の1階微分の計算
+
+　特性関数を$t$に関して微分します。
+
+$$
+\frac{d \varphi(t)}{d t}
+    = \frac{d}{d t} \Bigl\{
+          (\phi e^{it} + 1 - \phi)^M
+      \Bigr\}
+$$
+
+　式全体を$g(f(x))$、丸括弧を$f(x)$として、合成関数の微分$\frac{d g(f(x))}{d x} = \frac{d g(x)}{d f(x)} \frac{d f(x)}{d x}$を行います。
+
+$$
+\begin{aligned}
+   &= M (\phi e^{it} + 1 - \phi)^{M-1}
+      \frac{d}{d t} \Bigl\{
+          \phi e^{it} + 1 - \phi
+      \Bigr\}
+\\
+   &= M (\phi e^{it} + 1 - \phi)^{M-1}
+      \phi i e^{it}
+\end{aligned}
+$$
+
+　指数関数の微分は$\frac{d e^x}{d x} = e^x$です。\
+　式を整理します。
+
+$$
+\frac{d \varphi(t)}{d t}
+    = i M \phi e^{it}
+      (\phi e^{it} + 1 - \phi)^{M-1}
+$$
+
+　1階微分が求まりました。\
+\
+
+
+### 特性関数の2階微分の計算
+
+　続いて、特性関数を$t$に関して2階微分します。1階微分$\frac{d \varphi(t)}{d t}$を更に微分します。
+
+$$
+\begin{aligned}
+\frac{d^2 \varphi(t)}{d t^2}
+   &= \frac{d}{d t} \frac{d \varphi(t)}{d t} 
+\\
+   &= \frac{d}{d t} \Bigl\{
+          i M \phi e^{it}
+          (\phi e^{it} + 1 - \phi)^{M-1}
+      \Bigr\}
+\end{aligned}
+$$
+
+　$t$に関する項を2つ含むので、積の微分$\frac{d f(x) g(x)}{d x} = \frac{d f(x)}{d x} g(x) + f(x) \frac{d g(x)}{d x}$を行います。
+
+$$
+\frac{d^2 \varphi(t)}{d t^2}
+    = \frac{d}{d t} \Bigl\{
+          i M \phi e^{it}
+      \Bigr\}
+      (\phi e^{it} + 1 - \phi)^{M-1}
+      + i M \phi e^{it}
+        \frac{d}{d t} \Bigl\{
+          (\phi e^{it} + 1 - \phi)^{M-1}
+        \Bigr\}
+$$
+
+　前の項は指数関数の微分、後の項は合成関数の微分になります。
+
+$$
+\begin{aligned}
+\frac{d^2 \varphi(t)}{d t^2}
+   &= i M \phi i e^{it}
+      (\phi e^{it} + 1 - \phi)^{M-1}
+      + i M \phi e^{it}
+        (M - 1)
+        (\phi e^{it} + 1 - \phi)^{M-2}
+        \frac{d}{d t} \Bigl\{
+          \phi e^{it} + 1 - \phi
+        \Bigr\}
+\\
+   &= - M \phi e^{it}
+        (\phi e^{it} + 1 - \phi)^{M-1}
+      + i M \phi e^{it}
+        (M - 1)
+        (\phi e^{it} + 1 - \phi)^{M-2}
+        \phi i e^{it}
+\end{aligned}
+$$
+
+　虚数単位の2乗は$i^2 = -1$です。\
+　式を整理します。
+
+$$
+\frac{d^2 \varphi(t)}{d t^2}
+    = -  M \phi e^{it}
+        (\phi e^{it} + 1 - \phi)^{M-1}
+      - M (M - 1) \phi^2 e^{2it}
+        (\phi e^{it} + 1 - \phi)^{M-2}
+$$
+
+　2階微分が求まりました。\
+\
+
+
+### 平均の計算
+
+　特性関数の微分に$t = 0$を代入し、$i$の逆数を掛けると、平均が得られます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \frac{1}{i}
+      \frac{d \varphi(0)}{d t}
+\\
+   &= \frac{1}{i}
+      i M (\phi e^{0} + 1 - \phi)^{M-1}
+      \phi e^{0}
+\\
+   &= M \phi
+\end{aligned}
+$$
+
+　0乗は$x^0 = 1$です。\
+\
+
+
+### 二乗の平均の計算
+
+　同様に、特性関数の2階微分に$t = 0$を代入し、$i$の2乗の逆数を掛けると、二乗の平均が得られます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= \frac{1}{i^2}
+      \frac{d^2 M(0)}{d t^2}
+\\
+   &= \frac{1}{-1} \Bigl\{
+          - M \phi e^{0}
+            (\phi e^{0} + 1 - \phi)^{M-1}
+          - M (M - 1) \phi^2 e^{0}
+            (\phi e^{0} + 1 - \phi)^{M-2}
+      \Bigr\}
+\\
+   &= M \phi
+      + M (M - 1)
+        \phi^2
+\end{aligned}
+$$
+
+\ 
+
+
+### 分散の計算
+
+　分散は「$x$の2乗の平均」と「$x$の平均の2乗」の差で求められます。
+
+$$
+\begin{aligned}
+\mathbb{V}[x]
+   &= \mathbb{E}[x^2]
+      - (\mathbb{E}[x])^2
+\\
+   &= M (M - 1) \phi^2
+      + M \phi
+      - (M \phi)^2
+\end{aligned}
+$$
+
+　括弧を展開して、式を整理します。
+
+$$
+\begin{aligned}
+\mathbb{V}[x]
+   &= M^2 \phi^2 - M \phi^2
+      + M \phi
+      - M^2 \phi^2
+\\
+   &= M \phi (1 - \phi)
+\end{aligned}
+$$
+
+　二項分布の分散の計算式が得られました。\
+\
+
+
+# Rで二項分布の計算
+
+　二項分布(Binomial Distribution)の確率と統計量を計算します。二項分布については「定義式の確認」を参照してください。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r}
+# 利用するパッケージ
+library(tidyverse)
+```
+
+\ 
 
 
 ## 確率の計算
@@ -240,7 +1057,10 @@ $$
 　二項分布に従う確率を計算する方法をいくつか確認します。\
 \
 
-　パラメータを設定します。
+
+### パラメータの設定
+
+　二項分布のパラメータ$\phi, M$を設定します。
 
 ```{r}
 # パラメータを指定
@@ -253,7 +1073,11 @@ M <- 10
 x <- 3
 ```
 
-　二項分布のパラメータ$0 \leq \phi \leq 1$、試行回数$M$、確率変数がとり得る値$x \in \{0, 1, \cdots, M\}$を指定します。設定した値に従う確率を計算します。\
+　成功確率$0 < \phi < 1$、試行回数$M$、確率変数がとり得る値$x \in \{0, 1, \ldots, M\}$を指定します。設定した値に従う確率を計算します。\
+\
+
+
+### スクラッチで計算
 
 　まずは、定義式から確率を計算します。
 
@@ -271,7 +1095,7 @@ $$
 C_{\mathrm{Bin}}
    &= \frac{M!}{(M - x)! x!}
 \\
-p(x | \phi)
+\mathrm{Bin}(x | M, \phi)
    &= C_{\mathrm{Bin}} \phi^x (1 - \phi)^{M-x}
 \end{aligned}
 $$
@@ -296,25 +1120,32 @@ $$
 \log C_{\mathrm{Bin}}
    &= \log M! - \log (M - x)! - \log x!
 \\
-\log p(x | \phi)
+\log \mathrm{Bin}(x | M, \phi)
    &= \log C_{\mathrm{Bin}}
       + x \log \phi
       + (N - x) \log (1 - \phi)
 \end{aligned}
 $$
 
-を計算します。計算結果の指数をとると確率が得られます。
+を計算します。\
+　対数をとったガンマ関数$\log \Gamma(x)$は、`lgamma()`で計算できます。\
+　計算結果の指数をとると確率が得られます。
 
 $$
-p(x | \phi)
+\mathrm{Bin}(x | M, \phi)
     = \exp \Bigr(
-          \log p(x | \phi)
+          \log \mathrm{Bin}(x | M, \phi)
       \Bigr)
 $$
 
 　指数と対数の性質より$\exp(\log x) = x$です。\
 
 　次は、関数を使って確率を計算します。\
+\
+
+
+### 二項分布の関数による計算
+
 　二項分布の確率関数`dbinom()`を使って計算します。
 
 ```{r}
@@ -335,6 +1166,10 @@ prob; ln_prob
 ```
 
 　計算結果の指数をとると確率が得られます。\
+\
+
+
+### 多項式分布の関数による計算
 
 　以降の計算は、変数とパラメータをベクトル形式にしておく必要があります。
 
@@ -373,7 +1208,7 @@ prob; ln_prob
 
 ## 統計量の計算
 
-　二項分布の平均と分散を計算します。\
+　二項分布の平均と分散を計算します。詳しくは「統計量の導出」を参照してください。\
 \
 
 　平均を計算します。
@@ -391,6 +1226,8 @@ $$
     = M \phi
 $$
 
+　$M, \phi$が大きいほど平均が大きくなります。\
+
 　分散を計算します。
 
 ```{r}
@@ -406,7 +1243,48 @@ $$
     = M \phi (1 - \phi)
 $$
 
-\ 
+　$M$が大きいまたは$\phi$が0.5に近いほど分散が大きくなります。\
+\
+
+　以上で、二項分布の確率と統計量の計算を確認できました。次は、グラフを作成します。\
+\
+
+
+# Rで二項分布の作図
+
+　二項分布(Binomial Distribution)のグラフを作成します。二項分布については「定義式の確認」を参照してください。\
+\
+
+
+## 定義式の確認
+
+　まずは、二項分布の定義式を確認します。\
+\
+
+　二項分布は、次の式で定義されます。
+
+$$
+\mathrm{Bin}(x | M, \phi)
+    = \frac{M!}{(M - x)! x!} \phi^x (1 - \phi)^{M-x}
+$$
+
+　ここで、$x$は成功回数、$M$は試行回数、$\phi$は成功確率($x$が1増える確率)です。\
+　確率変数の値$x$は、$x \in \{0, 1, \ldots, M\}$となります。パラメータ$\phi$は、$\phi \in (0, 1)$を満たす必要があります。また、失敗回数は$M - x$、失敗確率($x$が1増えない確率)は$1 - \phi$で表せます。\
+
+　二項分布の平均と分散は、次の式で計算できます。詳しくは「統計量の導出」を参照してください。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= M \phi
+\\
+\mathbb{V}[x]
+   &= M \phi (1 - \phi)
+\end{aligned}
+$$
+
+　これらの計算を行いグラフを作成します。\
+\
 
 
 ## グラフの作成
@@ -414,7 +1292,7 @@ $$
 　`ggplot2`パッケージを利用して二項分布のグラフを作成します。\
 \
 
-　二項分布の確率変数がとり得る値$x$ごとの確率を計算します。
+　二項分布のパラメータ$\phi, M$を設定します。
 
 ```{r}
 # パラメータを指定
@@ -422,10 +1300,22 @@ phi <- 0.3
 
 # 試行回数を指定
 M <- 10
+```
 
-# 作図用のxの値を作成
+　成功確率$0 < \phi < 1$、試行回数$M$を指定します。\
+
+　二項分布の確率変数がとり得る値を作成します。
+
+```{r}
+# 作図用のxの点を作成
 x_vals <- 0:M
+```
 
+　$x$がとり得る値$x \in \{0, 1, \ldots, M\}$を作成して、`x_vals`とします。\
+
+　$x$の値ごとに確率を計算します。
+
+```{r}
 # 二項分布の情報を格納
 prob_df <- tidyr::tibble(
   x = x_vals, # 確率変数
@@ -434,7 +1324,8 @@ prob_df <- tidyr::tibble(
 head(prob_df)
 ```
 
-　$x$がとり得る値`0:M`と、それに対応する確率をデータフレームに格納します。\
+　二項分布の確率は、`dbinom()`で計算できます。成功回数の引数`x`に`x_vals`、試行回数の引数`size`に`M`、成功確率の引数`prob`に`phi`を指定します。\
+　`x_vals`と、`x_vals`の各要素に対応する確率をデータフレームに格納します。\
 
 　二項分布のグラフを作成します。
 
@@ -442,25 +1333,104 @@ head(prob_df)
 # 二項分布のグラフを作成
 ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
   geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 分布
-#  geom_vline(xintercept = E_x, color = "orange", size = 1, linetype = "dashed") + # 平均
-#  geom_vline(xintercept = E_x - sqrt(V_x), color = "orange", size = 1, linetype = "dotted") + # 平均 - 標準偏差
-#  geom_vline(xintercept = E_x + sqrt(V_x), color = "orange", size = 1, linetype = "dotted") + # 平均 + 標準偏差
   scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
   labs(title = "Binomial Distribution", 
        subtitle = paste0("phi=", phi, ", M=", M)) # ラベル
 ```
 
 　二項分布のグラフを描画できました。\
+
+　この分布に平均と標準偏差の情報を重ねて表示します。
+
+```{r}
+# 補助線用の統計量を計算
+E_x <- M * phi
+V_x <- M * phi * (1 - phi)
+s_x <- sqrt(V_x)
+
+# 二項分布のグラフを作成
+ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
+  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 分布
+  geom_vline(xintercept = E_x, color = "orange", size = 1, linetype = "dashed") + # 平均
+  geom_vline(xintercept = E_x - s_x, color = "orange", size = 1, linetype = "dotted") + # 平均 - 標準偏差
+  geom_vline(xintercept = E_x + s_x, color = "orange", size = 1, linetype = "dotted") + # 平均 + 標準偏差
+  scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
+  labs(title = "Binomial Distribution", 
+       subtitle = paste0("phi=", phi, ", M=", M)) # ラベル
+```
+
+　平均(破線)となる確率が最大なのを確認できます。また、平均を中心に標準偏差の範囲を点線で示しています。\
 \
 
 
-## パラメータと分布の形状の関係
+## パラメータと分布の関係
 
-　続いて、パラメータ$\phi$の値を少しずつ変更して、分布の変化をアニメーションで確認します。
+　パラメータと分布の形状の関係を可視化します。\
+\
+
+
+### 並べて可視化
+
+　複数のパラメータを指定してグラフを比較します。\
+
+　複数個の$\phi$の値を指定して、分布を計算します。
+
+```{r}
+# パラメータを指定
+phi_vals <- c(0.1, 0.33, 0.5, 0.8, 0.9)
+
+# 試行回数を指定
+M <- 100
+
+# 作図用のxの点を作成
+x_vals <- 0:M
+
+# phiの値ごとに分布を計算
+res_prob_df <- tidyr::tibble()
+for(phi in phi_vals) {
+  # 二項分布の情報を格納
+  tmp_prob_df <- tidyr::tibble(
+    x = x_vals, 
+    probability = dbinom(x = x_vals, size = M, prob = phi), 
+    parameter = paste0("phi=", phi, ", M=", M) %>% 
+      as.factor() # 作図用のラベル
+  )
+  
+  # 結果を結合
+  res_prob_df <- rbind(res_prob_df, tmp_prob_df)
+}
+head(res_prob_df)
+```
+
+　`for()`ループを使って、`phi_vals`の値を順番に取り出して確率を計算して、`res_prob_df`に追加していきます。\
+
+　二項分布のグラフを作成します。
+
+```{r}
+# 二項分布のグラフを作成
+ggplot(data = res_prob_df, mapping = aes(x = x, y = probability, fill = parameter, color = parameter)) + # データ
+  geom_bar(stat = "identity", position = "dodge") + # 棒グラフ
+  labs(title = "Binomial Distribution") # タイトル
+```
+
+　成功確率$\phi$が大きいと、成功回数$x$が大きいほど確率が高く(山が大きく)なるのが分かります。このことは、平均の計算式からも分かります。\
+　また分散の計算式からも分かるように、$\phi = 0.5$のとき分散が最大になり、分布の裾が広く確率の最大値が小さく(なだらかな山に)なります。$\phi$と$1 - \phi$の差が大きいほど分散が小さくなり、裾が狭く確率の最大値が大きく(高い山に)なります。\
+\
+
+
+### アニメーションによる可視化
+
+　続いて、$M$を固定し$\phi$の値を少しずつ変更して、分布の変化をアニメーションで確認します。
 
 ```{r}
 # 作図用のphiの値を作成
 phi_vals <- seq(from = 0, to = 1, by = 0.01)
+
+# 試行回数を指定
+M <- 10
+
+# 作図用のxの点を作成
+x_vals <- 0:M
 
 # phiの値ごとに分布を計算
 anime_prob_df <- tidyr::tibble()
@@ -480,7 +1450,7 @@ head(anime_prob_df)
 ```
 
 　$\phi$がとり得る値を作成して`phi_vals`とします。\
-　`for()`ループを使って`phi_vals`の値ごとに確率を計算して、`anime_prob_df`に追加していきます。\
+　`for()`ループを使って、`phi_vals`の値を順番に取り出して確率を計算して、`anime_prob_df`に追加していきます。\
 
 　gif画像を作成します。
 
@@ -497,10 +1467,10 @@ anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = x, y = probab
 gganimate::animate(anime_prob_graph, nframes = length(phi_vals), fps = 100)
 ```
 
-　パラメータ$\phi$の値が大きくなるのに従って、成功回数$x$が大きいほど確率が高くなる(山が右に移動する)のを確認できます。\
+　パラメータ$\phi$の値が大きくなるに従って、成功回数$x$が大きいほど確率が高くなる(山が右に移動する)のを確認できます。\
 \
 
-　続いて、$\phi$を固定して$M$を変更してみます。
+　次は、$\phi$を固定し$M$を変更してみます。
 
 ```{r}
 # パラメータを指定
@@ -512,7 +1482,7 @@ M_max <- 100
 # Mの値ごとに確率を計算
 anime_prob_df <- tidyr::tibble()
 for(M in 1:M_max) {
-  # 作図用のxの値を作成
+  # 作図用のxの点を作成
   x_vals <- 0:M
   
   # 二項分布の情報を格納
@@ -529,7 +1499,8 @@ for(M in 1:M_max) {
 head(anime_prob_df)
 ```
 
-　`for()`ループを使って`1:M_max`の値ごとに確率を計算して、`anime_prob_df`に追加していきます。\
+　試行回数$M$の最大値を`M_max`とします。\
+　`for()`ループを使って、`1`から`M_max`までの整数を`M`として確率を計算して、`anime_prob_df`に追加していきます。\
 
 　gif画像を作成します。
 
@@ -546,16 +1517,33 @@ anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = x, y = prob))
 gganimate::animate(anime_prob_graph, nframes = M_max, fps = 100)
 ```
 
-　試行回数$M$が増えるのに従って、成功回数$x$が大きいほど確率が高くなる(山が右に移動する)のを確認できます。ただし、$x$がとり得る値の範囲`x_vals`も広がっていくため、`x_vals`全体における山の位置は変わりません。\
+　試行回数$M$が増えるに従って、成功回数$x$が大きいほど確率が高くなる(山が右に移動する)のを確認できます。ただし、$x$がとり得る値の範囲`x_vals`も広がっていくため、`x_vals`全体における相対的な山の位置は変わりません。\
 \
 
 
-## 乱数の生成
+# Rで二項分布の乱数生成
 
-　二項分布の乱数を生成してヒストグラムを確認します。\
+　二項分布(Binomial Distribution)の乱数を生成します。二項分布については「定義式の確認」を参照してください。\
 \
 
-　パラメータを指定して、二項分布に従う乱数を生成します。
+　利用するパッケージを読み込みます。
+
+```{r}
+# 利用するパッケージ
+library(tidyverse)
+library(gganimate)
+```
+
+　分布の変化をアニメーション(gif画像)で確認するのに`gganimate`パッケージを利用します。不要であれば省略してください。\
+\
+
+
+## サンプリング
+
+　二項分布の乱数を生成します。\
+\
+
+　二項分布のパラメータ$\phi, M$とデータ数$N$を設定します。
 
 ```{r}
 # パラメータを指定
@@ -566,13 +1554,26 @@ M <- 10
 
 # データ数を指定
 N <- 1000
+```
 
+　成功確率$0 < \phi < 1$、試行回数$M$とデータ数$N$を指定します。\
+
+　二項分布に従う乱数を生成します。
+
+```{r}
 # 二項分布に従う乱数を生成
 x_n <- rbinom(n = N, size = M, prob = phi)
 x_n[1:5]
 ```
 
-　二項分布の乱数生成関数`rbinom()`のデータ数(サンプルサイズ)の引数`n`に`N`、試行回数の引数`size `に`1`、成功確率の引数`prob`に`phi`を指定します。\
+　二項分布の乱数は`rbinom()`で生成できます。データ数(サンプルサイズ)の引数`n`に`N`、試行回数の引数`size `に`M`、成功確率の引数`prob`に`phi`を指定します。\
+\
+
+
+## 乱数の可視化
+
+　サンプルのヒストグラムを作成します。\
+\
 
 　サンプルの値を集計します。
 
@@ -582,17 +1583,17 @@ freq_df <- tidyr::tibble(x = x_n) %>% # 乱数を格納
   dplyr::count(x, name = "frequency") %>% # 頻度を測定
   dplyr::right_join(tidyr::tibble(x = 0:M), by = "x") %>% # 確率変数列を追加
   dplyr::mutate(frequency = tidyr::replace_na(frequency, 0)) %>% # サンプルにない場合のNAを0に置換
-  dplyr::mutate(proportion = frequency / N) # 構成比を計算
+  dplyr::mutate(proportion = frequency / N) # 相対度数を計算
 head(freq_df)
 ```
 
 　サンプリングした値`x_n`をデータフレームに格納します。\
 　`count()`で重複する値の数をカウントします。\
-　サンプル`x_n`にない値はデータフレームに保存されないため、`0`から`M`の値を持つデータフレームを作成し、`right_join()`で結合します。\
+　サンプル`x_n`にない値はデータフレームに含まれないため、`0`から`M`の値を持つデータフレームを作成し、`right_join()`で結合します。\
 　サンプルにない場合は頻度列`frequency`が欠損値`NA`になるので、`replace_na()`で`0`に置換します。\
-　得られた頻度`frequency`をデータ数`N`で割り、各値の構成比を計算して`proportion`列とします。\
+　得られた頻度`frequency`をデータ数`N`で割り、各値の相対度数を計算して`proportion`列とします。\
 
-　ヒストグラムを作成します。
+　サンプルのヒストグラムを作成します。
 
 ```{r}
 # サンプルのヒストグラムを作成
@@ -606,13 +1607,22 @@ ggplot(data = freq_df, mapping = aes(x = x, y = frequency)) + # データ
 
 \ 
 
-　構成比を分布と重ねて描画します。
+　相対度数を分布と重ねて描画します。
 
 ```{r}
-# サンプルの構成比を作図
+# 作図用のxの点を作成
+x_vals <- 0:M
+
+# 二項分布の情報を格納
+prob_df <- tidyr::tibble(
+  x = x_vals, # 確率変数
+  probability = dbinom(x = x_vals, size = M, prob = phi) # 確率
+)
+
+# サンプルの相対度数を作図
 ggplot() + 
   geom_bar(data = freq_df, mapping = aes(x = x, y = proportion), 
-           stat = "identity", position = "dodge", fill = "#00A968") + # 構成比
+           stat = "identity", position = "dodge", fill = "#00A968") + # 相対度数
   geom_bar(data = prob_df, mapping = aes(x = x, y = probability), 
            stat = "identity", position = "dodge", alpha = 0, color = "darkgreen", linetype = "dashed") + # 真の分布
   scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
@@ -621,30 +1631,40 @@ ggplot() +
                          ", N=", N, "=(", paste0(freq_df[["frequency"]], collapse = ", "), ")")) # ラベル
 ```
 
-　データ数が十分に増えると分布のグラフに形が近づきます。\
+　二項分布のグラフの作成については「作図」を参照してください。\
+　データ数が十分に増えると、ヒストグラムの形が分布の形に近付きます。\
 \
 
-　サンプルサイズとヒストグラムの変化をアニメーションで確認します。
+
+## 推移の可視化
+
+　サンプルサイズとヒストグラムの変化をアニメーションで確認します。\
+\
+
+
+### ・1データずつアニメーションで可視化{-}
+
+　1データずつサンプルを増やしてヒストグラムの変化を確認します。
 
 ```{r}
-# データ数を指定
-N <- 100
+# データ数(フレーム数)を指定
+N_frame <- 100
 
 # 乱数を1つずつ生成
-x_n <- rep(NA, times = N)
+#x_n <- rep(NA, times = N_frame)
 anime_freq_df <- tidyr::tibble()
 anime_data_df <- tidyr::tibble()
 anime_prob_df <- tidyr::tibble()
-for(n in 1:N) {
+for(n in 1:N_frame) {
   # 二項分布に従う乱数を生成
-  x_n[n] <- rbinom(n = 1, size = M, prob = phi)
+  #x_n[n] <- rbinom(n = 1, size = M, prob = phi)
   
   # n個の乱数を集計して格納
   tmp_freq_df <- tidyr::tibble(x = x_n[1:n]) %>% # 乱数を格納
     dplyr::count(x, name = "frequency") %>% # 頻度を測定
     dplyr::right_join(tidyr::tibble(x = 0:M), by = "x") %>% # 確率変数列を追加
     dplyr::mutate(frequency = tidyr::replace_na(frequency, 0)) %>% # サンプルにない場合のNAを0に置換
-    dplyr::mutate(proportion = frequency / n) # 構成比を計算
+    dplyr::mutate(proportion = frequency / n) # 相対度数を計算
   
   # ラベル用のテキストを作成
   label_text <- paste0(
@@ -673,7 +1693,8 @@ for(n in 1:N) {
 head(anime_freq_df)
 ```
 
-　乱数を1つず生成して、結果を`anime_***_df`に追加していきます。
+　`for()`ループを使って、「`x_n`から1データずつ取り出す」または「1データずつ生成」して、結果を`anime_***_df`に追加していきます。\
+　フレームごとに分布の情報`prob_df`を複製し、対応する`parameter`列を追加する必要があります。\
 
 　ヒストグラムのアニメーションを作成します。
 
@@ -695,13 +1716,13 @@ gganimate::animate(anime_freq_graph, nframes = N, fps = 100)
 
 \ 
 
-　構成比のアニメーションを作成します。
+　相対度数のアニメーションを作成します。
 
 ```{r, eval=FALSE}
-# アニメーション用のサンプルの構成比を作図
+# アニメーション用のサンプルの相対度数を作図
 anime_prop_graph <- ggplot() + 
   geom_bar(data = anime_freq_df, mapping = aes(x = x, y = proportion), 
-           stat = "identity", position = "dodge", fill = "#00A968") + # 構成比
+           stat = "identity", position = "dodge", fill = "#00A968") + # 相対度数
   geom_bar(data = anime_prob_df, mapping = aes(x = x, y = probability), 
            stat = "identity", position = "dodge", alpha = 0, color = "darkgreen", linetype = "dashed") + # 真の分布
   geom_point(data = anime_data_df, mapping = aes(x = x, y = 0), 
@@ -715,8 +1736,103 @@ anime_prop_graph <- ggplot() +
 gganimate::animate(anime_prop_graph, nframes = N, fps = 100)
 ```
 
-　サンプルが増えるに従って、真の分布に近付いていくのを確認できます。\
+　サンプルが増えるに従って、ヒストグラムが元の分布に近付くのを確認できます。\
+\
+
+
+### ・全データをアニメーションで可視化{-}
+
+　続いて、フレーム数を指定して、フレームごとに均等に分けたサンプルを増やしてヒストグラムの変化をアニメーションで確認します。
+
+```{r}
+# フレーム数を指定
+frame_num <- 100
+
+# 1フレーム当たりのデータ数を計算
+n_per_frame <- N %/% frame_num
+
+# 乱数を1つずつ生成
+anime_freq_df <- tidyr::tibble()
+anime_prob_df <- tidyr::tibble()
+for(n in 1:N_frame) {
+  # n個の乱数を集計して格納
+  tmp_freq_df <- tidyr::tibble(x = x_n[1:(n*n_per_frame)]) %>% # 乱数を格納
+    dplyr::count(x, name = "frequency") %>% # 頻度を測定
+    dplyr::right_join(tidyr::tibble(x = 0:M), by = "x") %>% # 確率変数列を追加
+    dplyr::mutate(frequency = tidyr::replace_na(frequency, 0)) %>% # サンプルにない場合のNAを0に置換
+    dplyr::mutate(proportion = frequency / (n*n_per_frame)) # 相対度数を計算
+  
+  # ラベル用のテキストを作成
+  label_text <- paste0(
+    "phi=", phi, ", N=", n*n_per_frame, "=(", paste0(tmp_freq_df[["frequency"]], collapse = ", "), ")"
+  )
+  
+  # フレーム切替用のラベルを付与
+  tmp_freq_df <- tmp_freq_df %>% 
+    dplyr::mutate(parameter = as.factor(label_text))
+  
+  # n回目のラベルを付与
+  tmp_prob_df <- prob_df %>% 
+    dplyr::mutate(parameter = as.factor(label_text))
+  
+  # 結果を結合
+  anime_freq_df <- rbind(anime_freq_df, tmp_freq_df)
+  anime_prob_df <- rbind(anime_prob_df, tmp_prob_df)
+}
+head(anime_freq_df)
+```
+
+　フレーム数`frame_num`を指定して、1フレーム当たりのデータ数`n_per_frame`を計算します。`%/%`は、整数商(割り算の整数部分)を計算します。\
+　`n*n_per_frame`個ずつサンプルを取り出して、集計結果を`anime_freq_df`に追加していきます。\
+
+　ヒストグラムのアニメーションを作成します。
+
+```{r eval=FALSE}
+# アニメーション用のサンプルのヒストグラムを作成
+anime_freq_graph <- ggplot() + 
+  geom_bar(data = anime_freq_df, mapping = aes(x = x, y = frequency), 
+           stat = "identity", position = "dodge", fill = "#00A968") + # ヒストグラム
+  scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Binomial Distribution", 
+       subtitle = "{current_frame}") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_freq_graph, nframes = N_frame, fps = 100)
+```
+
+\ 
+
+　相対度数のアニメーションを作成します。
+
+```{r eval=FALSE}
+# アニメーション用のサンプルの相対度数を作図
+anime_prop_graph <- ggplot() + 
+  geom_bar(data = anime_freq_df, mapping = aes(x = x, y = proportion), 
+           stat = "identity", position = "dodge", fill = "#00A968") + # 相対度数
+  geom_bar(data = anime_prob_df, mapping = aes(x = x, y = probability), 
+           stat = "identity", position = "dodge", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
+  scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Binomial Distribution", 
+       subtitle = "{current_frame}") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_prop_graph, nframes = N_frame, fps = 100)
+```
+
+\ 
 
 　以上で、二項分布を確認できました。\
 \
+
+
+# 参考書籍{-}
+
+
+- 岩田具治『トピックモデル』(機械学習プロフェッショナルシリーズ)講談社,2015年.
+- 須山敦志『ベイズ推論による機械学習入門』(機械学習スタートアップシリーズ)杉山将監修,講談社,2017年.
+- C.M.ビショップ著,元田 浩・他訳『パターン認識と機械学習 上』丸善出版,2012年.
+- 星野満博・西崎雅仁『数理統計の探求』晃洋書房,2012年.
+
 

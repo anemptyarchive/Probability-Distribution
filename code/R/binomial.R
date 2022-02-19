@@ -77,7 +77,7 @@ phi <- 0.3
 # 試行回数を指定
 M <- 10
 
-# 作図用のxの値を作成
+# 作図用のxの点を作成
 x_vals <- 0:M
 
 # 二項分布の情報を格納
@@ -118,7 +118,7 @@ phi_vals <- c(0.1, 0.33, 0.5, 0.8, 0.9)
 # 試行回数を指定
 M <- 100
 
-# 作図用のxの値を作成
+# 作図用のxの点を作成
 x_vals <- 0:M
 
 # phiの値ごとに分布を計算
@@ -139,9 +139,6 @@ for(phi in phi_vals) {
 # 二項分布のグラフを作成
 ggplot(data = res_prob_df, mapping = aes(x = x, y = probability, fill = parameter, color = parameter)) + # データ
   geom_bar(stat = "identity", position = "dodge") + # 棒グラフ
-  scale_fill_manual(values = c("#FFC0CB", "#FF0000", "#FFFF00", "#EE82EE", "#7FFF00")) + # 塗りつぶし色(不必要)
-  scale_color_manual(values = c("#FFC0CB", "#FF0000", "#FFFF00", "#EE82EE", "#7FFF00")) + # 枠の色(不必要)
-  theme_dark() + # 背景色(不必要)
   labs(title = "Binomial Distribution") # タイトル
 
 
@@ -155,7 +152,7 @@ phi_vals <- seq(from = 0, to = 1, by = 0.01)
 # 試行回数を指定
 M <- 10
 
-# 作図用のxの値を作成
+# 作図用のxの点を作成
 x_vals <- 0:M
 
 # phiの値ごとに分布を計算
@@ -225,7 +222,7 @@ gganimate::animate(anime_prob_graph, nframes = M_max, fps = 100)
 
 # 乱数の生成 -------------------------------------------------------------------
 
-### ・乱数の可視化 -----
+### ・サンプリング -----
 
 # パラメータを指定
 phi <- 0.3
@@ -233,18 +230,32 @@ phi <- 0.3
 # 試行回数を指定
 M <- 10
 
+
+# 作図用のxの点を作成
+x_vals <- 0:M
+
+# 二項分布の情報を格納
+prob_df <- tidyr::tibble(
+  x = x_vals, # 確率変数
+  probability = dbinom(x = x_vals, size = M, prob = phi) # 確率
+)
+
+
 # データ数を指定
 N <- 1000
 
 # 二項分布に従う乱数を生成
 x_n <- rbinom(n = N, size = M, prob = phi)
 
+
+### ・乱数の可視化 -----
+
 # 乱数を集計して格納
 freq_df <- tidyr::tibble(x = x_n) %>% # 乱数を格納
   dplyr::count(x, name = "frequency") %>% # 頻度を測定
   dplyr::right_join(tidyr::tibble(x = 0:M), by = "x") %>% # 確率変数列を追加
   dplyr::mutate(frequency = tidyr::replace_na(frequency, 0)) %>% # サンプルにない場合のNAを0に置換
-  dplyr::mutate(proportion = frequency / N) # 構成比を計算
+  dplyr::mutate(proportion = frequency / N) # 相対度数を計算
 
 # サンプルのヒストグラムを作成
 ggplot(data = freq_df, mapping = aes(x = x, y = frequency)) + # データ
@@ -254,44 +265,38 @@ ggplot(data = freq_df, mapping = aes(x = x, y = frequency)) + # データ
        subtitle = paste0("phi=", phi, ", M=", M, 
                          ", N=", N, "=(", paste0(freq_df[["frequency"]], collapse = ", "), ")")) # ラベル
 
-# 二項分布の情報を格納
-prob_df <- tidyr::tibble(
-  x = x_vals, # 確率変数
-  probability = dbinom(x = x_vals, size = M, prob = phi) # 確率
-)
-
-# サンプルの構成比を作図
+# サンプルの相対度数を作図
 ggplot() + 
   geom_bar(data = freq_df, mapping = aes(x = x, y = proportion), 
-           stat = "identity", position = "dodge", fill = "#00A968") + # 構成比
+           stat = "identity", position = "dodge", fill = "#00A968") + # 相対度数
   geom_bar(data = prob_df, mapping = aes(x = x, y = probability), 
-           stat = "identity", position = "dodge", alpha = 0, color = "darkgreen", linetype = "dashed") + # 真の分布
+           stat = "identity", position = "dodge", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
   scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
   labs(title = "Binomial Distribution", 
        subtitle = paste0("phi=", phi, ", M=", M, 
                          ", N=", N, "=(", paste0(freq_df[["frequency"]], collapse = ", "), ")")) # ラベル
 
 
-### ・アニメーションによる可視化 -----
+### ・1データずつアニメーションで可視化 -----
 
-# データ数を指定
-N <- 100
+# フレーム数(データ数)を指定
+N_frame <- 100
 
 # 乱数を1つずつ生成
-x_n <- rep(NA, times = N)
+#x_n <- rep(NA, times = N_frame)
 anime_freq_df <- tidyr::tibble()
 anime_data_df <- tidyr::tibble()
 anime_prob_df <- tidyr::tibble()
-for(n in 1:N) {
+for(n in 1:N_frame) {
   # 二項分布に従う乱数を生成
-  x_n[n] <- rbinom(n = 1, size = M, prob = phi)
+  #x_n[n] <- rbinom(n = 1, size = M, prob = phi)
   
   # n個の乱数を集計して格納
   tmp_freq_df <- tidyr::tibble(x = x_n[1:n]) %>% # 乱数を格納
     dplyr::count(x, name = "frequency") %>% # 頻度を測定
     dplyr::right_join(tidyr::tibble(x = 0:M), by = "x") %>% # 確率変数列を追加
     dplyr::mutate(frequency = tidyr::replace_na(frequency, 0)) %>% # サンプルにない場合のNAを0に置換
-    dplyr::mutate(proportion = frequency / n) # 構成比を計算
+    dplyr::mutate(proportion = frequency / n) # 相対度数を計算
   
   # ラベル用のテキストを作成
   label_text <- paste0(
@@ -331,15 +336,15 @@ anime_freq_graph <- ggplot() +
        subtitle = "{current_frame}") # ラベル
 
 # gif画像を作成
-gganimate::animate(anime_freq_graph, nframes = N, fps = 100)
+gganimate::animate(anime_freq_graph, nframes = N_frame, fps = 100)
 
 
-# アニメーション用のサンプルの構成比を作図
+# アニメーション用のサンプルの相対度数を作図
 anime_prop_graph <- ggplot() + 
   geom_bar(data = anime_freq_df, mapping = aes(x = x, y = proportion), 
-           stat = "identity", position = "dodge", fill = "#00A968") + # 構成比
+           stat = "identity", position = "dodge", fill = "#00A968") + # 相対度数
   geom_bar(data = anime_prob_df, mapping = aes(x = x, y = probability), 
-           stat = "identity", position = "dodge", alpha = 0, color = "darkgreen", linetype = "dashed") + # 真の分布
+           stat = "identity", position = "dodge", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
   geom_point(data = anime_data_df, mapping = aes(x = x, y = 0), 
              color = "orange", size= 5) + # サンプル
   scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
@@ -348,6 +353,72 @@ anime_prop_graph <- ggplot() +
        subtitle = "{current_frame}") # ラベル
 
 # gif画像を作成
-gganimate::animate(anime_prop_graph, nframes = N, fps = 100)
+gganimate::animate(anime_prop_graph, nframes = N_frame, fps = 100)
+
+
+### ・全データをアニメーションで可視化 -----
+
+# フレーム数を指定
+frame_num <- 100
+
+# 1フレーム当たりのデータ数を計算
+n_per_frame <- N %/% frame_num
+
+# 乱数を1つずつ生成
+anime_freq_df <- tidyr::tibble()
+anime_prob_df <- tidyr::tibble()
+for(n in 1:N_frame) {
+  # n個の乱数を集計して格納
+  tmp_freq_df <- tidyr::tibble(x = x_n[1:(n*n_per_frame)]) %>% # 乱数を格納
+    dplyr::count(x, name = "frequency") %>% # 頻度を測定
+    dplyr::right_join(tidyr::tibble(x = 0:M), by = "x") %>% # 確率変数列を追加
+    dplyr::mutate(frequency = tidyr::replace_na(frequency, 0)) %>% # サンプルにない場合のNAを0に置換
+    dplyr::mutate(proportion = frequency / (n*n_per_frame)) # 相対度数を計算
+  
+  # ラベル用のテキストを作成
+  label_text <- paste0(
+    "phi=", phi, ", N=", n*n_per_frame, "=(", paste0(tmp_freq_df[["frequency"]], collapse = ", "), ")"
+  )
+  
+  # フレーム切替用のラベルを付与
+  tmp_freq_df <- tmp_freq_df %>% 
+    dplyr::mutate(parameter = as.factor(label_text))
+  
+  # n回目のラベルを付与
+  tmp_prob_df <- prob_df %>% 
+    dplyr::mutate(parameter = as.factor(label_text))
+  
+  # 結果を結合
+  anime_freq_df <- rbind(anime_freq_df, tmp_freq_df)
+  anime_prob_df <- rbind(anime_prob_df, tmp_prob_df)
+}
+
+
+# アニメーション用のサンプルのヒストグラムを作成
+anime_freq_graph <- ggplot() + 
+  geom_bar(data = anime_freq_df, mapping = aes(x = x, y = frequency), 
+           stat = "identity", position = "dodge", fill = "#00A968") + # ヒストグラム
+  scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Binomial Distribution", 
+       subtitle = "{current_frame}") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_freq_graph, nframes = N_frame, fps = 100)
+
+
+# アニメーション用のサンプルの相対度数を作図
+anime_prop_graph <- ggplot() + 
+  geom_bar(data = anime_freq_df, mapping = aes(x = x, y = proportion), 
+           stat = "identity", position = "dodge", fill = "#00A968") + # 相対度数
+  geom_bar(data = anime_prob_df, mapping = aes(x = x, y = probability), 
+           stat = "identity", position = "dodge", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
+  scale_x_continuous(breaks = 0:M, labels = 0:M) + # x軸目盛
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Binomial Distribution", 
+       subtitle = "{current_frame}") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_prop_graph, nframes = N_frame, fps = 100)
 
 
