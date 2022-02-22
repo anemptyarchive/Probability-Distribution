@@ -2,7 +2,7 @@
 title: |
   ポアソン分布
 author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
-date: "`r paste('2022/01/25', '2022/01/26', sep = ' - ')`"
+date: "`r paste('2022/01/25', '2022/02/21', sep = ' - ')`"
 output:
   pdf_document:
     latex_engine: xelatex
@@ -37,33 +37,34 @@ Sys.time()
 \newpage
 
 
-# ポアソン分布の定義式
+# ポアソン分布の定義式の確認
 
-# ポアソン分布の統計量の導出
-
-# ポアソン分布の作図
-
-　ポアソン分布(Poisson Distribution)の計算と作図を行います。\
-\
-
-　利用するパッケージを読み込みます。
-
-```{r}
-# 利用するパッケージ
-library(tidyverse)
-library(gganimate)
-```
-
-　分布の変化をアニメーション(gif画像)で確認するのに`gganimate`パッケージを利用します。不要であれば省略してください。\
+　ポアソン分布(Poisson Distribution)の定義を確認します。\
 \
 
 
-## 定義式の確認
+## 定義式
 
-　まずは、ポアソン分布の定義式を確認します。\
+　稀に起こる(発生確率が低い)事象が、一定期間に発生する回数の確率分布をポアソン分布と言います。\
 \
 
-　ポアソン分布は、次の式で定義されます。
+　単位時間における生起回数を$x$で表します。$x$は、0以上の整数になります。$x$が非負の整数をとることを
+
+$$
+x \in \{0, 1, 2, \ldots\}
+$$
+
+で表します。\
+
+　単位時間における生起回数の期待値を$\lambda$で表すことにします。$\lambda$は、0より大きい実数
+
+$$
+\lambda > 0
+$$
+
+を満たす必要があります。\
+
+　ポアソン分布は、パラメータ$\lambda$を用いて次の式で定義されます。
 
 $$
 \mathrm{Poi}(x | \lambda)
@@ -71,10 +72,9 @@ $$
       e^{-\lambda}
 $$
 
-　ここで、$x$は単位時間における事象の発生回数、$\lambda$は発生回数の期待値です。\
-　確率変数の値$x$は0以上の整数となります。パラメータ$\lambda$は、$\lambda > 0$を満たす必要があります。\
+　$x!$は$x$の階乗、$e$はネイピア数です。\
 
-　この式の対数をとると、次の式になります。
+　ポアソン分布の対数をとると
 
 $$
 \log \mathrm{Poi}(x | \lambda)
@@ -83,7 +83,19 @@ $$
       - \lambda
 $$
 
-　ポアソン分布の平均と分散は、どちらもパラメータ$\lambda$になります。
+となります。対数の性質より$\log x^a = a \log x$、$\log \frac{x}{y} = \log x - \log y$です。\
+\
+
+
+## 他の分布との関係
+
+　二項分布との関係性をいつか書きたい。\
+\
+
+
+## 統計量の計算式
+
+　ポアソン分布の平均と分散は、どちらも$\lambda$になります。詳しくは「統計量の導出」を参照してください。
 
 $$
 \begin{aligned}
@@ -98,12 +110,916 @@ $$
 \ 
 
 
+# ポアソン分布の定義式の導出
+
+　ポアソン分布(Poisson Distribution)の定義式を導出します。\
+\
+
+
+# ポアソン分布のモーメント母関数の導出
+
+　ポアソン分布(Poisson Distribution)のモーメント母関数(積率母関数)を導出します。ポアソン分布については「定義式の確認」を参照してください。\
+\
+
+　モーメント母関数は、$e^{tx}$の期待値として定義されます。$e$はネイピア数です。
+
+$$
+\begin{aligned}
+M(t)
+   &= \mathbb{E}[e^{tx}]
+\\
+   &= \sum_{x=0}^{\infty}
+          e^{tx}
+          \mathrm{Poi}(x | \lambda)
+\\
+   &= \sum_{x=0}^{\infty}
+          e^{tx}
+          \frac{\lambda^x}{x!}
+          e^{-\lambda}
+\end{aligned}
+$$
+
+　ここで、$\mathrm{Poi}(x | \lambda)$はポアソン分布を表し、$x$は単位時間における事象の発生回数、$\lambda$は発生回数の期待値です。\
+　$e^{tx} = (e^t)^x$と$\lambda^x$をまとめます。
+
+$$
+M(t)
+    = e^{-\lambda}
+      \sum_{x=0}^{\infty}
+          \frac{(e^t \lambda)^x}{x!}
+$$
+
+　指数関数のマクローリン展開$e^x = \sum_{x=0}^{\infty} \frac{x^n}{x!}$の形をしているので、右辺から左辺の式に変形します。
+
+$$
+\begin{aligned}
+M(t)
+   &= e^{-\lambda}
+      e^{e^t \lambda}
+\\
+   &= e^{e^t \lambda-\lambda}
+\\
+   &= e^{\lambda(e^t-1)}
+\end{aligned}
+$$
+
+　モーメント母関数の式が得られました。\
+
+　指数部分が分かりやすいように、指数関数を$e^x = \exp(x)$で表現すると
+
+$$
+\begin{aligned}
+M(t)
+   &= \exp(- \lambda)
+      \exp \Bigl(
+          \exp(t) \lambda
+      \Bigr)
+\\
+   &= \exp \Bigl(
+          \exp(t) \lambda
+          - \lambda
+      \Bigr)
+\\
+   &= \exp \Bigl(
+          \lambda
+          (\exp(t) - 1)
+      \Bigr)
+\end{aligned}
+$$
+
+となります。\
+\
+
+
+# ポアソン分布の特性関数の導出
+
+　ポアソン分布(Poisson Distribution)の特性関数を導出します。ポアソン分布については「定義式の確認」を参照してください。\
+\
+
+　特性関数は、$e^{itx}$の期待値として定義されます。$e$はネイピア数、$i$は虚数単位です。
+
+$$
+\begin{aligned}
+\varphi(t)
+   &= \mathbb{E}[e^{itx}]
+\\
+   &= \sum_{x=0}^{\infty}
+          e^{itx}
+          \mathrm{Poi}(x | \lambda)
+\\
+   &= \sum_{x=0}^{\infty}
+          e^{itx}
+          \frac{\lambda^x}{x!}
+          e^{-\lambda}
+\end{aligned}
+$$
+
+　ここで、$\mathrm{Poi}(x | \lambda)$はポアソン分布を表し、$x$は単位時間における事象の発生回数、$\lambda$は発生回数の期待値です。\
+　$e^{itx} = (e^{it})^x$と$\lambda^x$をまとめます。
+
+$$
+\varphi(t)
+    = e^{-\lambda}
+      \sum_{x=0}^{\infty}
+          \frac{(e^{it} \lambda)^x}{x!}
+$$
+
+　指数関数のマクローリン展開$e^x = \sum_{x=0}^{\infty} \frac{x^n}{x!}$の形をしているので、右辺から左辺の式に変形します。
+
+$$
+\begin{aligned}
+\varphi(t)
+   &= e^{-\lambda}
+      e^{e^{it} \lambda}
+\\
+   &= e^{e^{it} \lambda-\lambda}
+\\
+   &= e^{\lambda(e^{it}-1)}
+\end{aligned}
+$$
+
+　特性関数の式が得られました。モーメント母関数の$t$を$it$に置き換えた式と一致します。\
+
+　指数部分が分かりやすいように、指数関数を$e^x = \exp(x)$で表現すると
+
+$$
+\begin{aligned}
+\varphi(t)
+   &= \exp(- \lambda)
+      \exp \Bigl(
+          \exp(i t) \lambda
+      \Bigr)
+\\
+   &= \exp \Bigl(
+          \exp(i t) \lambda
+          - \lambda
+      \Bigr)
+\\
+   &= \exp \Bigl(
+          \lambda (\exp(i t) - 1)
+      \Bigr)
+\end{aligned}
+$$
+
+となります。\
+\
+
+
+# ポアソン分布の統計量の導出
+
+　ポアソン分布(Poisson Distribution)の平均(期待値)と分散を導出します。ポアソン分布については「定義式の確認」を参照してください。\
+\
+
+
+## 定義式から導出
+
+　定義式を利用して、平均と分散の計算式を導出します。\
+
+　ポアソン分布は、次の式で定義されます。
+
+$$
+\mathrm{Poi}(x | \lambda)
+    = \frac{\lambda^x}{x!}
+      e^{-\lambda}
+$$
+
+　ここで、$x$は単位時間における事象の発生回数、$\lambda$は発生回数の期待値です。\
+　確率変数の値$x$は0以上の整数となります。パラメータ$\lambda$は、$\lambda > 0$を満たす必要があります。\
+
+　ポアソン分布の平均と分散は、どちらもパラメータ$\lambda$になります。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \lambda
+\\
+\mathbb{V}[x]
+   &= \lambda
+\end{aligned}
+$$
+
+　定義式を用いて、平均と分散の計算式を導出します。\
+\
+
+
+### 平均の計算
+
+　ポアソン分布の平均を導出します。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \sum_{x=0}^{\infty}
+          x
+          \mathrm{Poi}(x | \lambda)
+\\
+   &= \sum_{x=0}^{\infty}
+          x
+          \frac{\lambda^x}{x!}
+          e^{-\lambda}
+\end{aligned}
+$$
+
+　$x = 0$について、0になり計算結果に影響しないので、$\sum_{x=0}^{\infty}$から取り出します。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= 0
+      \frac{\lambda^0}{0!}
+      e^{-\lambda}
+      + \sum_{x=1}^{\infty}
+          x
+          \frac{\lambda^x}{x!}
+          e^{-\lambda}
+\\
+   &= e^{-\lambda}
+      \sum_{x=1}^{\infty}
+          x
+          \frac{\lambda^x}{x!}
+\end{aligned}
+$$
+
+　階乗の項について
+
+$$
+\frac{1}{x!}
+    = \frac{1}{x}
+      \frac{1}{(x - 1)!}
+$$
+
+と分割します。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= e^{-\lambda}
+      \sum_{x=1}^{\infty}
+          x
+          \frac{1}{x}
+          \frac{\lambda^x}{(x - 1)!}
+\\
+   &= e^{-\lambda}
+      \sum_{x=1}^{\infty}
+          \frac{\lambda^x}{(x - 1)!}
+\end{aligned}
+$$
+
+　総和について$\sum_{x=1}^{\infty} = \sum_{x-1=0}^{\infty}$と変形して、さらに$x' = x - 1$に置き換えます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= e^{-\lambda}
+      \sum_{x-1=0}^{\infty}
+          \frac{\lambda^x}{(x - 1)!}
+\\
+   &= e^{-\lambda}
+      \sum_{x'=0}^{\infty}
+          \frac{\lambda^{x'+1}}{x'!}
+\end{aligned}
+$$
+
+　$\lambda^{x'+1} = \lambda \lambda^{x'}$に分割します。
+
+$$
+\mathbb{E}[x]
+    = \lambda
+      e^{-\lambda}
+      \sum_{x'=0}^{\infty}
+          \frac{\lambda^{x'}}{x'!}
+\tag{1}
+$$
+
+　式(1)は指数関数のマクローリン展開$e^x = \sum_{x=0}^{\infty} \frac{x^n}{x!}$の形をしているので、右辺から左辺の式に変形します。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \lambda
+      e^{-\lambda}
+      e^{\lambda}
+\\
+   &= \lambda
+      e^{\lambda-\lambda}
+\\
+   &= \lambda
+\end{aligned}
+$$
+
+　平均の計算式が得られました。\
+
+　次のようにも解釈できます。式(1)はパラメータ$\lambda$のポアソン分布になっています。
+
+$$
+\mathbb{E}[x]
+    = \lambda
+      \sum_{x'=0}^{\infty}
+          \mathrm{Poi}(x' | \lambda)
+$$
+
+　全事象$x' = 0, 1, \ldots, \infty$の和なので1になります。
+
+$$
+\mathbb{E}[x]
+    = \lambda
+$$
+
+　先ほどの結果と一致しました。\
+\
+
+
+### 二乗の平均の計算
+
+　続いて、$x^2$の平均を求めます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= \sum_{x=0}^{\infty}
+          x^2
+          \mathrm{Poi}(x | \lambda)
+\\
+   &= \sum_{x=0}^{\infty}
+          x^2
+          \frac{\lambda^x}{x!}
+          e^{-\lambda}
+\end{aligned}
+$$
+
+　$x^2 = x (x - 1) + x$に分割します。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= \sum_{x=0}^{\infty}
+          \{x (x - 1) + x\}
+          \frac{\lambda^x}{x!}
+          e^{-\lambda}
+\\
+   &= \sum_{x=0}^{\infty}
+          x (x - 1)
+          \frac{\lambda^x}{x!}
+          e^{-\lambda}
+      + \sum_{x=0}^{\infty}
+          x
+          \frac{\lambda^x}{x!}
+          e^{-\lambda}
+\end{aligned}
+$$
+
+　前の項に関して、$x = 0, 1$は0になるので取り出します。後の項は、$x$の平均なので置き換えます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= 0 (0 - 1)
+      \frac{\lambda^0}{0!}
+      e^{-\lambda} \\
+   &\quad
+      + 1 (1 - 1)
+        \frac{\lambda^1}{1!}
+        e^{-\lambda} \\
+   &\quad
+      + \sum_{x=2}^{\infty}
+          x (x - 1)
+          \frac{\lambda^x}{x!}
+          e^{-\lambda} \\
+   &\quad
+      + \mathbb{E}[x]
+\\
+   &= e^{-\lambda}
+      \sum_{x=2}^{\infty}
+          x (x - 1)
+          \frac{\lambda^x}{x!}
+      + \lambda
+\end{aligned}
+$$
+
+　階乗の項について
+
+$$
+\frac{1}{x!}
+    = \frac{1}{x (x - 1)}
+      \frac{1}{(x - 2)!}
+$$
+
+と分割します。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= e^{-\lambda}
+      \sum_{x=2}^{\infty}
+          x (x - 1)
+          \frac{1}{x (x - 1)}
+          \frac{\lambda^x}{(x - 2)!}
+      + \lambda
+\\
+   &= e^{-\lambda}
+      \sum_{x=2}^{\infty}
+          \frac{\lambda^x}{(x - 2)!}
+      + \lambda
+\end{aligned}
+$$
+
+　総和について$\sum_{x=2}^{\infty} = \sum_{x-2=0}^{\infty}$と変形して、さらに$x' = x - 2$に置き換えます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= e^{-\lambda}
+      \sum_{x-2=0}^{\infty}
+          \frac{\lambda^x}{(x - 2)!}
+      + \lambda
+\\
+   &= e^{-\lambda}
+      \sum_{x'=0}^{\infty}
+          \frac{\lambda^{x'+2}}{x'!}
+      + \lambda
+\end{aligned}
+$$
+
+　$\lambda^{x'+2} = \lambda^2 \lambda^{x'}$に分割します。
+
+$$
+\mathbb{E}[x^2]
+    = \lambda^2 e^{-\lambda}
+      \sum_{x'=0}^{\infty}
+          \frac{\lambda^{x'}}{x'!}
+      + \lambda
+\tag{2}
+$$
+
+　指数関数のマクローリン展開$e^x = \sum_{x=0}^{\infty} \frac{x^n}{x!}$の変形を行います。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= \lambda^2 e^{-\lambda}
+      e^{\lambda}
+      + \lambda
+\\
+   &= \lambda^2 e^{\lambda-\lambda}
+      + \lambda
+\\
+   &= \lambda^2 + \lambda
+\end{aligned}
+$$
+
+　二乗の平均が求まりました。\
+
+　あるいは、式(2)をパラメータ$\lambda$のポアソン分布の全事象の和と考えても同じ結果が得られます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= \lambda^2
+      \sum_{x'=0}^{\infty}
+          \mathrm{Poi}(x' | \lambda)
+      + \lambda
+\\
+   &= \lambda^2 + \lambda
+\end{aligned}
+$$
+
+\ 
+
+
+### 分散の計算
+
+　分散は「$x$の2乗の平均」と「$x$の平均の2乗」の差で求められます。
+
+$$
+\begin{aligned}
+\mathbb{V}[x]
+   &= \mathbb{E}[x^2]
+      - (\mathbb{E}[x])^2
+\\
+   &= \lambda^2 + \lambda
+      - \lambda^2
+\\
+   &= \lambda
+\end{aligned}
+$$
+
+　分散の計算式が得られました。\
+\
+
+
+## モーメント母関数から導出
+
+　モーメント母関数(積率母関数)を利用して、平均と分散の計算式を導出します。\
+
+　ポアソン分布のモーメント母関数は、次の式になります。詳しくは「モーメント母関数の導出」を参照してください。
+
+$$
+M(t)
+    = e^{\lambda (e^t-1)}
+    = \exp \Bigl(
+          \lambda
+          (\exp(t) - 1)
+      \Bigr)
+$$
+
+　ここで、$\lambda$はポアソン分布のパラメータで発生回数の期待値、$e$はネイピア数です。指数分布が分かりやすいように、$e^x = \exp(x)$でも表します。\
+
+　ポアソン分布の平均と分散は、どちらもパラメータ$\lambda$になります。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \lambda
+\\
+\mathbb{V}[x]
+   &= \lambda
+\end{aligned}
+$$
+
+　モーメント母関数の微分を用いて、平均と分散の計算式を導出します。\
+\
+
+
+### モーメント母関数の1階微分の計算
+
+　モーメント母関数を$t$に関して微分します。
+
+$$
+\frac{d M(t)}{d t}
+    = \frac{d}{d t} \Bigl\{
+          e^{\lambda (e^t-1)}
+      \Bigr\}
+$$
+
+　式全体を$g(f(x))$、指数部分を$f(x)$として、合成関数の微分$\frac{d g(f(x))}{d x} = \frac{d g(x)}{d f(x)} \frac{d f(x)}{d x}$を行います。
+
+$$
+\begin{aligned}
+\frac{d M(t)}{d t}
+   &= e^{\lambda (e^t-1)}
+      \frac{d}{d t} \Bigl\{
+          \lambda (e^t-1)
+      \Bigr\}
+\\
+   &= e^{\lambda (e^t-1)} \left\{
+          \frac{d \lambda e^t}{d t}
+          - \frac{d \lambda}{d t}
+      \right\}
+\\
+   &= e^{\lambda (e^t-1)}
+      \lambda
+      e^t
+\end{aligned}
+$$
+
+　指数関数の微分は$\frac{d e^x}{d x} = e^x$です。\
+　式を整理します。
+
+$$
+\frac{d M(t)}{d t}
+    = \lambda
+      e^{\lambda (e^t-1)+t}
+$$
+
+　1階微分が求まりました。\
+\
+
+
+### モーメント母関数の2階微分の計算
+
+　続いて、モーメント母関数を$t$に関して2階微分します。1階微分$\frac{d M(t)}{d t}$を更に微分します。
+
+$$
+\begin{aligned}
+\frac{d^2 M(t)}{d t^2}
+   &= \frac{d}{d t} \frac{d M(t)}{d t} 
+\\
+   &= \frac{d}{d t} \Bigl\{
+          \lambda
+          e^{\lambda (e^t-1)+t}
+      \Bigr\}
+\end{aligned}
+$$
+
+　指数関数の微分(合成関数の微分)を行います。
+
+$$
+\begin{aligned}
+\frac{d^2 M(t)}{d t^2}
+   &= \lambda
+      e^{\lambda (e^t-1)+t}
+      \frac{d}{d t} \Bigl\{
+          \lambda (e^t - 1) + t
+      \Bigr\}
+\\
+   &= \lambda
+      e^{\lambda (e^t-1)+t} \left\{
+          \frac{d \lambda e^t}{d t}
+          - \frac{d \lambda}{d t}
+          + \frac{d t}{d t}
+      \right\}
+\\
+   &= \lambda
+      e^{\lambda (e^t-1)+t} (
+          \lambda e^t + 1
+      )
+\end{aligned}
+$$
+
+　2階微分が求まりました。\
+\
+
+
+### 平均の計算
+
+　モーメント母関数の微分に$t = 0$を代入すると、平均が得られます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \frac{d M(0)}{d t}
+\\
+   &= \lambda
+      e^{\lambda (e^0-1)+0}
+\\
+   &= \lambda e^0
+\\
+   &= \lambda
+\end{aligned}
+$$
+
+　0乗は$x^0 = 1$です。\
+\
+
+
+### 二乗の平均の計算
+
+　同様に、モーメント母関数の2階微分に$t = 0$を代入すると、二乗の平均が得られます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= \frac{d^2 M(0)}{d t^2}
+\\
+   &= \lambda
+      e^{\lambda (e^0-1)+0} (
+          \lambda e^0 + 1
+      )
+\\
+   &= \lambda e^0
+      (\lambda + 1)
+\\
+   &= \lambda^2 + \lambda
+\end{aligned}
+$$
+
+\ 
+
+
+### 分散の計算
+
+　分散は「$x$の2乗の平均」と「$x$の平均の2乗」の差で求められます。
+
+$$
+\begin{aligned}
+\mathbb{V}[x]
+   &= \mathbb{E}[x^2]
+      - (\mathbb{E}[x])^2
+\\
+   &= \lambda^2 + \lambda
+      - \lambda^2
+\\
+   &= \lambda
+\end{aligned}
+$$
+
+　分散の計算式が得られました。\
+\
+
+
+## 特性関数から導出
+
+　特性関数を利用して、平均と分散の計算式を導出します。\
+
+　ポアソン分布の特性関数は、次の式になります。詳しくは「特性関数の導出」を参照してください。
+
+$$
+\varphi(t)
+    = e^{\lambda(e^{it}-1)}
+    = \exp \Bigl(
+          \lambda (\exp(i t) - 1)
+      \Bigr)
+$$
+
+　ここで、$\lambda$はポアソン分布のパラメータで発生回数の期待値、$e$はネイピア数、$i$は虚数単位です。指数分布が分かりやすいように、$e^x = \exp(x)$でも表します。\
+
+　ポアソン分布の平均と分散は、どちらもパラメータ$\lambda$になります。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \lambda
+\\
+\mathbb{V}[x]
+   &= \lambda
+\end{aligned}
+$$
+
+　関数の微分を用いて、平均と分散の計算式を導出します。\
+\
+
+
+### 特性関数の1階微分の計算
+
+　特性関数を$t$に関して微分します。
+
+$$
+\frac{d \varphi(t)}{d t}
+    = \frac{d}{d t} \Bigl\{
+          e^{\lambda(e^{it}-1)}
+      \Bigr\}
+$$
+
+　式全体を$g(f(x))$、指数部分を$f(x)$として、合成関数の微分$\frac{d g(f(x))}{d x} = \frac{d g(x)}{d f(x)} \frac{d f(x)}{d x}$を行います。
+
+$$
+\begin{aligned}
+\frac{d \varphi(t)}{d t}
+   &= e^{\lambda (e^{it}-1)}
+      \frac{d}{d t} \Bigl\{
+          \lambda (e^{it}-1)
+      \Bigr\}
+\\
+   &= e^{\lambda(e^{it}-1)} \left\{
+          \frac{d \lambda e^{it}}{d t}
+          - \frac{d \lambda}{d t}
+      \right\}
+\\
+   &= e^{\lambda(e^{it}-1)}
+      \lambda
+      e^{it}
+      \frac{d i t}{d t}
+\\
+   &= e^{\lambda(e^{it}-1)}
+      \lambda
+      e^{it} i
+\end{aligned}
+$$
+
+　指数に係数を含む指数関数の微分は$\frac{d e^{ax}}{d x} = e^{ax} \frac{d ax}{d x} = a e^{ax}$です。\
+　式を整理します。
+
+$$
+\frac{d \varphi(t)}{d t}
+    = i \lambda
+      e^{\lambda(e^{it}-1)+it}
+$$
+
+　1階微分が求まりました。\
+\
+
+
+### 特性関数の2階微分の計算
+
+　続いて、特性関数を$t$に関して2階微分します。1階微分$\frac{d \varphi(t)}{d t}$を更に微分します。
+
+$$
+\begin{aligned}
+\frac{d^2 \varphi(t)}{d t^2}
+   &= \frac{d}{d t} \frac{d \varphi(t)}{d t} 
+\\
+   &= \frac{d}{d t} \Bigl\{
+          i \lambda
+          e^{\lambda (e^{it}-1)+it}
+      \Bigr\}
+\end{aligned}
+$$
+
+　指数関数の微分(合成関数の微分)を行います。
+
+$$
+\begin{aligned}
+\frac{d^2 \varphi(t)}{d t^2}
+   &= i \lambda
+      e^{\lambda (e^{it}-1)+it}
+      \frac{d}{d t} \Bigl\{
+          \lambda (e^{it} - 1) + i t
+      \Bigr\}
+\\
+   &= i \lambda
+      e^{\lambda (e^{it}-1)+it} \left\{
+          \frac{d \lambda e^{it}}{d t}
+          - \frac{d \lambda}{d t}
+          + \frac{d i t}{d t}
+      \right\}
+\\
+   &= i \lambda
+      e^{\lambda (e^{it}-1)+it} \left(
+          \lambda e^{it} \frac{d i t}{d t}
+          + i
+      \right)
+\\
+   &= i \lambda
+      e^{\lambda (e^{it}-1)+it} (
+          i \lambda e^{it} + i
+      )
+\end{aligned}
+$$
+
+　2階微分が求まりました。\
+\
+
+
+### 平均の計算
+
+　特性関数の微分に$t = 0$を代入し、$i$の逆数を掛けると、平均が得られます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \frac{1}{i}
+      \frac{d \varphi(0)}{d t}
+\\
+   &= \frac{1}{i}
+      i \lambda
+      e^{\lambda(e^{0}-1)+0}
+\\
+   &= \lambda e^0
+\\
+   &= \lambda
+\end{aligned}
+$$
+
+　0乗は$x^0 = 1$です。\
+\
+
+
+### 二乗の平均の計算
+
+　同様に、特性関数の2階微分に$t = 0$を代入し、$i$の2乗の逆数を掛けると、二乗の平均が得られます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= \frac{1}{i^2}
+      \frac{d^2 \varphi(0)}{d t^2}
+\\
+   &= \frac{1}{-1} \Bigl\{
+          i \lambda
+          e^{\lambda(e^{0}-1)+0} (
+               i \lambda e^{0} + i
+          )
+      \Bigr\}
+\\
+   &= - \Bigl\{
+          i \lambda e^0
+          (i \lambda + i)
+      \Bigr\}
+\\
+   &= \lambda^2 + \lambda
+\end{aligned}
+$$
+
+　虚数単位の2乗は$i^2 = -1$です。\
+\
+
+
+### 分散の計算
+
+　分散は「$x$の2乗の平均」と「$x$の平均の2乗」の差で求められます。
+
+$$
+\begin{aligned}
+\mathbb{V}[x]
+   &= \mathbb{E}[x^2]
+      - (\mathbb{E}[x])^2
+\\
+   &= \lambda^2 + \lambda
+      - \lambda^2
+\\
+   &= \lambda
+\end{aligned}
+$$
+
+　分散の計算式が得られました。\
+\
+
+
+# Rでポアソン分布の計算
+
+　ポアソン分布(Poisson Distribution)の計算と統計量を計算します。ポアソン分布については「定義式の確認」を参照してください。\
+\
+
+
 ## 確率の計算
 
 　ポアソン分布に従う確率を計算する方法をいくつか確認します。\
 \
 
-　パラメータを設定します。
+
+### パラメータの設定
+
+　ポアソン分布のパラメータ$\lambda$を設定します。
 
 ```{r}
 # パラメータを指定
@@ -113,7 +1029,11 @@ lambda <- 4
 x <- 2
 ```
 
-　ポアソン分布のパラメータ$\lambda > 0$、確率変数がとり得る値(非負の整数)$x$を指定します。設定した値に従う確率を計算します。\
+　発生回数の期待値$\lambda > 0$、確率変数がとり得る値(非負の整数)$x$を指定します。設定した値に従う確率を計算します。\
+\
+
+
+### スクラッチで計算
 
 　まずは、定義式から確率を計算します。
 
@@ -152,7 +1072,9 @@ $$
       - \lambda
 $$
 
-を計算します。計算結果の指数をとると確率が得られます。
+を計算します。\
+　対数をとったガンマ関数$\log \Gamma(x)$は、`lgamma()`で計算できます。\
+　計算結果の指数をとると確率が得られます。
 
 $$
 \mathrm{Poi}(x | \lambda)
@@ -164,6 +1086,11 @@ $$
 　指数と対数の性質より$\exp(\log x) = x$です。\
 
 　次は、関数を使って確率を計算します。\
+\
+
+
+### ポアソン分布の関数により計算
+
 　ポアソン分布の確率関数`dpois()`を使って計算します。
 
 ```{r}
@@ -189,13 +1116,13 @@ prob; log_prob
 
 ## 統計量の計算
 
-　ポアソン分布の平均と分散を計算します。\
+　ポアソン分布の平均と分散を計算します。詳しくは「統計量を導出」を参照してください。\
 \
 
 　平均を計算します。
 
 ```{r}
-# 定義式により平均を計算
+# 平均を計算
 E_x <- lambda
 E_x
 ```
@@ -210,7 +1137,7 @@ $$
 　分散を計算します。
 
 ```{r}
-# 定義式により分散を計算
+# 分散を計算
 V_x <- lambda
 V_x
 ```
@@ -224,21 +1151,86 @@ $$
 
 \ 
 
+　以上で、ポアソン分布の確率と統計量の計算を確認できました。次は、グラフを作成します。\
+\
 
-## 分布の可視化
+
+# Rでポアソン分布の作図
+
+　ポアソン分布(Poisson Distribution)のグラフを作成します。ポアソン分布については「定義式の確認」を参照してください。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r}
+# 利用するパッケージ
+library(tidyverse)
+library(gganimate)
+```
+
+　分布の変化をアニメーション(gif画像)で確認するのに`gganimate`パッケージを利用します。不要であれば省略してください。\
+\
+
+
+## 定義式の確認
+
+　まずは、ポアソン分布の定義式を確認します。\
+\
+
+　ポアソン分布は、次の式で定義されます。
+
+$$
+\mathrm{Poi}(x | \lambda)
+    = \frac{\lambda^x}{x!}
+      e^{-\lambda}
+$$
+
+　ここで、$x$は単位時間における事象の発生回数、$\lambda$は発生回数の期待値です。\
+　確率変数の値$x$は0以上の整数となります。パラメータ$\lambda$は、$\lambda > 0$を満たす必要があります。\
+
+　ポアソン分布の平均と分散は、どちらもパラメータ$\lambda$になります。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \lambda
+\\
+\mathbb{V}[x]
+   &= \lambda
+\end{aligned}
+$$
+
+　これらの計算を行いグラフを作成します。\
+\
+
+
+## グラフの作成
 
 　`ggplot2`パッケージを利用してポアソン分布のグラフを作成します。\
 \
 
-　ポアソン分布の確率変数がとり得る値$x$ごとの確率を計算します。
+　ポアソン分布のパラメータを設定します。
 
 ```{r}
 # パラメータを指定
 lambda <- 4
+```
 
+　発生回数の期待値$\lambda > 0$を指定します。\
+
+　ポアソン分布の確率変数がとり得る値を作成します。
+
+```{r}
 # 作図用のxの点を作成
 x_vals <- seq(from = 0, to = ceiling(lambda) * 4)
+x_vals[1:5]
+```
 
+　$x$がとり得る値を作成して、`x_vals`とします。この例では、`0`から`lambda`の`4`倍を範囲とします。ただし、$x$は非負の整数なので、`ceiling()`で値を切り上げて使います。\
+
+　$x$の値ごとに確率を計算します。
+
+```{r}
 # ポアソン分布を計算
 prob_df <- tidyr::tibble(
   x = x_vals, # 確率変数
@@ -247,8 +1239,8 @@ prob_df <- tidyr::tibble(
 head(prob_df)
 ```
 
-　$x$がとり得る値を作成して`x_vals`とします。この例では、`0`から`lambda`の`4`倍を範囲とします。ただし、$x$は0以上の整数なので、`ceiling()`で`lambda`を切り上げて使います。\
-　`x_vals`の各要素に対応する確率を求めてデータフレームに格納します。\
+　ポアソン分布の確率は、`dpois()`で計算できます。変数の引数`x`に`x`、パラメータの引数`lambda`に`lambda`を指定します。\
+　`x_vals`と、`x_vals`の各要素に対応する確率をデータフレームに格納します。\
 
 　ポアソン分布のグラフを作成します。
 
@@ -261,12 +1253,12 @@ ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
        subtitle = paste0("lambda=", lambda)) # ラベル
 ```
 
-\ 
+　ポアソン分布のグラフを描画できました。\
 
-　この分布に平均と標準偏差を重ねて表示します。
+　この分布に平均と標準偏差の情報を重ねて表示します。
 
 ```{r}
-# 統計量の計算
+# 補助線用の統計量の計算
 E_x <- lambda
 s_x <- sqrt(lambda)
 
@@ -281,18 +1273,79 @@ ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
        subtitle = paste0("lambda=", lambda)) # ラベル
 ```
 
-　平均(破線)となる確率が最大なのを確認できます。また、点線で平均を中心に標準偏差の範囲を示しています。\
-
-　ポアソン分布のグラフを描画できました。\
+　平均(破線)となる確率が最大なのを確認できます。また、平均を中心に標準偏差の範囲を点線で示しています。\
 \
 
 
-## パラメータと分布の形状の関係
+## パラメータと分布の関係
 
-　パラメータが及ぼす分布への影響をアニメーション(gif画像)で可視化します。\
+　パラメータと分布の形状の関係を可視化します。\
 \
 
-　パラメータ$\lambda$の値を少しずつ変更して、分布の変化をアニメーションで確認します。
+
+### 並べて可視化
+
+　複数のパラメータを指定してグラフを比較します。
+
+　複数個の$\lambda$の値を指定して、分布を計算します。
+
+```{r}
+# パラメータを指定
+lambda_vals <- c(1, 3.5, 8, 15)
+
+# 作図用のxの点を作成
+x_vals <- seq(from = 0, to = ceiling(max(lambda_vals)) * 2)
+
+# lambdaの値ごとに分布を計算
+res_prob_df <- tidyr::tibble()
+for(lambda in lambda_vals) {
+  # ポアソン分布の情報を格納
+  tmp_prob_df <- tidyr::tibble(
+    x = x_vals, # 確率変数
+    probability = dpois(x = x_vals, lambda = lambda), # 確率
+    parameter = paste0("lambda=", lambda) %>% 
+      as.factor() # 作図用のラベル
+  )
+  
+  # 結果を結合
+  res_prob_df <- rbind(res_prob_df, tmp_prob_df)
+}
+head(res_prob_df)
+```
+
+　`for()`ループを使って、`lambda_vals`の値を順番に取り出して確率を計算して、`res_prob_df`に追加していきます。\
+
+　ポアソン分布のグラフを作成します。
+
+```{r}
+# ポアソン分布のグラフを作成
+ggplot(data = res_prob_df, mapping = aes(x = x, y = probability, fill = parameter, color = parameter)) + # データ
+  geom_bar(stat = "identity", position = "dodge") + # 棒グラフ
+  #scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  labs(title = "Poisson Distribution") # ラベル
+```
+
+\ 
+
+　棒グラフを並べると分かりにくいので、散布図と折れ線グラフを重ねて可視化します。
+
+```{r}
+# ポアソン分布のグラフを作成
+ggplot(data = res_prob_df, mapping = aes(x = x, y = probability, fill = parameter, color = parameter)) + # データ
+  geom_point(size = 2) + # 散布図
+  geom_line(size = 1) + # 折れ線グラフ
+  #scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  labs(title = "Poisson Distribution") # ラベル
+```
+
+　発生回数の期待値$\lambda$が大きいと、発生回数$x$が大きいほど確率が高くなる(山が右に位置する)のが分かります。このことは、平均の計算式からも分かります。\
+　また分散の計算式からも分かるように、$\lambda$が大きいほど分布の裾が広く確率の最大値が小さく(なだらかな山に)なります。\
+\
+
+
+### アニメーションによる可視化
+
+　続いて、$\lambda$の値を少しずつ変更して、分布の変化をアニメーションで確認します。
 
 ```{r}
 # lambdaとして利用する値を指定
@@ -320,7 +1373,7 @@ head(anime_prob_df)
 ```
 
 　$\lambda$がとり得る値を作成して`lambda_vals`とします。\
-　`for()`ループを使って`lambda_vals`の値ごとに確率を計算して、`anime_prob_df`に追加していきます。\
+　`for()`ループを使って、`lambda_vals`の値を順番に取り出して確率を計算して、`anime_prob_df`に追加していきます。\
 
 　gif画像を作成します。
 
@@ -340,13 +1393,33 @@ gganimate::animate(anime_prob_graph, nframes = length(lambda_vals), fps = 100)
 　$\lambda$が大きくなるに従って、$x$が大きいほど確率が高くなる(山が右に移動する)のを確認できます。\
 \
 
-
-## 乱数の生成
-
-　ポアソン分布の乱数を生成してヒストグラムを確認します。\
+　以上で、ポアソン分布のグラフ作成を確認できました。次は、乱数を生成します。\
 \
 
-　パラメータを指定して、ポアソン分布に従う乱数を生成します。
+
+# Rでポアソン分布の乱数生成
+
+　ポアソン分布(Poisson Distribution)の乱数を生成します。ポアソン分布については「定義式の確認」を参照してください。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r}
+# 利用するパッケージ
+library(tidyverse)
+library(gganimate)
+```
+
+　分布の変化をアニメーション(gif画像)で確認するのに`gganimate`パッケージを利用します。不要であれば省略してください。\
+\
+
+
+## サンプリング
+
+　ポアソン分布の乱数を生成します。\
+\
+
+　ポアソン分布のパラメータ$\lambda$を指定しします。
 
 ```{r}
 # パラメータを指定
@@ -354,29 +1427,42 @@ lambda <- 4
 
 # データ数(サンプルサイズ)を指定
 N <- 1000
+```
 
+　発生回数の期待値$\lambda > 0$とデータ数$N$を指定します。\
+
+　ポアソン分布に従う乱数を生成します。
+
+```{r}
 # ポアソン分布に従う乱数を生成
 x_n <- rpois(n = N, lambda = lambda)
 x_n[1:10]
 ```
 
-　ポアソン分布の乱数生成関数`rpois()`のデータ数(サンプルサイズ)の引数`n`に`N`、パラメータの引数`lambda`に`lmanda`を指定します。\
+　ポアソン分布の乱数は`rpois()`で生成できます。データ数(サンプルサイズ)の引数`n`に`N`、パラメータの引数`lambda`に`lmanda`を指定します。\
+\
 
-　サンプルを集計します。
+
+## 乱数の可視化
+
+　サンプルのヒストグラムを作成します。\
+\
+
+　サンプルの値を集計します。
 
 ```{r}
 # 乱数を集計して格納
 freq_df <- tidyr::tibble(x = x_n) %>% # 乱数を格納
   dplyr::count(x, name = "frequency") %>% # 頻度を測定
-  dplyr::mutate(proportion = frequency / N) # 構成比を計算
+  dplyr::mutate(proportion = frequency / N) # 相対度数を計算
 head(freq_df)
 ```
 
 　サンプリングした値`x_n`をデータフレームに格納します。\
 　`count()`で重複する値をカウントします。\
-　得られた頻度`frequency`をデータ数`N`で割り、各値の構成比を計算して`proportion`列とします。\
+　得られた頻度`frequency`をデータ数`N`で割り、各値の相対度数を計算して`proportion`列とします。\
 
-　作図に利用するため、$x$の値と分布の情報を作成しておきます。
+　作図に利用するために、ポアソン分布の情報を作成します。
 
 ```{r}
 # 作図用のxの点を作成
@@ -389,7 +1475,7 @@ prob_df <- tidyr::tibble(
 )
 ```
 
-\ 
+　ポアソン分布のグラフの作成については「作図」を参照してください。\
 
 　ヒストグラムを作成します。
 
@@ -399,49 +1485,59 @@ ggplot(data = freq_df, mapping = aes(x = x, y = frequency)) + # データ
   geom_bar(stat = "identity", fill = "#00A968") + # ヒストグラム
   scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   labs(title = "Poisson Distribution", 
-       subtitle = paste0("lambda=", lambda)) # ラベル
+       subtitle = paste0("lambda=", lambda, ", N=", N)) # ラベル
 ```
 
 \ 
 
-　構成比を分布と重ねて描画します。
+　相対度数を分布と重ねて描画します。
 
 ```{r}
-# サンプルの構成比を作図
+# サンプルの相対度数を作図
 ggplot() + 
   geom_bar(data = freq_df, mapping = aes(x = x, y = proportion), 
-           stat = "identity", fill = "#00A968") + # 構成比
+           stat = "identity", fill = "#00A968") + # 相対度数
   geom_bar(data = prob_df, mapping = aes(x = x, y = probability), 
            stat = "identity", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
   scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   labs(title = "Poisson Distribution", 
-       subtitle = paste0("lambda=", lambda)) # ラベル
+       subtitle = paste0("lambda=", lambda, ", N=", N)) # ラベル
 ```
 
-　データ数が十分に増えると元の分布(破線のグラフ)に形が近付きます。\
+　ポアソン分布のグラフの作成については「作図」を参照してください。\
+　データ数が十分に増えると、ヒストグラムが分布の形に近付きます。\
 \
 
-　サンプルサイズとヒストグラムの変化をアニメーションで確認します。
+
+## 推移の可視化
+
+　サンプルサイズとヒストグラムの変化をアニメーションで確認します。\
+\
+
+
+### ・1データずつアニメーションで可視化{-}
+
+　1データずつサンプルを増やしてヒストグラムの変化を確認します。
 
 ```{r}
-# フレーム数を指定
+# データ数(フレーム数)を指定
 N_frame <- 100
 
 # 乱数を1つずつ生成
-x_n <- rep(NA, times = N_frame)
+#x_n <- rep(NA, times = N_frame)
 anime_freq_df <- tidyr::tibble()
 anime_data_df <- tidyr::tibble()
 anime_prob_df <- tidyr::tibble()
 for(n in 1:N_frame) {
   # ポアソン分布に従う乱数を生成
-  x_n[n] <- rpois(n = 1, lambda = lambda)
+  #x_n[n] <- rpois(n = 1, lambda = lambda)
   
-  # 乱数を集計して格納
+  # n個の乱数を集計して格納
   tmp_freq_df <- tidyr::tibble(x = x_n[1:n]) %>% # 乱数を格納
-    dplyr::count(x, name = "frequency") %>% # 頻度を集計
+    dplyr::count(x, name = "frequency") %>% # 頻度を測定
     dplyr::full_join(tidyr::tibble(x = x_vals), by = "x") %>% # サンプルにない値を補完
     dplyr::mutate(frequency = tidyr::replace_na(frequency, 0)) %>% # サンプルにない場合のNAを0に置換
-    dplyr::mutate(proportion = frequency / n) # 構成比を計算
+    dplyr::mutate(proportion = frequency / n) # 相対度数を計算
 
   # ラベル用のテキストを作成
   label_text <- paste0(
@@ -470,11 +1566,13 @@ for(n in 1:N_frame) {
 head(anime_freq_df)
 ```
 
-　乱数を1つずつ生成して、結果を`anime_***_df`に追加していきます。\
+　`for()`ループを使って、「`x_n`から1データずつ取り出す」または「1データずつ生成」して、結果を`anime_***_df`に追加していきます。\
 
-　先ほどの集計処理に、サンプル`x_n`にない値のカウント(行)を追加する処理を行っています。\
+　ただし、先ほどの集計処理に、サンプル`x_n`にない値のカウント(行)を追加する処理を行っています。\
 　`x_vals`の値を持つデータフレームを作成し、`full_join()`で結合します。\
 　サンプルにない場合は頻度列`frequency`が欠損値`NA`になるので、`replace_na()`で`0`に置換します。\
+
+　また、フレームごとに分布の情報`prob_df`を複製し、対応する`parameter`列を追加する必要があります。\
 
 　ヒストグラムのアニメーションを作成します。
 
@@ -496,13 +1594,13 @@ gganimate::animate(anime_freq_graph, nframes = N_frame, fps = 100)
 
 \ 
 
-　構成比のアニメーションを作成します。
+　相対度数のアニメーションを作成します。
 
 ```{r, eval=FALSE}
-# アニメーション用のサンプルの構成比を作図
+# アニメーション用のサンプルの相対度数を作図
 anime_prop_graph <- ggplot() + 
   geom_bar(data = anime_freq_df, mapping = aes(x = x, y = proportion), 
-           stat = "identity", fill = "#00A968") + # 構成比
+           stat = "identity", fill = "#00A968") + # 相対度数
   geom_bar(data = anime_prob_df, mapping = aes(x = x, y = probability), 
            stat = "identity", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
   geom_point(data = anime_data_df, mapping = aes(x = x, y = 0), 
@@ -519,4 +1617,100 @@ gganimate::animate(anime_prop_graph, nframes = N_frame, fps = 100)
 
 　サンプルが増えるに従って、元の分布に近付くのを確認できます。\
 \
+
+
+### ・全データをアニメーションで可視化{-}
+
+　続いて、フレーム数を指定して、フレームごとに均等に分けたサンプルを増やしてヒストグラムの変化をアニメーションで確認します。
+
+```{r}
+# フレーム数を指定
+frame_num <- 100
+
+# 1フレーム当たりのデータ数を計算
+n_per_frame <- N %/% frame_num
+
+# フレームごとに乱数を抽出
+anime_freq_df <- tidyr::tibble()
+anime_prob_df <- tidyr::tibble()
+for(n in 1:N_frame) {
+  # 乱数を集計して格納
+  tmp_freq_df <- tidyr::tibble(x = x_n[1:(n*n_per_frame)]) %>% # 乱数を格納
+    dplyr::count(x, name = "frequency") %>% # 頻度を測定
+    dplyr::full_join(tidyr::tibble(x = x_vals), by = "x") %>% # サンプルにない値を補完
+    dplyr::mutate(frequency = tidyr::replace_na(frequency, 0)) %>% # サンプルにない場合のNAを0に置換
+    dplyr::mutate(proportion = frequency / (n*n_per_frame)) # 相対度数を計算
+  
+  # ラベル用のテキストを作成
+  label_text <- paste0(
+    "lambda=", lambda, ", N=", n*n_per_frame, "=(", paste0(tmp_freq_df[["frequency"]], collapse = ", "), ")"
+  )
+  
+  # フレーム切替用のラベルを付与
+  tmp_freq_df <- tmp_freq_df %>% 
+    dplyr::mutate(parameter = as.factor(label_text))
+  
+  # n回目のラベルを付与
+  tmp_prob_df <- prob_df %>% 
+    dplyr::mutate(parameter = as.factor(label_text))
+  
+  # 結果を結合
+  anime_freq_df <- rbind(anime_freq_df, tmp_freq_df)
+  anime_prob_df <- rbind(anime_prob_df, tmp_prob_df)
+}
+head(anime_freq_df)
+```
+
+　フレーム数`frame_num`を指定して、1フレーム当たりのデータ数`n_per_frame`を計算します。`%/%`は、整数商(割り算の整数部分)を計算します。\
+　`n*n_per_frame`個ずつサンプルを取り出して、集計結果を`anime_freq_df`に追加していきます。\
+
+　ヒストグラムのアニメーションを作成します。
+
+```{r, eval=FALSE}
+# アニメーション用のサンプルのヒストグラムを作成
+anime_freq_graph <- ggplot() + 
+  geom_bar(data = anime_freq_df, mapping = aes(x = x, y = frequency), 
+           stat = "identity", fill = "#00A968") + # ヒストグラム
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  labs(title = "Poisson Distribution", 
+       subtitle = "{current_frame}") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_freq_graph, nframes = frame_num, fps = 100)
+```
+
+\ 
+
+　相対度数のアニメーションを作成します。
+
+```{r, eval=FALSE}
+# アニメーション用のサンプルの相対度数を作図
+anime_prop_graph <- ggplot() + 
+  geom_bar(data = anime_freq_df, mapping = aes(x = x, y = proportion), 
+           stat = "identity", fill = "#00A968") + # 相対度数
+  geom_bar(data = anime_prob_df, mapping = aes(x = x, y = probability), 
+           stat = "identity", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  ylim(c(-0.01, 0.5)) + # y軸の表示範囲
+  labs(title = "Poisson Distribution", 
+       subtitle = "{current_frame}") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_prop_graph, nframes = frame_num, fps = 100)
+```
+
+\ 
+
+　以上で、ポアソン分布を確認できました。\
+\
+
+
+# 参考書籍{-}
+
+
+- 須山敦志『ベイズ推論による機械学習入門』(機械学習スタートアップシリーズ)杉山将監修,講談社,2017年.
+- 星野満博・西崎雅仁『数理統計の探求』晃洋書房,2012年.
+
 

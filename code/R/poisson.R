@@ -40,16 +40,16 @@ prob; log_prob
 lambda <- 4
 
 
-# 定義式により平均を計算
+# 平均を計算
 E_x <- lambda
 E_x
 
-# 定義式により分散を計算
+# 分散を計算
 V_x <- lambda
 V_x
 
 
-# 分布の可視化 ------------------------------------------------------------------
+# グラフの作成 ------------------------------------------------------------------
 
 # パラメータを指定
 lambda <- 4
@@ -70,7 +70,8 @@ ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
   labs(title = "Poisson Distribution", 
        subtitle = paste0("lambda=", lambda)) # ラベル
 
-# 統計量の計算
+
+# 補助線用の統計量の計算
 E_x <- lambda
 s_x <- sqrt(lambda)
 
@@ -85,9 +86,41 @@ ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
        subtitle = paste0("lambda=", lambda)) # ラベル
 
 
-# パラメータと分布の形状の関係 ----------------------------------------------------------
+# パラメータと分布の関係：並べて比較 ----------------------------------------------------------
 
-# lambdaとして利用する値を指定
+# パラメータを指定
+lambda_vals <- c(1, 3.5, 8, 15)
+
+# 作図用のxの点を作成
+x_vals <- seq(from = 0, to = ceiling(max(lambda_vals)) * 2)
+
+# lambdaの値ごとに分布を計算
+res_prob_df <- tidyr::tibble()
+for(lambda in lambda_vals) {
+  # ポアソン分布の情報を格納
+  tmp_prob_df <- tidyr::tibble(
+    x = x_vals, # 確率変数
+    probability = dpois(x = x_vals, lambda = lambda), # 確率
+    parameter = paste0("lambda=", lambda) %>% 
+      as.factor() # 作図用のラベル
+  )
+  
+  # 結果を結合
+  res_prob_df <- rbind(res_prob_df, tmp_prob_df)
+}
+
+# ポアソン分布のグラフを作成
+ggplot(data = res_prob_df, mapping = aes(x = x, y = probability, fill = parameter, color = parameter)) + # データ
+  geom_bar(stat = "identity", position = "dodge") + # 棒グラフ
+  #geom_point(size = 3) + # 散布図
+  #geom_line(size = 1) + # 折れ線グラフ
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  labs(title = "Poisson Distribution") # ラベル
+
+
+# パラメータと分布の関係：アニメーションによる可視化 ----------------------------------------------------------
+
+# lambdaとして利用する値を作成
 lambda_vals <- seq(from = 0, to = 10, by = 0.1)
 length(lambda_vals) # フレーム数
 
@@ -105,7 +138,7 @@ for(lambda in lambda_vals) {
       as.factor() # フレーム切替用のラベル
   )
   
-  # 計算結果を結合
+  # 結果を結合
   anime_prob_df <- rbind(anime_prob_df, tmp_prob_df)
 }
 
@@ -123,12 +156,13 @@ gganimate::animate(anime_prob_graph, nframes = length(lambda_vals), fps = 100)
 
 # 乱数の生成 -------------------------------------------------------------------
 
-### 乱数を生成 -----
+### ・サンプリング -----
 
 # パラメータを指定
 lambda <- 4
 
-# データ数(サンプルサイズ)を指定
+
+# データ数を指定
 N <- 1000
 
 # ポアソン分布に従う乱数を生成
@@ -137,7 +171,8 @@ x_n <- rpois(n = N, lambda = lambda)
 # 乱数を集計して格納
 freq_df <- tidyr::tibble(x = x_n) %>% # 乱数を格納
   dplyr::count(x, name = "frequency") %>% # 頻度を測定
-  dplyr::mutate(proportion = frequency / N) # 構成比を計算
+  dplyr::mutate(proportion = frequency / N) # 相対度数を計算
+
 
 # 作図用のxの点を作成
 x_vals <- seq(from = 0, to = max(x_n) + 3)
@@ -149,46 +184,46 @@ prob_df <- tidyr::tibble(
 )
 
 
-### 乱数の可視化 -----
+### ・乱数の可視化 -----
 
 # サンプルのヒストグラムを作成
 ggplot(data = freq_df, mapping = aes(x = x, y = frequency)) + # データ
   geom_bar(stat = "identity", fill = "#00A968") + # ヒストグラム
   scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   labs(title = "Poisson Distribution", 
-       subtitle = paste0("lambda=", lambda)) # ラベル
+       subtitle = paste0("lambda=", lambda, ", N=", N)) # ラベル
 
-# サンプルの構成比を作図
+# サンプルの相対度数を作図
 ggplot() + 
   geom_bar(data = freq_df, mapping = aes(x = x, y = proportion), 
-           stat = "identity", fill = "#00A968") + # 構成比
+           stat = "identity", fill = "#00A968") + # 相対度数
   geom_bar(data = prob_df, mapping = aes(x = x, y = probability), 
            stat = "identity", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
   scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   labs(title = "Poisson Distribution", 
-       subtitle = paste0("lambda=", lambda)) # ラベル
+       subtitle = paste0("lambda=", lambda, ", N=", N)) # ラベル
 
 
-### アニメーションによる可視化 -----
+### ・1データずつアニメーションで可視化 -----
 
-# フレーム数を指定
+# データ数(フレーム数)を指定
 N_frame <- 100
 
 # 乱数を1つずつ生成
-x_n <- rep(NA, times = N_frame)
+#x_n <- rep(NA, times = N_frame)
 anime_freq_df <- tidyr::tibble()
 anime_data_df <- tidyr::tibble()
 anime_prob_df <- tidyr::tibble()
 for(n in 1:N_frame) {
   # ポアソン分布に従う乱数を生成
-  x_n[n] <- rpois(n = 1, lambda = lambda)
+  #x_n[n] <- rpois(n = 1, lambda = lambda)
   
-  # 乱数を集計して格納
+  # n個の乱数を集計して格納
   tmp_freq_df <- tidyr::tibble(x = x_n[1:n]) %>% # 乱数を格納
-    dplyr::count(x, name = "frequency") %>% # 頻度を集計
+    dplyr::count(x, name = "frequency") %>% # 頻度を測定
     dplyr::full_join(tidyr::tibble(x = x_vals), by = "x") %>% # サンプルにない値を補完
     dplyr::mutate(frequency = tidyr::replace_na(frequency, 0)) %>% # サンプルにない場合のNAを0に置換
-    dplyr::mutate(proportion = frequency / n) # 構成比を計算
+    dplyr::mutate(proportion = frequency / n) # 相対度数を計算
 
   # ラベル用のテキストを作成
   label_text <- paste0(
@@ -231,10 +266,10 @@ anime_freq_graph <- ggplot() +
 gganimate::animate(anime_freq_graph, nframes = N_frame, fps = 100)
 
 
-# アニメーション用のサンプルの構成比を
+# アニメーション用のサンプルの相対度数を作図
 anime_prop_graph <- ggplot() + 
   geom_bar(data = anime_freq_df, mapping = aes(x = x, y = proportion), 
-           stat = "identity", fill = "#00A968") + # 構成比
+           stat = "identity", fill = "#00A968") + # 相対度数
   geom_bar(data = anime_prob_df, mapping = aes(x = x, y = probability), 
            stat = "identity", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
   geom_point(data = anime_data_df, mapping = aes(x = x, y = 0), 
@@ -247,4 +282,72 @@ anime_prop_graph <- ggplot() +
 
 # gif画像を作成
 gganimate::animate(anime_prop_graph, nframes = N_frame, fps = 100)
+
+
+### ・全データをアニメーションで可視化 -----
+
+# フレーム数を指定
+frame_num <- 100
+
+# 1フレーム当たりのデータ数を計算
+n_per_frame <- N %/% frame_num
+
+# フレームごとに乱数を抽出
+anime_freq_df <- tidyr::tibble()
+anime_prob_df <- tidyr::tibble()
+for(n in 1:N_frame) {
+  # 乱数を集計して格納
+  tmp_freq_df <- tidyr::tibble(x = x_n[1:(n*n_per_frame)]) %>% # 乱数を格納
+    dplyr::count(x, name = "frequency") %>% # 頻度を測定
+    dplyr::full_join(tidyr::tibble(x = x_vals), by = "x") %>% # サンプルにない値を補完
+    dplyr::mutate(frequency = tidyr::replace_na(frequency, 0)) %>% # サンプルにない場合のNAを0に置換
+    dplyr::mutate(proportion = frequency / (n*n_per_frame)) # 相対度数を計算
+  
+  # ラベル用のテキストを作成
+  label_text <- paste0(
+    "lambda=", lambda, ", N=", n*n_per_frame, "=(", paste0(tmp_freq_df[["frequency"]], collapse = ", "), ")"
+  )
+  
+  # フレーム切替用のラベルを付与
+  tmp_freq_df <- tmp_freq_df %>% 
+    dplyr::mutate(parameter = as.factor(label_text))
+  
+  # n回目のラベルを付与
+  tmp_prob_df <- prob_df %>% 
+    dplyr::mutate(parameter = as.factor(label_text))
+  
+  # 結果を結合
+  anime_freq_df <- rbind(anime_freq_df, tmp_freq_df)
+  anime_prob_df <- rbind(anime_prob_df, tmp_prob_df)
+}
+
+
+# アニメーション用のサンプルのヒストグラムを作成
+anime_freq_graph <- ggplot() + 
+  geom_bar(data = anime_freq_df, mapping = aes(x = x, y = frequency), 
+           stat = "identity", fill = "#00A968") + # ヒストグラム
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  labs(title = "Poisson Distribution", 
+       subtitle = "{current_frame}") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_freq_graph, nframes = frame_num, fps = 100)
+
+
+# アニメーション用のサンプルの相対度数を作図
+anime_prop_graph <- ggplot() + 
+  geom_bar(data = anime_freq_df, mapping = aes(x = x, y = proportion), 
+           stat = "identity", fill = "#00A968") + # 相対度数
+  geom_bar(data = anime_prob_df, mapping = aes(x = x, y = probability), 
+           stat = "identity", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  ylim(c(-0.01, 0.5)) + # y軸の表示範囲
+  labs(title = "Poisson Distribution", 
+       subtitle = "{current_frame}") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_prop_graph, nframes = frame_num, fps = 100)
+
 
