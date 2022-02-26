@@ -1,0 +1,644 @@
+---
+title: "確率分布の統計量"
+author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
+date: "`r paste('2022/02/22','2022/02/26', sep = ' - ')`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_section: true
+    toc: true
+    toc_depth: 4
+    keep_tex: false
+header-includes:
+  - \usepackage{bookmark}
+  - \usepackage{xltxtra}
+  - \usepackage{zxjatype}
+  - \usepackage[ipa]{zxjafont}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, error = FALSE, warning = FALSE, # メッセージを非表示
+  fig.align = "center", # 画像を中央揃え
+  fig.width = 5, fig.height = 4, # 画像のサイズ
+  dev = "cairo_pdf", dev.args = list(family = "ipaexg"), # {ggplot2}に日本語を組み込む場合の対処
+  class.source = "numberLines lineAnchors", # ソースを番号付けする
+  class.output = "numberLines lineAnchors chunkout" # 出力を番号付けする
+)
+```
+
+```{r}
+# レンダリング日時
+Sys.time()
+```
+
+\newpage
+
+
+# モーメント
+
+　確率分布・確率変数の、期待値・分散・標準偏差、モーメント(積率)、歪度・尖度の定義を確認します。\
+\
+
+
+## 期待値
+
+　確率変数の期待値(平均)の定義を確認します。\
+\
+
+　確率変数が離散値$x$をとる(離散確率分布$p(x)$の)場合は、総和を用いて期待値が定義されます。
+
+$$
+\mathbb{E}[x]
+    = \sum_{x}
+          x p(x)
+$$
+
+　確率変数が連続値$x$をとる(連続確率分布$p(x)$の)場合は、積分を用いて期待値が定義されます。
+
+$$
+\mathbb{E}[x]
+    = \int_{-\infty}^{\infty}
+          x p(x)
+      dx
+$$
+
+\ 
+
+
+## 分散
+
+　分散の定義を確認して、計算式を導出します。\
+\
+
+　分散は、偏差の2乗で定義されます。
+
+$$
+\mathbb{V}[x]
+    = \mathbb{E}[(x - \mathbb{E}[x])^2]
+$$
+
+　「変数」と「変数の期待値」の差を「偏差」と言います。\
+\
+
+
+### ・計算式の導出{-}
+
+　定義式の2乗の括弧を展開します。
+
+$$
+\begin{aligned}
+\mathbb{V}[x]
+   &= \mathbb{E} \Bigl[
+          (x - \mathbb{E}[x])^2
+      \Bigr]
+\\
+   &= \mathbb{E} \Bigl[
+          x^2
+          - 2 \mathbb{E}[x] x
+          + (\mathbb{E}[x])^2
+      \Bigr]
+\end{aligned}
+$$
+
+　期待値の性質$\mathbb{E}[x + y] = \mathbb{E}[x] + \mathbb{E}[y]$より、項を分割します。
+
+$$
+\mathbb{V}[x]
+    = \mathbb{E}[x^2]
+      + \mathbb{E} \Bigl[
+          - 2 \mathbb{E}[x] x
+        \Bigr]
+      + \mathbb{E} \Bigl[
+          (\mathbb{E}[x])^2
+        \Bigr]
+$$
+
+　期待値の性質$\mathbb{E}[a] = a$、$\mathbb{E}[a x] = a \mathbb{E}[x]$より、式を整理します。
+
+$$
+\begin{aligned}
+\mathbb{V}[x]
+   &= \mathbb{E}[x^2]
+      - 2 \mathbb{E}[x] \mathbb{E}[x]
+      + (\mathbb{E}[x])^2
+\\
+   &= \mathbb{E}[x^2] - (\mathbb{E}[x])^2
+\end{aligned}
+$$
+
+　期待値$\mathbb{E}[x]$は定数です。\
+　分散は、「$x$の2乗の期待値」と「$x$の期待値の2乗」の差で計算できるのが分かりました。\
+\
+
+
+## 標準偏差
+
+　標準偏差の定義を確認します。\
+\
+
+　標準偏差は、分散の平方根で定義されます。
+
+$$
+s[x]
+    = \sqrt{\mathbb{V}[x]}
+$$
+
+\ 
+
+
+## モーメント
+
+　確率変数のモーメント(積率)の定義を確認します。\
+\
+
+　期待値$\mathbb{E}[x]$を原点周りの1次モーメントと呼びます。また、期待値を$\mu = \mathbb{E}[x]$で表して、分散$\mathbb{E}[(x - \mu)^2]$を期待値$\mu$周りの2次モーメントと呼びます。確率分布の形状を表す指標であるこれらの考え方を拡張します。\
+
+　原点周りの$k$次モーメントを
+
+$$
+\mathbb{E}[x^k]
+$$
+
+で表します。\
+　また、定数$a$周りの$k$次モーメントを
+
+$$
+\mathbb{E}[(x - a)^k]
+$$
+
+で表します。\
+　特に、期待値$\mu$周りの$k$次モーメントは、$k$次の中心モーメントとも呼び
+
+$$
+\mathbb{E}[(x - \mu)^k]
+$$
+
+で表します。\
+\
+
+
+### ・原点周りのモーメントと期待値周りのモーメントの関係{-}
+
+　$k$次の中心モーメントについて、二項定理$(a + b)^n = \sum_{r=0}^n {}_nC_r a^r b^{n-r}$の変形を行います。
+
+$$
+\begin{aligned}
+\mathbb{E}[(x - \mu)^k]
+   &= \mathbb{E} \left[
+          \sum_{l=0}^k
+              {}_kC_l x^{k-l (- \mu)^l}
+      \right]
+\\
+   &= \sum_{l=0}^k
+          {}_kC_l
+          \mathbb{E}[x^{k-l}]
+          (- \mu)^l
+\end{aligned}
+$$
+
+　「原点周りの$k - l$次モーメント$\mathbb{E}[x^{k-l}]$」と「原点周りの1次モーメント$\mu = \mathbb{E}[x]$の$l$乗」が現れました。\
+\
+
+　この式に$k = 2$を代入してみます。
+
+$$
+\begin{aligned}
+\mathbb{E}[(x - \mu)^2]
+   &= \sum_{l=0}^2
+          {}_2C_l
+          \mathbb{E}[x^{2-l}]
+          (- \mu)^l
+\\
+   &= \frac{2!}{(2 - 0)! 0!}
+      \mathbb{E}[x^{2-0}]
+      (- \mu)^0
+      + \frac{2!}{(2 - 1)! 1!}
+        \mathbb{E}[x^{2-1}]
+        (- \mu)^1
+      + \frac{2!}{(2 - 2)! 2!}
+        \mathbb{E}[x^{2-2}]
+        (- \mu)^2
+\\
+   &= \mathbb{E}[x^2]
+      - 2 \mathbb{E}[x] \mu
+      + \mu^2
+\end{aligned}
+$$
+
+　定義より$0! = 1$、$x^0 = 1$です。\
+　$\mu = \mathbb{E}[x]$で置き換えます。
+
+$$
+\begin{aligned}
+\mathbb{E}[(x - \mu)^2]
+   &= \mathbb{E}[x^2]
+      - 2 \mathbb{E}[x] \mathbb{E}[x]
+      + (\mathbb{E}[x])^2
+\\
+   &= \mathbb{E}[x^2] - (\mathbb{E}[x])^2
+    = \mathbb{V}[x]
+\end{aligned}
+$$
+
+　分散の計算式になりました。\
+\
+
+
+## 歪度
+
+　歪度の定義を確認します。\
+\
+
+　歪度は、「3次中心モーメント」を「標準偏差の3乗」で割った値で定義されます。
+
+$$
+\frac{\mathbb{E}[(x - \mu)^3]}{\sigma^3}
+$$
+
+　ここで、期待値(原点周りの1次モーメント)$\mu = \mathbb{E}[x]$、標準偏差(2次中心モーメントの平方根)$\sigma = \sqrt{\mathbb{E}[(x - \mu)^2]}$です。\
+
+　歪度は、分布の非対称性(歪み具合)を表す指標です。分布の形状が対称な場合は値が0になり、左側の裾が長い(左側に歪んでいる)場合は負の値に、右側の裾が長い(右側に歪んでいる)場合は正の値になります。\
+\
+
+
+## 尖度
+
+　尖度の定義を確認します。\
+\
+
+　尖度は、「4次中心モーメント」を「標準偏差の4乗(分散の2乗)」で割った値で定義されます。
+
+$$
+\frac{\mathbb{E}[(x - \mu)^4]}{\sigma^4}
+$$
+
+　ここで、期待値(原点周りの1次モーメント)$\mu = \mathbb{E}[x]$、標準偏差(2次中心モーメントの平方根)$\sigma = \sqrt{\mathbb{E}[(x - \mu)^2]}$です。\
+
+　尖度は、分布の期待値付近の集中度(尖り具合)を表す指標です。先端がなだらかで裾が短く細いほど値が小さくなり、先端が細く裾が長く太いほど値が大きくなります。\
+\
+
+　ガウス分布の尖度は常に3になります。そこで、上の式から3を引いた
+
+$$
+\frac{\mathbb{E}[(x - \mu)^4]}{\sigma^4} - 3
+$$
+
+を尖度とする場合もあります。\
+　この定義を利用する場合は、ガウス分布の尖度は0になり、ガウス分布より先端がなだらかなで裾が短く細い場合は負の値になり、先端が細く裾が長く太い場合は0より大きくなります。\
+\
+
+
+# モーメント母関数
+
+　モーメント母関数(積率母関数)の定義と性質を確認します。\
+\
+
+
+## 定義
+
+　モーメント母関数$M(t)$は、$e^{tx}$の期待値として定義されます。$e$はネイピア数です。
+
+$$
+M(t)
+    \equiv
+      \mathbb{E}[e^{tx}]
+$$
+
+　$x$が離散値($p(x)$が離散確率分布)の場合は
+
+$$
+M(t)
+    = \sum_{x}
+          e^{tx}
+          p(x)
+$$
+
+で、$x$が連続値($p(x)$が連続確率分布)の場合は
+
+$$
+M(t)
+    = \int_{-\infty}^{\infty}
+          e^{tx}
+          p(x)
+      dx
+$$
+
+です。\
+
+　コーシー分布など、モーメン母関数が存在しない分布もあります。\
+\
+
+
+## 性質
+
+　モーメント母関数$M(t)$を$k$階微分して、$t = 0$を代入すると、原点の周りでの$k$次モーメント(積率)になります。
+
+$$
+\left.
+    \frac{d^k M(t)}{d t^k}
+\right|_{t=0}
+    = \mathbb{E}[x^k]
+$$
+
+\ 
+
+
+## 性質の確認
+
+　モーメン母関数の性質を2通りの方法で導出します。\
+\
+
+
+### ・パターン1{-}
+
+　まずは、期待値から確認します。
+
+$$
+M(t)
+    = \mathbb{E}[e^{tx}]
+$$
+
+　指数関数のマクローリン展開$e^x = \sum_{k=0}^{\infty} \frac{x^k}{k!}$を行います。
+
+$$
+\begin{aligned}
+M(t)
+   &= \mathbb{E} \left[
+          \frac{(t x)^0}{0!}
+          + \frac{(t x)^1}{1!}
+          + \frac{(t x)^2}{2!}
+          + \frac{(t x)^3}{3!}
+          + \frac{(t x)^4}{4!}
+          + \cdots
+      \right]
+\\
+   &= \mathbb{E} \left[
+          1
+          + t x
+          + \frac{t^2 x^2}{2!}
+          + \frac{t^3 x^3}{3!}
+          + \frac{t^4 x^4}{4!}
+          + \cdots
+      \right]
+\end{aligned}
+$$
+
+　定義より$x^0 = 1$、$0! = 1$です。\
+　期待値の性質$\mathbb{E}[a] = a$、$\mathbb{E}[a x] = a \mathbb{E}[x]$、$\mathbb{E}[x + y] = \mathbb{E}[x] + \mathbb{E}[y]$より、式を整理します。
+
+$$
+M(t)
+    = 1
+      + \mathbb{E}[x] t
+      + \frac{\mathbb{E}[x^2]}{2!} t^2
+      + \frac{\mathbb{E}[x^3]}{3!} t^3
+      + \frac{\mathbb{E}[x^4]}{4!} t^4
+      + \cdots
+\tag{1}
+$$
+
+
+　式(1)を$t$に関して微分します。
+
+$$
+\begin{aligned}
+\frac{d M(t)}{d t}
+   &= \frac{d}{d t} \left\{
+          1
+          + \mathbb{E}[x] t
+          + \frac{\mathbb{E}[x^2]}{2!} t^2
+          + \frac{\mathbb{E}[x^3]}{3!} t^3
+          + \frac{\mathbb{E}[x^4]}{4!} t^4
+          + \cdots
+      \right\}
+\\
+   &= 0
+      + \mathbb{E}[x]
+      + 2 \frac{\mathbb{E}[x^2]}{2!} t
+      + 3 \frac{\mathbb{E}[x^3]}{3!} t^2
+      + 4 \frac{\mathbb{E}[x^4]}{4!} t^3
+      + \cdots
+\\
+   &= \mathbb{E}[x]
+      + \mathbb{E}[x^2] t
+      + \frac{\mathbb{E}[x^3]}{2!} t^2
+      + \frac{\mathbb{E}[x^4]}{3!} t^3
+      + \cdots
+\end{aligned}
+$$
+
+　この式に$t = 0$を代入すると、1番目の項のみが残ります。
+
+$$
+\left.
+    \frac{d M(t)}{d t}
+\right|_{t=0}
+    = \mathbb{E}[x]
+$$
+
+　1次モーメント($x$の期待値)が得られました。\
+\
+
+　続いて、式(1)を$t$に関して2階微分します。1階微分$\frac{d M(t)}{d t}$を更に微分します。
+
+$$
+\begin{aligned}
+\frac{d^2 M(t)}{d t^2}
+   &= \frac{d}{d t} \frac{d M(t)}{d t}
+\\
+   &= \frac{d}{d t} \left\{
+          \mathbb{E}[x]
+          + \mathbb{E}[x^2] t
+          + \frac{\mathbb{E}[x^3]}{2!} t^2
+          + \frac{\mathbb{E}[x^4]}{3!} t^3
+          + \cdots
+      \right\}
+\\
+   &= 0
+      + \mathbb{E}[x^2]
+      + 2 \frac{\mathbb{E}[x^3]}{2!} t
+      + 3 \frac{\mathbb{E}[x^4]}{3!} t^2
+      + \cdots
+\\
+   &= \mathbb{E}[x^2]
+      + \mathbb{E}[x^3] t
+      + \frac{\mathbb{E}[x^4]}{2!} t^2
+      + \cdots
+\end{aligned}
+$$
+
+　この式に$t = 0$を代入します。
+
+$$
+\left.
+    \frac{d^2 M(t)}{d t^2}
+\right|_{t=0}
+    = \mathbb{E}[x^2]
+$$
+
+　2次モーメント($x^2$の期待値)が得られました。\
+\
+
+　モーメント母関数$M(t)$を$k$階微分して$t = 0$を代入したとき、$k + 1$番目の項($k$次の項)のみ残るのが分かります。\
+\
+
+
+### ・パターン2{-}
+
+　次は、期待値の定義式から確認します。連続値の場合は総和$\sum$を積分$\int$に置き換えれば成り立ちます。
+
+$$
+M(t)
+    = \sum_{x}
+          e^{tx}
+          p(x)
+\tag{2}
+$$
+
+　式(2)を$t$に関して微分します。
+
+$$
+\begin{aligned}
+\frac{d M(t)}{d t}
+   &= \frac{d}{d t} \left\{
+          \sum_{x}
+              e^{tx}
+              p(x)
+      \right\}
+\\
+   &= \sum_{x}
+          \frac{d}{d t} \Bigl\{
+              e^{tx}
+              p(x)
+      \Bigr\}
+\\
+   &= \sum_{x}
+          \frac{d e^{tx}}{d t}
+          p(x)
+\end{aligned}
+$$
+
+　モーメン母関数が存在するときルーベルグの収束定理により、総和$\sum$と微分を入れ変えられます。積分$\int$の場合も同様です。\
+　係数を含む指数関数の微分(合成関数の微分)$\frac{d e^{ax}}{d x} = e^{ax} \frac{d ax}{d x} = a e^{ax}$を行います。
+
+$$
+\frac{d M(t)}{d t}
+    = \sum_{x}
+          x e^{tx}
+          p(x)
+$$
+
+　この式に$t = 0$を代入すると、指数関数の項が消えます。
+
+$$
+\begin{aligned}
+\left.
+    \frac{d M(t)}{d t}
+\right|_{t=0}
+   &= \sum_{x}
+          x e^0
+          p(x)
+\\
+   &= \sum_{x}
+          x p(x)
+\end{aligned}
+$$
+
+　定義より$x^0 = 1$です。\
+　$x$の期待値の定義式になります。
+
+$$
+\left.
+    \frac{d M(t)}{d t}
+\right|_{t=0}
+    = \mathbb{E}[x]
+$$
+
+　1次モーメント($x$の期待値)が得られました。\
+\
+
+　続いて、式(2)を$t$に関して2階微分します。1階微分$\frac{d M(t)}{d t}$を更に微分します。
+
+$$
+\begin{aligned}
+\frac{d^2 M(t)}{d t^2}
+   &= \frac{d}{d t} \frac{d M(t)}{d t}
+\\
+   &= \frac{d}{d t} \left\{
+          \sum_{x}
+              x e^{tx}
+              p(x)
+      \right\}
+\\
+   &= \sum_{x}
+          \frac{d}{d t} \Bigl\{
+              x e^{tx}
+              p(x)
+      \Bigr\}
+\\
+   &= \sum_{x}
+          x
+          \frac{d e^{tx}}{d t}
+          p(x)
+\end{aligned}
+$$
+
+　指数関数の微分(と合成関数の微分)を行います。
+
+$$
+\begin{aligned}
+\frac{d^2 M(t)}{d t^2}
+   &= \sum_{x}
+          x x e^{tx}
+          p(x)
+\\
+   &= \sum_{x}
+          x^2 e^{tx}
+          p(x)
+\end{aligned}
+$$
+
+　この式に$t = 0$を代入します。
+
+$$
+\begin{aligned}
+\left.
+    \frac{d^2 M(t)}{d t^2}
+\right|_{t=0}
+   &= \sum_{x}
+          x^2 e^0
+          p(x)
+\\
+   &= \sum_{x}
+          x^2 p(x)
+\\
+   &= \mathbb{E}[x^2]
+\end{aligned}
+$$
+
+　2次モーメント($x^2$の期待値)が得られました。\
+\
+
+　モーメント母関数$M(t)$を$k$階微分して$t = 0$を代入したとき、$k$次の項になるのが分かります。\
+\
+
+
+# キュムラント母関数
+
+　見なかったことにする。\
+\
+
+
+# 特性関数
+
+　難しかった。\
+\
+
+
+# 参考書籍{-}
+
+- 星野満博・西崎雅仁『数理統計の探求』晃洋書房,2012年.
+
+
