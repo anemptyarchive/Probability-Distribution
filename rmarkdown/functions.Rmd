@@ -1,0 +1,901 @@
+---
+title: "確率分布に利用する関数"
+author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
+date: "`r paste('2022/02/28',  '2022/03/03', sep = ' - ')`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_section: true
+    toc: true
+    toc_depth: 4
+    keep_tex: false
+header-includes:
+  - \usepackage{bookmark}
+  - \usepackage{xltxtra}
+  - \usepackage{zxjatype}
+  - \usepackage[ipa]{zxjafont}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, error = FALSE, warning = FALSE, # メッセージを非表示
+  fig.align = "center", # 画像を中央揃え
+  fig.width = 5, fig.height = 4, # 画像のサイズ
+  dev = "cairo_pdf", dev.args = list(family = "ipaexg"), # {ggplot2}に日本語を組み込む場合の対処
+  class.source = "numberLines lineAnchors", # ソースを番号付けする
+  class.output = "numberLines lineAnchors chunkout" # 出力を番号付けする
+)
+```
+
+```{r}
+# レンダリング日時
+Sys.time()
+```
+
+\newpage
+
+
+# ガンマ関数の性質の導出
+
+　ガンマ関数(Gamma Function)の定義と性質を確認します。\
+\
+
+
+## 定義
+
+　ガンマ関数は、次の式で定義されます。
+
+$$
+\Gamma(x)
+  = \int_0^{\infty}
+        u^{x-1}
+        e^{-u}
+    du
+$$
+
+　ここで、$e$はネイピア数です。$e^x = \exp(x)$で表記することもあります。\
+\
+
+　ガンマ関数には、次の性質があります。\
+
+$$
+\begin{aligned}
+\Gamma(x + 1) 
+   &= x \Gamma(x)
+   &\quad
+      (x > 0)
+\\
+\Gamma(1)
+   &= 1
+\\
+\Gamma(n + 1)
+   &= n!
+   &\quad
+      (n > 0)
+\end{aligned}
+$$
+
+　これらの性質を導出します。\
+\
+
+
+## 性質1
+
+　まずは、$x$が非負の実数の場合を考えます。ガンマ関数の定義式の$x$を$x + 1$に置き換えます。
+
+$$
+\begin{aligned}
+\Gamma(x + 1) 
+   &= \int_0^{\infty}
+          u^{(x+1)-1}
+          e^{-u}
+      du
+\\
+   &= \int_0^{\infty}
+          u^x
+          e^{-u}
+      du
+\end{aligned}
+$$
+
+　部分積分$\int_a^b f'(x) g(x) dx = [f(x) g(x)]_a^b - \int_a^b f(x) g'(x) dx$を行うために、後の項を変形します。\
+　微分と積分は打ち消し合うので、$f(x) = \{\int f(x) dx\}'$です。また、係数を含む指数関数の積分$\int e^{ax} dx = \frac{1}{a} e^{ax}$を行います。
+
+$$
+\begin{aligned}
+e^{-u}
+   &=\left\{
+          \int
+              e^{-u}
+          du
+      \right\}'
+\\
+   &= \Bigl\{
+          - e^{-u}
+      \Bigr\}'
+\end{aligned}
+$$
+
+　係数を含む指数関数の微分(合成関数の微分)$(e^{ax})' = e^{ax} (a x)' = a e^{ax}$より、この式が成り立つのを確認できます。\
+　変形した項に置き換えます。
+
+$$
+\Gamma(x + 1)
+    = \int_0^{\infty}
+          u^{x}
+          \Bigl\{
+              - e^{-u}
+          \Bigr\}'
+      du
+$$
+
+　$f(x) = - e^{-u}$、$f'(x) = \{- e^{-u}\}'$、$g(x) = u^x$、$g'(x) = x u^{x-1}$として部分積分を行います。
+
+$$
+\Gamma(x + 1)
+    = \left[
+          u^x
+          \Bigl(
+              - e^{-u}
+          \Bigr)
+      \right]_0^{\infty}
+      - \int_0^{\infty}
+          x u^{x-1}
+          \Bigl(
+              - e^{-u}
+          \Bigr)
+        du
+$$
+
+　定積分$\int_a^b f(x) dx = [F(x)]_a^b = F(b) - F(a)$について、$u \rightarrow \infty$のとき$e^{-u} \rightarrow e^{-\infty} = 0$、$u = 0$のとき$u^x = 0^x = 0$となります。また、$u$と無関係な$-x$を$\int$の外に出します。
+
+$$
+\Gamma(x + 1)
+    = 0 - 0
+      + x
+        \int_0^{\infty}
+          u^{x-1}
+          e^{-u}
+        du
+$$
+
+　ガンマ関数の定義より置き換えます。
+
+$$
+\Gamma(x + 1) 
+    = x \Gamma(x)
+$$
+
+　1つ目の性質の式が得られました。\
+\
+
+
+## 性質2
+
+　次に、$x$が1の場合を考えます。ガンマ関数の定義式に$x = 1$を代入します。
+
+$$
+\begin{aligned}
+\Gamma(1)
+   &= \int_0^{\infty}
+         u^{1-1}
+         e^{-u}
+      du
+\\
+   &= \int_0^{\infty}
+         u^0
+         e^{-u}
+      du
+\end{aligned}
+$$
+
+　性質1のときと同様に、部分積分$\int_a^b f'(x) g(x) dx = [f(x) g(x)]_a^b - \int_a^b f(x) g'(x) dx$を行えるように、項を変形します。また、べき乗の定義より$x^0 = 1$です。
+
+$$
+\Gamma(1)
+    = \int_0^{\infty}
+          1
+          \Bigl(
+              - e^{-u}
+          \Bigr)'
+      du
+$$
+
+　$f(x) = - e^{-u}$、$f'(x) = \{- e^{-u}\}'$、$g(x) = 1$、$g'(x) = 0$として部分積分を行います。
+
+$$
+\Gamma(1)
+    = [- e^{-u}]_0^{\infty}
+      - \int_0^{\infty}
+          0
+          \Bigl(
+              - e^{-u}
+          \Bigr)
+        du
+$$
+
+　定積分$\int_a^b f(x) dx = [F(x)]_a^b = F(b) - F(a)$について、$u \rightarrow \infty$のとき$e^{-u} \rightarrow e^{-\infty} = 0$、$u = 0$のとき$e^{-u} = e^0 = 1$となります。
+
+$$
+\begin{aligned}
+\Gamma(1)
+   &= 0 - (-1)
+      - 0
+\\
+   &= 1
+\end{aligned}
+$$
+
+　2つ目の性質の式が得られました。\
+\
+
+
+## 性質3
+ 
+　最後に、$x$が自然数の場合を考えます。性質1の式を用います。
+
+$$
+\Gamma(x + 1)
+    = x \Gamma(x)
+$$
+
+　性質1より$\Gamma(x) = (x - 1) \Gamma(x - 1)$になります。
+
+$$
+\Gamma(x + 1)
+    = x (x - 1) \Gamma(x - 1)
+$$
+
+　同様に、$\Gamma(x - 1) = (x - 2) \Gamma(x - 2)$になるので、更に繰り返します。
+
+$$
+\Gamma(x + 1)
+    = x (x - 1) (x - 2)
+      \cdots
+      2 * 1 * \Gamma(1)
+$$
+
+　性質2より$\Gamma(x) = 1$なので、式全体が1から$x$の自然数の積(階乗)$x!$となります。
+
+$$
+\Gamma(x + 1)
+    = x!
+$$
+
+　3つ目の性質の式が得られました。\
+\
+
+
+# Rでガンマ関数の作図
+
+　ガンマ関数(Gamma Function)の計算を確認して、グラフを作成します。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r}
+# 利用するパッケージ
+library(tidyverse)
+```
+
+\ 
+
+
+## 定義式の確認
+
+　まずは、ガンマ関数の定義式を確認します。\
+\
+
+　ガンマ関数は、次の式で定義されます。
+
+$$
+\Gamma(x)
+  = \int_0^{\infty}
+        u^{x-1}
+        e^{-u}
+    du
+$$
+
+　ここで、$e$はネイピア数です。ガンマ関数については「ガンマ関数の性質」を参照してください。\
+\
+
+
+## ガンマ関数の計算
+
+　続いて、ガンマ関数の計算方法を確認します。\
+\
+
+　ガンマ関数`gamma()`を使って計算します。
+
+```{r}
+# 変数の値を指定
+x <- 4
+
+# ガンマ関数の計算
+y <- gamma(x)
+y
+```
+
+\ 
+
+　対数ガンマ関数`lgamma()`を使って計算します。
+
+```{r}
+# 対数ガンマ関数による計算
+log_y <- lgamma(x)
+y <- exp(log_y)
+y
+```
+
+　計算結果の指数をとるとガンマ関数の計算結果が得られます。\
+\
+
+　ガンマ関数の計算は非常に大きな値になるため、引数(変数)$x$によっては発散してしまいます。
+
+```{r}
+# ガンマ関数を計算:(発散)
+gamma(171); gamma(172)
+```
+
+\ 
+
+　途中計算などでは、対数ガンマ関数を使うことで計算できます。
+
+```{r}
+# 対数ガンマ関数による計算
+lgamma(172)
+```
+
+\ 
+
+　$x$が0または負の整数の場合は計算できません。
+
+```{r}
+# ガンマ関数を計算:(計算できない)
+gamma(0); gamma(-3)
+```
+
+\ 
+
+　ガンマ関数の計算を確認できました。次は、ガンマ関数を可視化します。\
+\
+
+
+## グラフの作成
+
+　`ggplot2`パッケージを利用して、ガンマ関数のグラフを作成します。\
+\
+
+
+### ・非負の値の場合{-}
+
+　まずは、0より大きい実数$x$を範囲として、ガンマ関数を計算します。
+
+```{r}
+# xの値を指定:(x > 0)
+x_vals <- seq(from = 0.01, to = 6, by = 0.01)
+
+# ガンマ関数の計算
+gamma_df <- tidyr::tibble(
+  x = x_vals, 
+  y = gamma(x_vals)
+)
+head(gamma_df)
+```
+
+　x軸の値を作成して`x_vals`とします。\
+　作成した`x_vals`を用いて、`gamma()`でガンマ関数の計算をします。\
+　作図用に、`x_vals`と各要素に対応する計算結果をデータフレームに格納します。\
+
+　ガンマ関数のグラフを作成します。
+
+```{r}
+# ガンマ関数を作図
+ggplot(data = gamma_df, mapping = aes(x = x, y = y)) + # データ
+  geom_line(color = "orange") + # 折れ線グラフ
+  labs(title = "Gamma Function", 
+       y = expression(Gamma(x))) # ラベル
+```
+
+　$x = 0$の垂線に漸近しているのが分かります。\
+\
+
+
+### ・負の値を含む場合{-}
+
+　続いて、負の実数も含めて、ガンマ関数を計算します。
+
+```{r}
+# xの値を指定:(0と負の整数は計算できない)
+x_vals <- seq(from = -5, to = 5, by = 0.0005)
+
+# ガンマ関数の計算
+gamma_df <- tidyr::tibble(
+  x = x_vals, 
+  y = gamma(x_vals)
+)
+head(gamma_df)
+```
+
+　0と負の整数のとき、計算結果が`NaN`になります。\
+
+　ガンマ関数のグラフを作成します。
+
+```{r}
+# ガンマ関数を作図
+ggplot(data = gamma_df, mapping = aes(x = x, y = y)) + # データ
+  geom_line(color = "orange") + # 折れ線グラフ
+  scale_x_continuous(breaks = seq(from = floor(min(x_vals)), to = floor(max(x_vals)))) + # x軸目盛
+  ylim(c(-10, 10)) + # y軸の表示範囲
+  labs(title = "Gamma Function", 
+       y = expression(Gamma(x))) # ラベル
+```
+
+　x軸の値が負の整数と0の点において、不連続なグラフになっているのが分かります。\
+\
+
+
+# ディガンマ関数の定義
+
+　ディガンマ関数(Digamma Function)の定義を確認します。\
+\
+
+
+# Rでディガンマ関数の作図
+
+　ディガンマ関数(Digamma Function)の計算を確認して、グラフを作成します。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r}
+# 利用するパッケージ
+library(tidyverse)
+```
+
+\ 
+
+
+## 定義式の確認
+
+　まずは、ディガンマ関数の定義式を確認します。\
+\
+
+　ディガンマ関数は、次の式で定義されます。
+
+$$
+\psi(x)
+    = \frac{d}{d x} \log \Gamma(x)
+    = \frac{1}{\Gamma(x)}
+      \frac{d \Gamma(x)}{d x}
+$$
+
+　ここで、$\Gamma(x)$はガンマ関数です。対数関数の微分は$\frac{d \log x}{d x} = \frac{1}{x}$です。ガンマ関数については「ガンマ関数の性質」を参照してください。\
+\
+
+
+## ディガンマ関数の計算
+
+　続いて、ディガンマ関数の計算方法を確認します。\
+\
+
+　ディガンマ関数`digamma()`を使って計算します。
+
+```{r}
+# 変数の値を指定
+x <- 4
+
+# ガンマ関数の計算
+y <- digamma(x)
+y
+```
+
+\ 
+
+　$x$が0または負の整数の場合は計算できません。
+
+```{r}
+# ディガンマ関数を計算:(計算できない)
+digamma(0); digamma(-3)
+```
+
+\ 
+
+　ディガンマ関数の計算を確認できました。次は、ディガンマ関数を可視化します。\
+\
+
+
+## グラフの作成
+
+　`ggplot2`パッケージを利用して、ディガンマ関数のグラフを作成します。\
+\
+
+
+### ・非負の値の場合{-}
+
+　まずは、0より大きい実数$x$を範囲として、ディガンマ関数を計算します。
+
+```{r}
+# xの値を指定:(x > 0)
+x_vals <- seq(from = 0.01, to = 5, by = 0.01)
+
+# ディガンマ関数の計算
+digamma_df <- tidyr::tibble(
+  x = x_vals, 
+  y = digamma(x_vals)
+)
+head(digamma_df)
+```
+
+　x軸の値を作成して`x_vals`とします。\
+　作成した`x_vals`を用いて、`digamma()`でディガンマ関数の計算をします。\
+　作図用に、`x_vals`と各要素に対応する計算結果をデータフレームに格納します。\
+
+　ガンマ関数のグラフを作成します。
+
+```{r}
+# ディガンマ関数を作図
+ggplot(data = digamma_df, mapping = aes(x = x, y = y)) + # データ
+  geom_line(color = "orange") + # 折れ線グラフ
+  labs(title = "Digamma Function", 
+       y = expression(psi(x))) # ラベル
+```
+
+　$x = 0$の垂線に漸近しているのが分かります。\
+\
+
+
+### ・負の値を含む場合{-}
+
+　続いて、負の実数も含めて、ディガンマ関数を計算します。
+
+```{r}
+# xの値を指定:(0と負の整数は計算できない)
+x_vals <- seq(from = -5, to = 5, by = 0.002)
+
+# ディガンマ関数の計算
+digamma_df <- tidyr::tibble(
+  x = x_vals, 
+  y = digamma(x_vals)
+)
+head(digamma_df)
+```
+
+　0と負の整数のとき、計算結果が`NaN`になります。\
+
+　ディガンマ関数のグラフを作成します。
+
+```{r}
+# ディガンマ関数を作図
+ggplot(data = digamma_df, mapping = aes(x = x, y = y)) + # データ
+  geom_line(color = "orange") + # 折れ線グラフ
+  scale_x_continuous(breaks = seq(from = floor(min(x_vals)), to = floor(max(x_vals)))) + # x軸目盛
+  ylim(c(-10, 10)) + # y軸の表示範囲
+  labs(title = "Digamma Function", 
+       y = expression(psi(x))) # ラベル
+```
+
+　x軸の値が負の整数と0の点において、不連続なグラフになっているのが分かります。\
+\
+
+
+# ベータ関数の定義
+
+　ベータ関数(Beta Function)の定義と性質を確認します。\
+\
+
+
+# Rでベータ関数の作図
+
+　ベータ関数(Beta Function)の計算を確認して、グラフを作成します。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r}
+# 利用するパッケージ
+library(tidyverse)
+```
+
+\ 
+
+
+## 定義式の確認
+
+　まずは、ベータ関数の定義式を確認します。\
+\
+
+　ベータ関数は、次の式で定義されます。
+
+$$
+B(\alpha,\beta)
+    = \int_0^1
+          x^{\alpha-1}
+          (1 - x)^{\beta-1}
+      dx
+    = \frac{\Gamma(\alpha) \Gamma(\beta)}{\Gamma(\alpha + \beta)}
+$$
+
+　ここで、$\Gamma(x)$はガンマ関数です。ガンマ関数については「ガンマ関数の性質」を参照してください。\
+\
+
+
+## ベータ関数の計算
+
+　続いて、ベータ関数の計算方法を確認します。\
+\
+
+　ガンマ関数`gamma()`を使って計算します。
+
+```{r}
+# 変数の値を指定
+a <- 2.1
+b <- 3.2
+
+# ガンマ関数によりベータ関数の計算
+z <- gamma(a) * gamma(b) / gamma(a + b)
+z
+```
+
+　ガンマ関数の定義式
+
+$$
+B(\alpha,\beta)
+    = \frac{\Gamma(\alpha) \Gamma(\beta)}{\Gamma(\alpha + \beta)}
+$$
+
+を計算します。\
+
+　対数ガンマ関数`lgamma()`を使って計算します。
+
+```{r}
+# ガンマ関数によりベータ関数の計算
+log_z <- lgamma(a) + lgamma(b) - lgamma(a + b)
+z <- exp(log_z)
+z
+```
+
+　対数をとった定義式
+
+$$
+\log B(\alpha,\beta)
+    = \log \Gamma(\alpha) + \log \Gamma(\beta)
+      - \log \Gamma(\alpha + \beta)
+$$
+
+を計算します。\
+　計算結果の指数をとります。
+
+$$
+B(\alpha,\beta)
+    = \exp \Bigr(
+          \log B(\alpha,\beta)
+      \Bigr)
+$$
+
+　指数と対数の性質より$\exp(\log x) = x$です。\
+
+　ベータ関数`beta()`を使って計算します。
+
+```{r}
+# ベータ関数の計算
+z <- beta(a, b)
+z
+```
+
+\ 
+
+　対数ベータ関数`lbeta()`を使って計算します。
+
+```{r}
+# 対数ベータ関数の計算
+log_z <- lbeta(a, b)
+z <- exp(log_z)
+z
+```
+
+\ 
+
+　$x$が0または負の整数の場合は計算できません。
+
+```{r}
+# ベータ関数の計算:(計算できない)
+beta(2.5, 0); beta(-3.5, 2.5)
+```
+
+　負の値の計算ができないのは実装上の理由で、定義・数式的には計算できます。\
+\
+
+　ベータ関数の計算を確認できました。次は、ベータ関数を可視化します。\
+\
+
+
+## グラフの作成
+
+　`ggplot2`パッケージを利用して、ベータ関数のグラフを作成します。\
+\
+
+
+### ・非負の値の場合{-}
+
+　まずは、0より大きい実数$\alpha, \beta$を範囲として、ベータ関数を計算します。
+
+```{r}
+# x軸とy軸の値を指定:(a > 0, b > 0)
+a_vals <- seq(from = 0.01, to = 3, by = 0.01)
+b_vals <- seq(from = 0.01, to = 3, by = 0.01)
+a_vals[1:5]; b_vals[1:5]
+```
+
+　x軸($\alpha$)の値を作成して`a_vals`、y軸($\beta$)の値を作成して`b_vals`とします。\
+
+　格子点に変換します。
+
+```{r}
+# 格子状の点を作成
+points_df  <- expand.grid(alpha = a_vals, beta = b_vals)
+a_grid <- points_df[["alpha"]]
+b_grid <- points_df[["beta"]]
+head(points_df)
+```
+
+　`expand.grid()`で`a_vals, b_vals`の全ての組み合わせを持つデータフレームを作成して、各列を取り出して`a_grid, b_grid`とします。引数名に指定した文字列が列名になります。\
+
+　ベータ関数を計算します。
+
+```{r}
+# ベータ関数の計算
+z_grid <- beta(a_grid, b_grid)
+
+# 値を格納
+beta_df <- tidyr::tibble(
+  alpha = a_grid, 
+  beta = b_grid, 
+  z = z_grid
+)
+head(beta_df)
+```
+
+　作成した`a_grid, b_grid`を用いて、`beta()`でベータ関数の計算をします。\
+　作図用に、`a_grid, b_grid`と各要素に対応する計算結果をデータフレームに格納します。\
+
+　ベータ関数のグラフを作成します。
+
+```{r}
+# ベータ関数を作図
+ggplot(data = beta_df, mapping = aes(x = alpha, y = beta, z = z, color = ..level..)) + 
+  geom_contour() + # 等高線図
+  scale_color_distiller(palette = "Spectral") + # 等高線の色
+  coord_fixed(ratio = 1) + # アスペクト比
+  labs(title = "Beta Function", 
+       x = expression(alpha), y = expression(beta), color = expression(Beta(alpha, beta))) # ラベル
+
+# ベータ関数を作図
+ggplot(data = beta_df, mapping = aes(x = alpha, y = beta, z = z, fill = ..level..)) + 
+  geom_contour_filled() + # 塗りつぶし等高線図
+  scale_fill_brewer(palette = "Spectral", direction = -1) + # 塗りつぶしの色
+  coord_fixed(ratio = 1) + # アスペクト比
+  labs(title = "Beta Function", 
+       x = expression(alpha), y = expression(beta), fill = expression(Beta(alpha, beta))) # ラベル
+```
+
+　$\alpha = 0$と$\beta = 0$の垂線に漸近しているのを分かってほしい。\
+\
+
+
+### ・負の値を含む場合{-}
+
+　続いて、負の実数も含めて、ベータ関数を計算します。
+
+```{r}
+# x軸とy軸の値を指定:(0と負の整数は計算できない)
+a_vals <- seq(from = -2, to = 2, by = 0.01)
+b_vals <- seq(from = -2, to = 2, by = 0.01)
+
+# 格子状の点を作成
+points_df  <- expand.grid(alpha = a_vals, beta = b_vals)
+a_grid <- points_df[["alpha"]]
+b_grid <- points_df[["beta"]]
+
+# ベータ関数の計算
+z_grid <- gamma(a_grid) * gamma(b_grid) / gamma(a_grid + b_grid)
+
+# 値を格納
+beta_df <- tidyr::tibble(
+  alpha = a_grid, 
+  beta = b_grid, 
+  z = z_grid
+)
+head(beta_df)
+```
+
+　ベータ関数`beta()`では負の値を計算できないので、ガンマ関数`gamma()`で計算します。値が大きい場合は対数ガンマ関数`lgamma()`を使ってください。\
+　0のとき計算結果が`Inf`、負の整数のとき計算結果が`NaN`になります。\
+
+　ベータ関数のグラフを作成します。
+
+```{r}
+# 閾値を指定
+threshold <- 10
+
+# ベータ関数を作図
+ggplot(data = beta_df, mapping = aes(x = alpha, y = beta, z = z, color = ..level..)) + 
+  geom_contour() + # 等高線図:(デフォルト)
+  #geom_contour(breaks = seq(from = -threshold, to = threshold, length.out = 10)) + # 等高線図:(線の位置を指定)
+  scale_color_distiller(palette = "Spectral") + # 等高線の色
+  coord_fixed(ratio = 1) + # アスペクト比
+  labs(title = "Beta Function", 
+       x = expression(alpha), y = expression(beta), color = expression(Beta(alpha, beta))) # ラベル
+
+# ベータ関数を作図
+ggplot(data = beta_df, mapping = aes(x = alpha, y = beta, z = z, fill = ..level..)) + 
+  geom_contour_filled() + # 塗りつぶし等高線図:(デフォルト)
+  #geom_contour_filled(breaks = seq(from = -threshold, to = threshold, length.out = 10)) + # 塗りつぶし等高線図:(線の位置を指定)
+  scale_fill_brewer(palette = "Spectral", direction = -1) + # 塗りつぶしの色
+  coord_fixed(ratio = 1) + # アスペクト比
+  labs(title = "Beta Function", 
+       x = expression(alpha), y = expression(beta), fill = expression(Beta(alpha, beta))) # ラベル
+```
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 閾値を指定
+threshold <- 10
+
+# ベータ関数を作図
+ggplot(data = beta_df, mapping = aes(x = alpha, y = beta, z = z, color = ..level..)) + 
+  #geom_contour() + # 等高線図:(デフォルト)
+  geom_contour(breaks = seq(from = -threshold, to = threshold, length.out = 10)) + # 等高線図:(線の位置を指定)
+  scale_color_distiller(palette = "Spectral") + # 等高線の色
+  coord_fixed(ratio = 1) + # アスペクト比
+  labs(title = "Beta Function", 
+       x = expression(alpha), y = expression(beta), color = expression(Beta(alpha, beta))) # ラベル
+
+# ベータ関数を作図
+ggplot(data = beta_df, mapping = aes(x = alpha, y = beta, z = z, fill = ..level..)) + 
+  #geom_contour_filled() + # 塗りつぶし等高線図:(デフォルト)
+  geom_contour_filled(breaks = seq(from = -threshold, to = threshold, length.out = 10)) + # 塗りつぶし等高線図:(線の位置を指定)
+  scale_fill_brewer(palette = "Spectral", direction = -1) + # 塗りつぶしの色
+  coord_fixed(ratio = 1) + # アスペクト比
+  labs(title = "Beta Function", 
+       x = expression(alpha), y = expression(beta), fill = expression(Beta(alpha, beta))) # ラベル
+```
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 閾値を指定
+threshold <- 100
+
+# ベータ関数を作図
+ggplot(data = beta_df, mapping = aes(x = alpha, y = beta, z = z, color = ..level..)) + 
+  #geom_contour() + # 等高線図:(デフォルト)
+  geom_contour(breaks = seq(from = -threshold, to = threshold, length.out = 10)) + # 等高線図:(線の位置を指定)
+  scale_color_distiller(palette = "Spectral") + # 等高線の色
+  coord_fixed(ratio = 1) + # アスペクト比
+  labs(title = "Beta Function", 
+       x = expression(alpha), y = expression(beta), color = expression(Beta(alpha, beta))) # ラベル
+
+# ベータ関数を作図
+ggplot(data = beta_df, mapping = aes(x = alpha, y = beta, z = z, fill = ..level..)) + 
+  #geom_contour_filled() + # 塗りつぶし等高線図:(デフォルト)
+  geom_contour_filled(breaks = seq(from = -threshold, to = threshold, length.out = 10)) + # 塗りつぶし等高線図:(線の位置を指定)
+  scale_fill_brewer(palette = "Spectral", direction = -1) + # 塗りつぶしの色
+  coord_fixed(ratio = 1) + # アスペクト比
+  labs(title = "Beta Function", 
+       x = expression(alpha), y = expression(beta), fill = expression(Beta(alpha, beta))) # ラベル
+```
+
+　等高線を引くz軸の値を`breaks`引数に指定します。この例では、`-threshold`から`threshold`までの値を等間隔に区切ります。\
+
+　各軸の値が負の整数と0の点において、不連続なグラフになっているのが分かります。\
+\
+
+
+# 参考文献
+
+- 岩田具治『トピックモデル』(機械学習プロフェッショナルシリーズ)講談社,2015年.
+
+
