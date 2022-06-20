@@ -107,8 +107,8 @@ ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
   geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 棒グラフ
   scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   labs(title = "Binomial Distribution", 
-       subtitle = paste0("phi=", phi, ", M=", M), # (文字列表記)
-       #subtitle = parse(text = paste0("list(phi==", phi, ", M==", M, ")")), # (数式表記)
+       subtitle = paste0("phi=", phi, ", M=", M), # (文字列表記用)
+       #subtitle = parse(text = paste0("list(phi==", phi, ", M==", M, ")")), # (数式表記用)
        x = "x", y = "probability") # ラベル
 
 
@@ -177,7 +177,8 @@ res_prob_df <- tidyr::expand_grid(
   dplyr::arrange(phi, x) |> # パラメータごとに並べ替え
   dplyr::mutate(
     probability = dbinom(x = x, size = M, prob = phi), 
-    parameter = paste0("phi=", phi, ", M=", M) # 色分け用ラベル
+    parameter = paste0("phi=", phi, ", M=", M) |> 
+      factor(levels = paste0("phi=", sort(phi_vals), ", M=", M)) # 色分け用ラベル
   ) # 確率を計算
 
 # 凡例用のラベルを作成:(数式表示用)
@@ -185,7 +186,7 @@ label_vec <- res_prob_df[["parameter"]] |>
   stringr::str_replace_all(pattern = "=", replacement = "==") %>% # 等号表示用の記法に変換
   paste0("list(", ., ")") |> # カンマ表示用の記法に変換
   unique() |> # 重複を除去
-  parse(text = _) # expression()化
+  parse(text = _) # expression関数化
 names(label_vec) <- unique(res_prob_df[["parameter"]]) # ggplotに指定する文字列に対応する名前付きベクトルに変換
 
 
@@ -195,6 +196,7 @@ ggplot(data = res_prob_df, mapping = aes(x = x, y = probability, fill = paramete
   #scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   scale_color_hue(labels = label_vec) + # 線の色:(数式表示用)
   scale_fill_hue(labels = label_vec) + # 塗りつぶしの色:(数式表示用)
+  theme(legend.text.align = 0) + # 図の体裁:凡例
   labs(title = "Binomial Distribution", 
        fill = "parameter", color = "parameter", 
        x = "x", y = "probability") # タイトル
@@ -220,7 +222,8 @@ res_prob_df <- tidyr::expand_grid(
   dplyr::arrange(M, x) |> # 試行回数ごとに並べ替え
   dplyr::mutate(
     probability = dbinom(x = x, size = M, prob = phi), 
-    parameter = paste0("phi=", phi, ", M=", M) # 色分け用ラベル
+    parameter = paste0("phi=", phi, ", M=", M) |> 
+      factor(paste0("phi=", phi, ", M=", M_vals)) # 色分け用ラベル
   ) # 確率を計算
 
 # 凡例用のラベルを作成:(数式表示用)
@@ -228,7 +231,7 @@ label_vec <- res_prob_df[["parameter"]] |>
   stringr::str_replace_all(pattern = "=", replacement = "==") %>% # 等号表示用の記法に変換
   paste0("list(", ., ")") |> # カンマ表示用の記法に変換
   unique() |> # 重複を除去
-  parse(text = _) # expression()化
+  parse(text = _) # expression関数化
 names(label_vec) <- unique(res_prob_df[["parameter"]]) # ggplotに指定する文字列に対応する名前付きベクトルに変換
 
 
@@ -238,6 +241,7 @@ ggplot(data = res_prob_df, mapping = aes(x = x, y = probability, fill = paramete
   #scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   scale_color_hue(labels = label_vec) + # 線の色:(数式表示用)
   scale_fill_hue(labels = label_vec) + # 塗りつぶしの色:(数式表示用)
+  theme(legend.text.align = 0) + # 図の体裁:凡例
   labs(title = "Binomial Distribution", 
        fill = "parameter", color = "parameter", 
        x = "x", y = "probability") # タイトル
