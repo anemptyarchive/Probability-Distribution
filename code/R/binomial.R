@@ -131,12 +131,12 @@ ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
 
 # 統計量を格納
 stat_df <- tibble::tibble(
-  statistic = c(E_x, E_x-s_x, E_x+s_x, mode_x), 
-  type = c("mean", "sd", "sd", "mode")
+  statistic = c(E_x, E_x-s_x, E_x+s_x, mode_x), # 統計量
+  type = c("mean", "sd", "sd", "mode") # 色分け用ラベル
 )
 
 # 凡例用の設定を作成:(数式表示用)
-value_vec <- c(mean = "blue", sd = "orange", mode = "chocolate")
+color_vec <- c(mean = "blue", sd = "orange", mode = "chocolate")
 linetype_vec <- c(mean = "dashed", sd = "dotted", mode = "dashed")
 label_vec <- c(mean = expression(E(x)), sd = expression(E(x) %+-% sqrt(V(x))), mode = expression(mode(x)))
 
@@ -147,8 +147,8 @@ ggplot() + # データ
   geom_vline(data = stat_df, mapping = aes(xintercept = statistic, color = type, linetype = type), 
              size = 1) + # 統計量
   scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  scale_color_manual(values = color_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
   scale_linetype_manual(values = linetype_vec, labels = label_vec, name = "statistic") + # 線の種類:(線指定と数式表示用)
-  scale_color_manual(values = value_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
   theme(legend.text.align = 0) + # 図の体裁:凡例
   labs(title = "Binomial Distribution", 
        subtitle = parse(text = paste0("list(phi==", phi, ", M==", M, ")")), 
@@ -223,7 +223,7 @@ res_prob_df <- tidyr::expand_grid(
   dplyr::mutate(
     probability = dbinom(x = x, size = M, prob = phi), 
     parameter = paste0("phi=", phi, ", M=", M) |> 
-      factor(paste0("phi=", phi, ", M=", M_vals)) # 色分け用ラベル
+      factor(levels = paste0("phi=", phi, ", M=", sort(M_vals))) # 色分け用ラベル
   ) # 確率を計算
 
 # 凡例用のラベルを作成:(数式表示用)
@@ -271,7 +271,7 @@ anime_prob_df <- tidyr::expand_grid(
   dplyr::mutate(
     probability = dbinom(x = x, size = M, prob = phi), 
     parameter = paste0("phi=", phi, ", M=", M) |> 
-      factor(levels = paste0("phi=", phi_vals, ", M=", M)) # フレーム切替用ラベル
+      factor(levels = paste0("phi=", sort(phi_vals), ", M=", M)) # フレーム切替用ラベル
   ) # 確率を計算
 
 # 二項分布のアニメーションを作図
@@ -387,7 +387,7 @@ anime_stat_df <- tibble::tibble(
     type = stringr::str_replace(type, pattern = "sd_.*", replacement = "sd")) # 期待値±標準偏差のカテゴリを統一
 
 # 凡例用の設定を作成:(数式表示用)
-value_vec <- c(mean = "blue", sd = "orange", mode = "chocolate")
+color_vec <- c(mean = "blue", sd = "orange", mode = "chocolate")
 linetype_vec <- c(mean = "dashed", sd = "dotted", mode = "dashed")
 label_vec <- c(mean = expression(E(x)), sd = expression(E(x) %+-% sqrt(V(x))), mode = expression(mode(x)))
 
@@ -401,7 +401,7 @@ anime_prob_graph <- ggplot() + # データ
   gganimate::transition_manual(parameter) + # フレーム
   scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   scale_linetype_manual(values = linetype_vec, labels = label_vec, name = "statistic") + # 線の種類:(線指定と数式表示用)
-  scale_color_manual(values = value_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
+  scale_color_manual(values = color_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
   theme(legend.text.align = 0) + # 図の体裁:凡例
   labs(title = "Binomial Distribution", 
        subtitle = "{current_frame}", 
@@ -469,7 +469,7 @@ anime_stat_df <- tibble::tibble(
     type = stringr::str_replace(type, pattern = "sd_.*", replacement = "sd")) # 期待値±標準偏差のカテゴリを統一
 
 # 凡例用の設定を作成:(数式表示用)
-value_vec <- c(mean = "blue", sd = "orange", mode = "chocolate")
+color_vec <- c(mean = "blue", sd = "orange", mode = "chocolate")
 linetype_vec <- c(mean = "dashed", sd = "dotted", mode = "dashed")
 label_vec <- c(mean = expression(E(x)), sd = expression(E(x) %+-% sqrt(V(x))), mode = expression(mode(x)))
 
@@ -484,7 +484,7 @@ anime_prob_graph <- ggplot() + # データ
   gganimate::view_follow(fixed_x = FALSE, fixed_y = TRUE) + # 表示範囲の調整
   #scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   scale_linetype_manual(values = linetype_vec, labels = label_vec, name = "statistic") + # 線の種類:(線指定と数式表示用)
-  scale_color_manual(values = value_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
+  scale_color_manual(values = color_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
   theme(legend.text.align = 0) + # 図の体裁:凡例
   labs(title = "Binomial Distribution", 
        subtitle = "{current_frame}", 
@@ -525,7 +525,7 @@ prob_df <- tidyr::tibble(
 
 # サンプルを集計
 freq_df <- tidyr::tibble(x = x_n) |> # 乱数を格納
-  dplyr::count(x, name = "frequency") |> # 頻度を集計
+  dplyr::count(x, name = "frequency") |> # 度数を集計
   dplyr::right_join(tidyr::tibble(x = x_vals), by = "x") |> # 全てのパターンに追加
   dplyr::mutate(frequency = tidyr::replace_na(frequency, 0)) # サンプルにない場合の欠損値を0に置換
 
@@ -593,8 +593,8 @@ label_vec <- freq_df |>
     names_from = x, 
     names_prefix = "x", 
     values_from = frequency
-  ) |> # 頻度列を展開
-  tidyr::unite(col = "label", dplyr::starts_with("x"), sep = ", ") |> # 頻度情報をまとめて文字列化
+  ) |> # 度数列を展開
+  tidyr::unite(col = "label", dplyr::starts_with("x"), sep = ", ") |> # 度数情報をまとめて文字列化
   dplyr::mutate(
     label = paste0("phi=", phi, ", M=", M, ", N=", n, "=(", label, ")") %>% 
       factor(., levels = .)

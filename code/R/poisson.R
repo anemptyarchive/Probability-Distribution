@@ -112,9 +112,14 @@ ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
 
 # 統計量を格納
 stat_df <- tibble::tibble(
-  statistic = c(E_x, E_x-s_x, E_x+s_x, mode_x), 
-  type = c("mean", "sd", "sd", "mode")
+  statistic = c(E_x, E_x-s_x, E_x+s_x, mode_x), # 統計量
+  type = c("mean", "sd", "sd", "mode") # 色分け用ラベル
 )
+
+# 凡例用の設定を作成:(数式表示用)
+color_vec <- c(mean = "blue", sd = "orange", mode = "chocolate")
+linetype_vec <- c(mean = "dashed", sd = "dotted", mode = "dashed")
+label_vec <- c(mean = expression(E(x)), sd = expression(E(x) %+-% sqrt(V(x))), mode = expression(mode(x)))
 
 # 統計量を重ねたポアソン分布のグラフを作成:凡例付き
 ggplot() + # データ
@@ -123,9 +128,8 @@ ggplot() + # データ
   geom_vline(data = stat_df, mapping = aes(xintercept = statistic, color = type), 
              size = 1, linetype = "dashed") + # 統計量
   scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
-  scale_color_manual(name = "statistics", 
-                     values = c(mean = "blue", sd = "orange", mode = "chocolate"), 
-                     labels = c(mean = expression(E(x)), sd = expression(E(x) %+-% sqrt(V(x))), mode = expression(mode(x)))) + # 線の色:(色指定と数式表示用)
+  scale_color_manual(values = color_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
+  scale_linetype_manual(values = linetype_vec, labels = label_vec, name = "statistic") + # 線の種類:(線指定と数式表示用)
   theme(legend.text.align = 0) + # 図の体裁:凡例
   labs(title = "Poisson Distribution", 
        subtitle = parse(text = paste0("lambda==", lambda)), 
@@ -277,7 +281,7 @@ anime_stat_df <- tibble::tibble(
     type = stringr::str_replace(type, pattern = "sd_.", replacement = "sd")) # 期待値±標準偏差のカテゴリを統一
 
 # 凡例用の設定を作成:(数式表示用)
-value_vec <- c(mean = "blue", sd = "orange", mode = "chocolate")
+color_vec <- c(mean = "blue", sd = "orange", mode = "chocolate")
 linetype_vec <- c(mean = "dashed", sd = "dotted", mode = "dashed")
 label_vec <- c(mean = expression(E(x)), sd = expression(E(x) %+-% sqrt(V(x))), mode = expression(mode(x)))
 
@@ -291,7 +295,7 @@ anime_prob_graph <- ggplot() +
   gganimate::transition_manual(parameter) + # フレーム
   scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   scale_linetype_manual(values = linetype_vec, labels = label_vec, name = "statistic") + # 線の種類:(線指定と数式表示用)
-  scale_color_manual(values = value_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
+  scale_color_manual(values = color_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
   theme(legend.text.align = 0) + # 図の体裁:凡例
   labs(title = "Poisson Distribution", 
        subtitle = "{current_frame}", 
