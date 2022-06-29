@@ -16,7 +16,7 @@ library(ggplot2)
 phi <- 0.35
 
 # 確率変数の値を指定:(0, 1)
-x <- 1
+x <- 0
 
 # ベクトルに変換
 phi_v <- c(1 - phi, phi)
@@ -28,27 +28,27 @@ prob <- phi^x * (1 - phi)^(1 - x)
 prob
 
 # 対数をとった定義式により確率を計算
-ln_prob <- x * log(phi) + (1 - x) * log(1 - phi)
-prob <- exp(ln_prob)
-prob; ln_prob
+log_prob <- x * log(phi) + (1 - x) * log(1 - phi)
+prob <- exp(log_prob)
+prob; log_prob
 
 # 二項分布の関数により確率を計算
 prob <- dbinom(x = x, size = 1, prob = phi)
 prob
 
 # 二項分布の対数をとった関数により確率を計算
-ln_prob <- dbinom(x = x, size = 1, prob = phi, log = TRUE)
-prob <- exp(ln_prob)
-prob; ln_prob
+log_prob <- dbinom(x = x, size = 1, prob = phi, log = TRUE)
+prob <- exp(log_prob)
+prob; log_prob
 
 # 多項分布の関数により確率を計算
 prob <- dmultinom(x = x_v, size = 1, prob = phi_v)
 prob
 
 # 多項分布の対数をとった関数により確率を計算
-ln_prob <- dmultinom(x = x_v, size = 1, prob = phi_v, log = TRUE)
-prob <- exp(ln_prob)
-prob; ln_prob
+log_prob <- dmultinom(x = x_v, size = 1, prob = phi_v, log = TRUE)
+prob <- exp(log_prob)
+prob; log_prob
 
 # インデックスにより確率を抽出
 prob <- phi_v[x+1]
@@ -89,7 +89,7 @@ kurtosis
 phi <- 0.35
 
 
-# 作図用のxの点を作成
+# xがとり得る値を作成
 x_vals <- 0:1
 
 # ベルヌーイ分布を計算
@@ -101,7 +101,7 @@ prob_df <- tidyr::tibble(
 
 # ベルヌーイ分布を作図
 ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
-  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 棒グラフ
+  geom_bar(stat = "identity", fill = "#00A968") + # 棒グラフ
   scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   ylim(c(0, 1)) + # y軸の表示範囲
   labs(title = "Bernoulli Distribution", 
@@ -117,7 +117,7 @@ mode_x <- which.max(c(1 - phi, phi)) - 1
 
 # ベルヌーイ分布を作図:線のみ
 ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
-  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 分布
+  geom_bar(stat = "identity", fill = "#00A968") + # 分布
   geom_vline(xintercept = E_x, color = "blue", size = 1, linetype = "dashed") + # 期待値
   geom_vline(xintercept = E_x-s_x, color = "orange", size = 1, linetype = "dotted") + # 期待値 - 標準偏差
   geom_vline(xintercept = E_x+s_x, color = "orange", size = 1, linetype = "dotted") + # 期待値 + 標準偏差
@@ -125,7 +125,7 @@ ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
   scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   ylim(c(0, 1)) + # y軸の表示範囲
   labs(title = "Bernoulli Distribution", 
-       subtitle = parse(text = paste0("phi==", phi)), # (数式表記用)
+       subtitle = parse(text = paste0("phi==", phi)), 
        x = "x", y = "probability") # ラベル
 
 
@@ -143,9 +143,9 @@ label_vec <- c(mean = expression(E(x)), sd = expression(E(x) %+-% sqrt(V(x))), m
 # 統計量を重ねたベルヌーイ分布のグラフを作成:凡例付き
 ggplot() + # データ
   geom_bar(data = prob_df, mapping = aes(x = x, y = probability), 
-           stat = "identity", position = "dodge", fill = "#00A968") + # 分布
-  geom_vline(data = stat_df, mapping = aes(xintercept = statistic, color = type), 
-             size = 1, linetype = "dashed") + # 統計量
+           stat = "identity", fill = "#00A968") + # 分布
+  geom_vline(data = stat_df, mapping = aes(xintercept = statistic, color = type, linetype = type), 
+             size = 1) + # 統計量
   scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   scale_color_manual(values = color_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
   scale_linetype_manual(values = linetype_vec, labels = label_vec, name = "statistic") + # 線の種類:(線指定と数式表示用)
@@ -156,14 +156,14 @@ ggplot() + # データ
        x = "x", y = "probability") # ラベル
 
 
-# パラメータと分布の関係：アニメによる可視化 -----------------------------------
+# パラメータと分布の関係：アニメーションによる可視化 -----------------------------------
 
 # パラメータとして利用する値を指定
 phi_vals <- seq(from = 0, to = 1, by = 0.01)
 length(phi_vals) # フレーム数
 
 
-# 作図用のxの点を作成
+# xがとり得る値を作成
 x_vals <- 0:1
 
 # パラメータごとにベルヌーイ分布を計算
@@ -181,7 +181,7 @@ anime_prob_df <- tidyr::expand_grid(
 
 # ベルヌーイ分布のアニメーションを作図
 anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = x, y = probability)) + # データ
-  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 分布
+  geom_bar(stat = "identity", fill = "#00A968") + # 分布
   gganimate::transition_manual(parameter) + # フレーム
   scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   labs(title = "Bernoulli Distribution", 
@@ -191,14 +191,14 @@ anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = x, y = probab
 gganimate::animate(anime_prob_graph, nframes = length(phi_vals), fps = 100, width = 600, height = 600)
 
 
-# 歪度と尖度の可視化 --------------------------------------------------------------------
+# パラメータと統計量の関係：アニメーションによる可視化 --------------------------------------------------------------------
 
 # パラメータとして利用する値を作成
 phi_vals <- seq(from = 0, to = 1, by = 0.01)
 length(phi_vals) # フレーム数
 
 
-# 作図用のxの点を作成
+# xがとり得る値を作成
 x_vals <- 0:1
 
 # 歪度を計算
@@ -265,7 +265,7 @@ anime_prob_graph <- ggplot(data = anime_stat_df, ) +
        x = "x", y = "probability") # ラベル
 
 # gif画像を作成
-gganimate::animate(anime_prob_graph, nframes = length(phi_vals), fps = 100, width = 600, height = 600)
+gganimate::animate(anime_prob_graph, nframes = length(phi_vals), fps = 100, width = 700, height = 600)
 
 
 # 乱数の生成 -------------------------------------------------------------------
@@ -285,7 +285,7 @@ x_n <- rbinom(n = N, size = 1, prob = phi)
 
 ### ・乱数の可視化 ----
 
-# 作図用のxの点を作成
+# xがとり得る値を作成
 x_vals <- 0:1
 
 # ベルヌーイ分布を計算
@@ -303,7 +303,7 @@ freq_df <- tidyr::tibble(
 
 # サンプルのヒストグラムを作成:度数
 ggplot(data = freq_df, mapping = aes(x = x, y = frequency)) + # データ
-  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 度数
+  geom_bar(stat = "identity", fill = "#00A968") + # 度数
   scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   labs(title = "Bernoulli Distribution", 
        subtitle = paste0("phi=", phi, ", N=", N), 
@@ -312,9 +312,9 @@ ggplot(data = freq_df, mapping = aes(x = x, y = frequency)) + # データ
 # サンプルのヒストグラムを作成:相対度数
 ggplot() + 
   geom_bar(data = freq_df, mapping = aes(x = x, y = frequency/N), 
-           stat = "identity", position = "dodge", fill = "#00A968") + # 構成比
+           stat = "identity", fill = "#00A968") + # 構成比
   geom_bar(data = prob_df, mapping = aes(x = x, y = probability), 
-           stat = "identity", position = "dodge", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
+           stat = "identity", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
   scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   ylim(c(0, 1)) + # y軸の表示範囲
   labs(
@@ -339,7 +339,7 @@ N <- 300
 # ベルヌーイ分布に従う乱数を生成
 x_n <- rbinom(n = N, size = 1, prob = phi)
 
-# 作図用のxの点を作成
+# xがとり得る値を作成
 x_vals <- 0:1
 
 # サンプルを集計
@@ -375,8 +375,10 @@ anime_freq_df <- freq_df |>
   tibble::add_column(parameter = rep(label_vec, each = length(x_vals)))
 
 # サンプルを格納
-anime_data_df <- tibble::tibble(x = x_n) |> 
-  tibble::add_column(parameter = label_vec) # フレーム切替用のラベルを追加
+anime_data_df <- tibble::tibble(
+  x = x_n, # サンプル
+  parameter = label_vec # フレーム切替用ラベルを追加
+)
 
 # ベルヌーイ分布の情報を複製
 anime_prob_df <- tibble::tibble(
@@ -385,17 +387,18 @@ anime_prob_df <- tibble::tibble(
   num = N # 複製数
 ) |> 
   tidyr::uncount(num) |> # データ数分に複製
-  tibble::add_column(parameter = rep(label_vec, times = length(x_vals))) # フレーム切替用のラベルを追加
+  tibble::add_column(parameter = rep(label_vec, times = length(x_vals))) |> # フレーム切替用ラベルを追加
+  dplyr::arrange(parameter) # サンプリング回数ごとに並べ替え
 
 
 # ベルヌーイ乱数のヒストグラムのアニメーションを作図:度数
 anime_hist_graph <- ggplot() + 
   geom_bar(data = anime_freq_df, mapping = aes(x = x, y = frequency), 
-           stat = "identity", position = "dodge", fill = "#00A968") + # 度数
+           stat = "identity", fill = "#00A968") + # 度数
   geom_point(data = anime_data_df, mapping = aes(x = x, y = 0), 
              color = "orange", size= 5) + # サンプル
-  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   gganimate::transition_manual(parameter) + # フレーム
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   labs(title = "Bernoulli Distribution", 
        subtitle = "{current_frame}", 
        x = "x", y = "frequency") # ラベル
@@ -407,13 +410,14 @@ gganimate::animate(anime_hist_graph, nframes = N, fps = 100, width = 600, height
 # ベルヌーイ乱数のヒストグラムのアニメーションを作図:相対度数
 anime_prop_graph <- ggplot() + 
   geom_bar(data = anime_freq_df, mapping = aes(x = x, y = frequency/n), 
-           stat = "identity", position = "dodge", fill = "#00A968") + # 相対度数
+           stat = "identity", fill = "#00A968") + # 相対度数
   geom_bar(data = anime_prob_df, mapping = aes(x = x, y = probability), 
-           stat = "identity", position = "dodge", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
+           stat = "identity", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
   geom_point(data = anime_data_df, mapping = aes(x = x, y = 0), 
              color = "orange", size= 5) + # サンプル
-  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   gganimate::transition_manual(parameter) + # フレーム
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  ylim(c(0, 1)) + # y軸の表示範囲
   labs(title = "Bernoulli Distribution", 
        subtitle = "{current_frame}", 
        x = "x", y = "relative frequency") # ラベル

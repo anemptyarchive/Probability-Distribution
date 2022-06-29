@@ -73,6 +73,10 @@ E_x
 V_x <- M * phi * (1 - phi)
 V_x
 
+# 最頻値を計算:(注:複数の場合も1つしか返さない)
+mode_x <- floor(phi * (M + 1))
+mode_x
+
 
 # 歪度を計算
 skewness <- (1 - 2 * phi) / sqrt(M * phi * (1 - phi))
@@ -92,7 +96,7 @@ phi <- 0.35
 M <- 10
 
 
-# 作図用のxの点を作成
+# xがとり得る値を作成
 x_vals <- 0:M
 
 # 二項分布を計算
@@ -166,7 +170,7 @@ phi_vals <- c(0.1, 0.33, 0.5, 0.8, 0.9)
 M <- 100
 
 
-# 作図用のxの点を作成
+# xがとり得る値を作成
 x_vals <- 0:M
 
 # パラメータごとに二項分布を計算
@@ -181,26 +185,6 @@ res_prob_df <- tidyr::expand_grid(
       factor(levels = paste0("phi=", sort(phi_vals), ", M=", M)) # 色分け用ラベル
   ) # 確率を計算
 
-# 凡例用のラベルを作成:(数式表示用)
-label_vec <- res_prob_df[["parameter"]] |> 
-  stringr::str_replace_all(pattern = "=", replacement = "==") %>% # 等号表示用の記法に変換
-  paste0("list(", ., ")") |> # カンマ表示用の記法に変換
-  unique() |> # 重複を除去
-  parse(text = _) # expression関数化
-names(label_vec) <- unique(res_prob_df[["parameter"]]) # ggplotに指定する文字列に対応する名前付きベクトルに変換
-
-
-# パラメータごとに二項分布のグラフを作成
-ggplot(data = res_prob_df, mapping = aes(x = x, y = probability, fill = parameter, color = parameter)) + # データ
-  geom_bar(stat = "identity", position = "dodge") + # 棒グラフ
-  #scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
-  scale_color_hue(labels = label_vec) + # 線の色:(数式表示用)
-  scale_fill_hue(labels = label_vec) + # 塗りつぶしの色:(数式表示用)
-  theme(legend.text.align = 0) + # 図の体裁:凡例
-  labs(title = "Binomial Distribution", 
-       fill = "parameter", color = "parameter", 
-       x = "x", y = "probability") # タイトル
-
 
 ### ・試行回数の影響 -----
 
@@ -211,7 +195,7 @@ phi <- 0.5
 M_vals <- c(5, 10, 20, 40)
 
 
-# 作図用のxの点を作成
+# xがとり得る値を作成
 x_vals <- 0:max(M_vals)
 
 # パラメータごとに二項分布を計算
@@ -224,18 +208,22 @@ res_prob_df <- tidyr::expand_grid(
     probability = dbinom(x = x, size = M, prob = phi), 
     parameter = paste0("phi=", phi, ", M=", M) |> 
       factor(levels = paste0("phi=", phi, ", M=", sort(M_vals))) # 色分け用ラベル
-  ) # 確率を計算
+  ) |> # 確率を計算
+  dplyr::filter(x <= M) # 実現可能な値を抽出
+
+
+### ・作図 -----
 
 # 凡例用のラベルを作成:(数式表示用)
 label_vec <- res_prob_df[["parameter"]] |> 
+  unique() |> # 重複を除去
   stringr::str_replace_all(pattern = "=", replacement = "==") %>% # 等号表示用の記法に変換
   paste0("list(", ., ")") |> # カンマ表示用の記法に変換
-  unique() |> # 重複を除去
   parse(text = _) # expression関数化
 names(label_vec) <- unique(res_prob_df[["parameter"]]) # ggplotに指定する文字列に対応する名前付きベクトルに変換
 
 
-# 試行回数ごとに二項分布のグラフを作成
+# パラメータごとに二項分布のグラフを作成
 ggplot(data = res_prob_df, mapping = aes(x = x, y = probability, fill = parameter, color = parameter)) + # データ
   geom_bar(stat = "identity", position = "dodge") + # 棒グラフ
   #scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
@@ -259,7 +247,7 @@ length(phi_vals) # フレーム数
 M <- 10
 
 
-# 作図用のxの点を作成
+# xがとり得る値を作成
 x_vals <- 0:M
 
 # パラメータごとに二項分布を計算
@@ -274,18 +262,6 @@ anime_prob_df <- tidyr::expand_grid(
       factor(levels = paste0("phi=", sort(phi_vals), ", M=", M)) # フレーム切替用ラベル
   ) # 確率を計算
 
-# 二項分布のアニメーションを作図
-anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = x, y = probability)) + # データ
-  geom_bar(stat = "identity", position = "dodge", fill = "#00A968", color = "#00A968") + # 分布
-  gganimate::transition_manual(parameter) + # フレーム
-  #scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
-  labs(title = "Binomial Distribution", 
-       subtitle = "{current_frame}", 
-       x = "x", y = "probability") # ラベル
-
-# gif画像を作成
-gganimate::animate(anime_prob_graph, nframes = length(phi_vals), fps = 100, width = 800, height = 600)
-
 
 ### ・試行回数の影響 -----
 
@@ -296,7 +272,7 @@ phi <- 0.3
 M_max <- 100
 
 
-# 作図用のxの点を作成
+# xがとり得る値を作成
 x_vals <- 0:M_max
 
 # 試行回数ごとに二項分布を計算
@@ -313,21 +289,24 @@ anime_prob_df <- tidyr::expand_grid(
   dplyr::filter(x <= M) # 実現可能な値を抽出
 
 
+### ・作図 -----
+
 # 二項分布のアニメーションを作図
 anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = x, y = probability)) + # データ
-  geom_bar(stat = "identity", position = "dodge", fill = "#00A968", color = "#00A968") + # 棒グラフ
+  geom_bar(stat = "identity", position = "dodge", fill = "#00A968", color = "#00A968") + # 分布
   gganimate::transition_manual(parameter) + # フレーム
-  gganimate::view_follow(fixed_x = FALSE, fixed_y = TRUE) + # 表示範囲の調整
+  #gganimate::view_follow(fixed_x = FALSE, fixed_y = TRUE) + # 表示範囲の調整
   #scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   labs(title = "Binomial Distribution", 
        subtitle = "{current_frame}", 
        x = "x", y = "probability") # ラベル
 
 # gif画像を作成
-gganimate::animate(anime_prob_graph, nframes = M_max, fps = 100, width = 800, height = 600)
+gganimate::animate(anime_prob_graph, nframes = length(phi_vals), fps = 100, width = 800, height = 600) # パラメータの影響用
+gganimate::animate(anime_prob_graph, nframes = M_max, fps = 100, width = 800, height = 600) # 試行回数の影響用
 
 
-# 歪度と尖度の可視化 --------------------------------------------------------------------
+# パラメータと統計量の関係：アニメーションによる可視化 --------------------------------------------------------------------
 
 ### ・パラメータの影響 -----
 
@@ -339,7 +318,7 @@ length(phi_vals) # フレーム数
 M <- 10
 
 
-# 作図用のxの点を作成
+# xがとり得る値を作成
 x_vals <- 0:M
 
 # 歪度を計算
@@ -386,30 +365,6 @@ anime_stat_df <- tibble::tibble(
   dplyr::mutate(
     type = stringr::str_replace(type, pattern = "sd_.*", replacement = "sd")) # 期待値±標準偏差のカテゴリを統一
 
-# 凡例用の設定を作成:(数式表示用)
-color_vec <- c(mean = "blue", sd = "orange", mode = "chocolate")
-linetype_vec <- c(mean = "dashed", sd = "dotted", mode = "dashed")
-label_vec <- c(mean = expression(E(x)), sd = expression(E(x) %+-% sqrt(V(x))), mode = expression(mode(x)))
-
-
-# 統計量を重ねた二項分布のアニメーションを作図
-anime_prob_graph <- ggplot() + # データ
-  geom_bar(data = anime_prob_df, mapping = aes(x = x, y = probability), 
-           stat = "identity", position = "dodge", fill = "#00A968") + # 分布
-  geom_vline(data = anime_stat_df, mapping = aes(xintercept = statistic, color = type, linetype = type), 
-             size = 1) + # 統計量
-  gganimate::transition_manual(parameter) + # フレーム
-  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
-  scale_linetype_manual(values = linetype_vec, labels = label_vec, name = "statistic") + # 線の種類:(線指定と数式表示用)
-  scale_color_manual(values = color_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
-  theme(legend.text.align = 0) + # 図の体裁:凡例
-  labs(title = "Binomial Distribution", 
-       subtitle = "{current_frame}", 
-       x = "x", y = "probability") # ラベル
-
-# gif画像を作成
-gganimate::animate(anime_prob_graph, nframes = length(phi_vals), fps = 100, width = 800, height = 600)
-
 
 ### ・試行回数の影響 -----
 
@@ -420,7 +375,7 @@ phi <- 0.35
 M_vals <- 1:100
 
 
-# 作図用のxの点を作成
+# xがとり得る値を作成
 x_vals <- 0:max(M_vals)
 
 # 歪度を計算
@@ -448,7 +403,7 @@ anime_prob_df <- tidyr::expand_grid(
   ) |> # 確率を計算
   dplyr::filter(x <= M) # 実現可能な値を抽出
 
-# パラメータごとに統計量を計算
+# 試行回数ごとに統計量を計算
 anime_stat_df <- tibble::tibble(
   mean = M_vals * phi, # 期待値
   sd = sqrt(M_vals * phi * (1 - phi)), # 標準偏差
@@ -468,6 +423,9 @@ anime_stat_df <- tibble::tibble(
   dplyr::mutate(
     type = stringr::str_replace(type, pattern = "sd_.*", replacement = "sd")) # 期待値±標準偏差のカテゴリを統一
 
+
+### ・作図 -----
+
 # 凡例用の設定を作成:(数式表示用)
 color_vec <- c(mean = "blue", sd = "orange", mode = "chocolate")
 linetype_vec <- c(mean = "dashed", sd = "dotted", mode = "dashed")
@@ -481,7 +439,7 @@ anime_prob_graph <- ggplot() + # データ
   geom_vline(data = anime_stat_df, mapping = aes(xintercept = statistic, color = type, linetype = type), 
              size = 1) + # 統計量
   gganimate::transition_manual(parameter) + # フレーム
-  gganimate::view_follow(fixed_x = FALSE, fixed_y = TRUE) + # 表示範囲の調整
+  #gganimate::view_follow(fixed_x = FALSE, fixed_y = TRUE) + # 表示範囲の調整
   #scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   scale_linetype_manual(values = linetype_vec, labels = label_vec, name = "statistic") + # 線の種類:(線指定と数式表示用)
   scale_color_manual(values = color_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
@@ -491,7 +449,8 @@ anime_prob_graph <- ggplot() + # データ
        x = "x", y = "probability") # ラベル
 
 # gif画像を作成
-gganimate::animate(anime_prob_graph, nframes = length(M_vals), fps = 100, width = 800, height = 600)
+gganimate::animate(anime_prob_graph, nframes = length(phi_vals), fps = 100, width = 800, height = 600) # パラメータの影響用
+gganimate::animate(anime_prob_graph, nframes = length(M_vals), fps = 100, width = 800, height = 600) # 試行回数の影響用
 
 
 # 乱数の生成 -------------------------------------------------------------------
@@ -499,7 +458,7 @@ gganimate::animate(anime_prob_graph, nframes = length(M_vals), fps = 100, width 
 ### ・サンプリング -----
 
 # パラメータを指定
-phi <- 0.3
+phi <- 0.35
 
 # 試行回数を指定
 M <- 10
@@ -514,20 +473,20 @@ x_n <- rbinom(n = N, size = M, prob = phi)
 
 ### ・乱数の可視化 -----
 
-# 作図用のxの点を作成
+# xがとり得る値を作成
 x_vals <- 0:M
-
-# 二項分布を計算
-prob_df <- tidyr::tibble(
-  x = x_vals, 
-  probability = dbinom(x = x_vals, size = M, prob = phi) 
-)
 
 # サンプルを集計
 freq_df <- tidyr::tibble(x = x_n) |> # 乱数を格納
   dplyr::count(x, name = "frequency") |> # 度数を集計
   dplyr::right_join(tidyr::tibble(x = x_vals), by = "x") |> # 全てのパターンに追加
   dplyr::mutate(frequency = tidyr::replace_na(frequency, 0)) # サンプルにない場合の欠損値を0に置換
+
+# 二項分布を計算
+prob_df <- tidyr::tibble(
+  x = x_vals, # 確率変数
+  probability = dbinom(x = x_vals, size = M, prob = phi) # 確率
+)
 
 
 # サンプルのヒストグラムを作成:度数
@@ -540,7 +499,7 @@ ggplot(data = freq_df, mapping = aes(x = x, y = frequency)) + # データ
 
 # サンプルのヒストグラムを作成:相対度数
 ggplot() + 
-  geom_bar(data = freq_df, mapping = aes(x = x, y = frequency/N), # データ
+  geom_bar(data = freq_df, mapping = aes(x = x, y = frequency/N), 
            stat = "identity", position = "dodge", fill = "#00A968") + # 相対度数
   geom_bar(data = prob_df, mapping = aes(x = x, y = probability), 
            stat = "identity", position = "dodge", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
@@ -558,7 +517,7 @@ ggplot() +
 # 乱数と分布の関係：アニメーションによる可視化 --------------------------------------------------
 
 # パラメータを指定
-phi <- 0.3
+phi <- 0.35
 
 # 試行回数を指定
 M <- 10
@@ -570,7 +529,7 @@ N <- 300
 # 二項分布に従う乱数を生成
 x_n <- rbinom(n = N, size = M, prob = phi)
 
-# 作図用のxの点を作成
+# xがとり得る値を作成
 x_vals <- 0:M
 
 # サンプルを集計
@@ -606,8 +565,10 @@ anime_freq_df <- freq_df |>
   tibble::add_column(parameter = rep(label_vec, each = M+1))
 
 # サンプルを格納
-anime_data_df <- tibble::tibble(x = x_n) |> 
-  tibble::add_column(parameter = label_vec) # フレーム切替用ラベルを追加
+anime_data_df <- tibble::tibble(
+  x = x_n, # サンプル
+  parameter = label_vec # フレーム切替用ラベルを追加
+)
 
 # 二項分布の情報を複製
 anime_prob_df <- tibble::tibble(
@@ -616,7 +577,8 @@ anime_prob_df <- tibble::tibble(
   num = N # 複製数
 ) |> 
   tidyr::uncount(num) |> # データ数分に複製
-  tibble::add_column(parameter = rep(label_vec, times = length(x_vals))) # フレーム切替用ラベルを追加
+  tibble::add_column(parameter = rep(label_vec, times = length(x_vals))) |> # フレーム切替用ラベルを追加
+  dplyr::arrange(parameter) # サンプリング回数ごとに並べ替え
 
 
 # 二項乱数のヒストグラムのアニメーションを作図:度数
@@ -625,8 +587,8 @@ anime_hist_graph <- ggplot() +
            stat = "identity", position = "dodge", fill = "#00A968") + # 度数
   geom_point(data = anime_data_df, mapping = aes(x = x, y = 0), 
              color = "orange", size = 5) + # サンプル
-  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   gganimate::transition_manual(parameter) + # フレーム
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   labs(title = "Binomial Distribution", 
        subtitle = "{current_frame}", 
        x = "x", y = "frequency") # ラベル
@@ -643,8 +605,9 @@ anime_hist_graph <- ggplot() +
            stat = "identity", position = "dodge", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
   geom_point(data = anime_data_df, mapping = aes(x = x, y = 0), 
              color = "orange", size = 5) + # サンプル
-  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   gganimate::transition_manual(parameter) + # フレーム
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  coord_cartesian(ylim = c(-0.01, 0.5)) + # 軸の表示範囲
   labs(title = "Binomial Distribution", 
        subtitle = "{current_frame}", 
        x = "x", y = "relative frequency") # ラベル
