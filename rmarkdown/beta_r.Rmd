@@ -1,0 +1,1676 @@
+---
+title: "ベータ分布"
+author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M:%S')`"
+output:
+  html_document:
+    toc: TRUE       # 目次
+    toc_depth: 3    # 目次の見出しレベル
+    toc_float: TRUE # 目次のスクロール追跡
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, error = FALSE, warning = FALSE # メッセージを非表示
+)
+```
+
+----
+
+【編集履歴】
+
+- 2022/01/15：執筆開始
+- 2022/00/00：中断
+- 2022/07/03：Rコードを改修
+
+----
+
+# Rでベータ分布の計算
+
+　ベータ分布(Beta Distribution)の確率密度と統計量を計算します。ベータ分布については「定義式の確認」を参照してください。\
+\
+
+
+## 確率密度の計算
+
+　ベータ分布に従う確率密度を計算する方法をいくつか確認します。\
+\
+
+
+### パラメータの設定
+
+　まずは、ベータ分布のパラメータ$\alpha, \beta$と確率変数$\phi$を設定します。
+
+```{r}
+# パラメータを指定
+alpha <- 5
+beta  <- 2
+
+# 確率変数の値を指定
+phi <- 0.6
+```
+
+　2つのパラメータ$\alpha > 0, \beta > 0$、確率変数の値$0 < \phi < 1$を指定します。設定した値に従う確率密度を計算します。$\phi$がとり得る範囲外の値の場合は、確率密度が0になります。\
+\
+
+
+### スクラッチで計算
+
+　定義式から計算します。
+
+```{r}
+# 定義式により確率密度を計算
+C    <- gamma(alpha + beta) / gamma(alpha) / gamma(beta)
+dens <- C * phi^(alpha - 1) * (1 - phi)^(beta - 1)
+dens
+```
+
+　ベータ分布定は、次の式で定義されます。
+
+$$
+\begin{aligned}
+C_{\mathrm{Beta}}
+   &= \frac{
+          \Gamma(\alpha + \beta)
+      }{
+          \Gamma(\alpha) \Gamma(\beta)
+      }
+\\
+\mathrm{Beta}(\phi | \alpha, \beta)
+   &= C_{\mathrm{Beta}}
+      \phi^{\alpha-1}
+      (1 - \phi)^{\beta-1}
+\end{aligned}
+$$
+
+　ここで、$C_{\mathrm{Beta}}$はベータ分布の正規化係数、$\Gamma(x)$はガンマ関数です。\
+　ガンマ関数は、`gamma()`で計算できます。\
+
+　対数をとった定義式から計算します。
+
+```{r}
+# 対数をとった定義式により確率密度を計算
+log_C    <- lgamma(alpha + beta) - lgamma(alpha) - lgamma(beta)
+log_dens <- log_C + (alpha - 1) * log(phi) + (beta - 1) * log(1 - phi)
+dens     <- exp(log_dens)
+dens; log_dens
+```
+
+　対数をとった定義式を計算します。
+
+$$
+\begin{aligned}
+\log C_{\mathrm{Beta}}
+   &= \log \Gamma(\alpha + \beta)
+      - \log \Gamma(\alpha)
+      - \log \Gamma(\beta)
+\\
+\log \mathrm{Beta}(\phi | \alpha, \beta)
+   &= \log C_{\mathrm{Beta}}
+      + (\alpha - 1) \log \phi
+      + (\beta - 1) \log (1 - \phi)
+\end{aligned}
+$$
+
+　対数をとったガンマ関数は、`lgamma()`で計算できます。引数の値が大きいと`gamma()`の計算結果が発散してしまいます。その場合でも、`lgamma()`で計算できます。\
+　計算結果の指数をとると確率密度が得られます。
+
+$$
+\mathrm{Beta}(\phi | \alpha, \beta)
+    = \exp \Bigr(
+          \log \mathrm{Beta}(\phi | \alpha, \beta)
+      \Bigr)
+$$
+
+　指数と対数の性質より$\exp(\log x) = x$です。\
+
+　次は、関数を使って確率密度を計算します。\
+\
+
+
+### ベータ分布の関数による計算
+
+　ベータ分布の確率密度関数`dbeta()`で計算します。
+
+```{r}
+# ベータ分布の関数により確率密度を計算
+dens <- dbeta(x = phi, shape1 = alpha, shape2 = beta)
+dens
+```
+
+　確率変数の引数`x`に`phi`、パラメータの引数`shape1, shape2`に`alpha, beta`を指定します。\
+
+　`log = TRUE`を指定すると対数をとった確率密度を返します。
+
+```{r}
+# ベータ分布の対数をとった関数により確率密度を計算
+log_dens <- dbeta(x = phi, shape1 = alpha, shape2 = beta, log = TRUE)
+dens     <- exp(log_dens)
+dens; log_dens
+```
+
+　計算結果の指数をとると確率密度が得られます。\
+\
+
+
+### ディリクレ分布の関数による計算
+
+　以降の計算は、変数とパラメータをベクトル形式にしておく必要があります。
+
+```{r}
+# ベクトルに変換
+alpha_v <- c(alpha, beta)
+phi_v   <- c(phi, 1 - phi)
+alpha_v; phi_v
+```
+
+　2つのパラメータをベクトルにまとめて`alpha_v`とします。\
+　成功確率(クラス1の出現確率)$\phi$と失敗確率(クラス0の出現確率)$1 - \phi$をベクトルにまとめて`phi_v`とします。\
+　「`alpha`と`phi`」「`beta`と`1-phi`」のインデックスが対応していれば、順番は計算結果に影響しません。\
+
+　`MCMCpack`パッケージのディリクレ分布の確率密度関数`ddirichlet()`で計算します。
+
+```{r}
+# ディリクレ分布の関数により確率密度を計算
+dens <- MCMCpack::ddirichlet(x = phi_v, alpha = alpha_v)
+dens
+```
+
+　確率変数の引数`x`に`phi_v`、パラメータの引数`alpha`に`alpha_v`を指定します。$V = 2$のときベータ分布の確率密度になります。\
+\
+
+
+## 統計量の計算
+
+　次は、ベータ分布の期待値と分散を計算します。詳しくは「統計量の導出」を参照してください。\
+\
+
+　期待値を計算します。
+
+```{r}
+# 期待値を計算
+E_phi <- alpha / (alpha + beta)
+E_phi
+```
+
+　ベータ分布の期待値は、次の式で計算できます。
+
+$$
+\mathbb{E}[\phi]
+    = \frac{\alpha}{\alpha + \beta}
+$$
+
+　分散を計算します。
+
+```{r}
+# 分散を計算
+V_phi <- alpha * beta / (alpha + beta)^2 / (alpha + beta + 1)
+V_phi
+```
+
+　ベータ分布の分散は、次の式で計算できます。
+
+$$
+\mathbb{V}[\phi]
+    = \frac{
+          \alpha \beta
+      }{
+          (\alpha + \beta)^2
+          (\alpha + \beta + 1)
+      }
+$$
+
+\ 
+
+　最頻値を計算します。
+
+```{r}
+# 最頻値を計算
+mode_phi <- (alpha - 1) / (alpha + beta - 2)
+mode_phi
+```
+
+　ベータ分布の最頻値(モード)は、次の式で計算できます。
+
+$$
+\mathrm{mode}[\phi]
+    = \frac{\alpha - 1}{\alpha + \beta - 2}
+$$
+
+\ 
+
+
+## 歪度と尖度の計算
+
+　最後に、ベータ分布の歪度と尖度を計算します。詳しくはいつか書きます。\
+\
+
+　歪度を計算します。
+
+```{r}
+# 歪度を計算
+numer <- 2 * (beta - alpha) * sqrt(alpha + beta + 1)
+denom <- (alpha + beta + 2) * sqrt(alpha * beta)
+skewness <- numer / denom
+skewness
+```
+
+　ベータ分布の歪度は、次の式で計算できます。
+
+$$
+\mathrm{Skewness}
+    = \frac{\mathbb{E}[(x - \mu)^3]}{\sigma^3}
+    = \frac{
+          2 (\beta - \alpha)
+          \sqrt{\alpha + \beta + 1}
+      }{
+          (\alpha + \beta + 2)
+          \sqrt{\alpha \beta}
+      }
+$$
+
+　ここで、$x$の平均$\mu = \mathbb{E}[x]$、標準偏差$\sigma = \sqrt{\mathbb{E}[(x - \mu)^2]}$です。\
+
+　尖度を計算します。
+
+```{r}
+# 尖度を計算
+numer <- (6 * (alpha - beta)^2 * (alpha + beta + 1) - alpha * beta * (alpha + beta + 2))
+denom <- alpha * beta * (alpha + beta + 2) * (alpha + beta + 3)
+kurtosis <- numer / denom
+kurtosis
+```
+
+　ベータ分布の尖度は、次の式で計算できます。
+
+$$
+\mathrm{Kurtosis}
+    = \frac{\mathbb{E}[(x - \mu)^4]}{\sigma^4} - 3
+    = \frac{
+          6 \Bigl\{
+              (\alpha - \beta)^2
+              (\alpha + \beta + 1)
+              - \alpha \beta
+                (\alpha + \beta + 2)
+          \Bigr\}
+      }{
+          (\alpha + \beta + 2)
+          (\alpha + \beta + 3)
+      }
+$$
+
+\ 
+
+　この記事では、ベータ分布の計算を確認しました。次は、グラフを作成します。\
+\
+
+
+# Rでベータ分布の作図
+
+　ベータ分布(Beta Distribution)のグラフを作成します。ベータ分布については「定義式の確認」を参照してください。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r, eval=FALSE}
+# 利用するパッケージ
+library(tidyverse)
+library(gganimate)
+```
+
+```{r, echo=FALSE}
+### 資料作成用
+
+# チェック用
+library(magrittr)
+library(ggplot2)
+```
+
+　この記事では、基本的に`パッケージ名::関数名()`の記法を使うので、パッケージを読み込む必要はありません。ただし、作図コードがごちゃごちゃしないようにパッケージ名を省略しているため、`ggplot2`は読み込む必要があります。また、基本的にベースパイプ(ネイティブパイプ)演算子`|>`を使いますが、パイプ演算子`%>%`でないと処理できない部分があるため、`magrittr`も読み込む必要があります。  
+　分布の変化をアニメーション(gif画像)で確認するのに`gganimate`パッケージを利用します。不要であれば省略してください。\
+\
+
+
+## 定義式の確認
+
+　まずは、ベータ分布の定義式を確認します。\
+\
+
+　ベータ分布は、次の式で定義されます。
+
+$$
+\mathrm{Beta}(\phi | \alpha, \beta)
+  = \frac{
+        \Gamma(\alpha + \beta)
+    }{
+        \Gamma(\alpha) \Gamma(\beta)
+    }
+    \phi^{\alpha-1}
+    (1 - \phi)^{\beta-1}
+$$
+　ここで、$\alpha, \beta$はパラメータで、$\alpha > 0, \beta > 0$の値をとります。確率変数の値$\phi$は、$0 < \phi < 1$となり、ベルヌーイ分布と二項分布のパラメータ(成功確率)として利用できます。\
+
+　ベータ分布の期待値・分散・最頻値は、次の式で計算できます。詳しくは「統計量の導出」を参照してください。
+
+$$
+\begin{aligned}
+\mathbb{E}[\phi]
+   &= \frac{\alpha}{\alpha + \beta}
+\\
+\mathbb{V}[\phi]
+   &= \frac{
+          \alpha \beta
+      }{
+          (\alpha + \beta)^2
+          (\alpha + \beta + 1)
+      }
+\\
+\mathrm{mode}[\phi]
+   &= \frac{\alpha - 1}{\alpha + \beta - 2}
+      \quad (\alpha > 1, \beta > 1)
+\end{aligned}
+$$
+
+　ベータ分布の歪度と尖度は、次の式で計算できます。
+
+$$
+\begin{aligned}
+\mathrm{Skewness}
+   &= \frac{
+          2 (\beta - \alpha)
+          \sqrt{\alpha + \beta + 1}
+      }{
+          (\alpha + \beta + 2)
+          \sqrt{\alpha \beta}
+      }
+\\
+\mathrm{Kurtosis}
+   &= \frac{
+          6 \Bigl\{
+              (\alpha - \beta)^2
+              (\alpha + \beta + 1)
+              - \alpha \beta
+                (\alpha + \beta + 2)
+          \Bigr\}
+      }{
+          (\alpha + \beta + 2)
+          (\alpha + \beta + 3)
+      }
+\end{aligned}
+$$
+
+　これらの計算を行いグラフを作成します。\
+\
+
+
+## グラフの作成
+
+　`ggplot2`パッケージを利用して、ベータ分布のグラフを作成します。ベータ分布の確率や統計量の計算については「ベータ分布の計算」を参照してください。\
+\
+
+　ベータ分布のパラメータ$\alpha, \beta$を設定します。
+
+```{r}
+# パラメータを指定
+alpha <- 5
+beta  <- 2
+```
+
+　$\alpha > 0, \beta > 0$の値を指定します。\
+
+　ベータ分布の確率変数$\phi$がとり得る値を作成します。
+
+```{r}
+# phiがとり得る値を作成
+phi_vals <- seq(from = 0, to = 1, length.out = 501)
+```
+
+　$0 \leq \phi \leq 1$の値を作成して`phi_vals`とします。$\phi$がとり得る範囲外の値の場合は、確率密度が0になります。\
+
+　$\phi$の値ごとに確率密度を計算します。
+
+```{r}
+# ベータ分布を計算
+dens_df <- tidyr::tibble(
+  phi = phi_vals, # 確率変数
+  density = dbeta(x = phi_vals, shape1 = alpha, shape2 = beta) # 確率密度
+)
+dens_df
+```
+
+　ベータ分布の確率密度は、`dbeta()`で計算できます。確率変数の引数`x`に`phi_vals`、パラメータの引数`shape1, shape2`に`alpha, beta`を指定します。\
+　`phi_vals`と、`phi_vals`の各要素に対応する確率密度をデータフレームに格納します。\
+
+　ベータ分布のグラフを作成します。
+
+```{r, fig.width=8, fig.height=6}
+# ベータ分布を作図
+ggplot(data = dens_df, mapping = aes(x = phi, y = density)) + # データ
+  geom_line(color = "#00A968", size = 1) + # 折れ線グラフ
+  labs(title = "Beta Distribution", 
+       subtitle = paste0("alpha=", alpha, ", beta=", beta), # (文字列表記用)
+       #subtitle = parse(text = paste0("list(alpha==", alpha, ", beta==", beta, ")")), # (数式表記用)
+       x = expression(phi), y = "density") # ラベル
+```
+
+　ギリシャ文字などの記号を使った数式を表示する場合は、`expression()`の記法を使います。等号は`"=="`、複数の(数式上の)変数を並べるには`"list(変数1, 変数2)"`とします。(プログラム上の)変数の値を使う場合は、`parse()`の`text`引数に指定します。\
+\
+
+　この分布に統計量の情報を重ねて表示します。
+
+```{r, fig.width=8, fig.height=6}
+# 補助線用の統計量を計算
+E_phi <- alpha / (alpha + beta)
+s_phi <- sqrt(alpha * beta / (alpha + beta)^2 / (alpha + beta + 1))
+mode_phi <- (alpha - 1) / (alpha + beta - 2)
+
+# 統計量を重ねたベータ分布のグラフを作成:線のみ
+ggplot(data = dens_df, mapping = aes(x = phi, y = density)) + # データ
+  geom_line(color = "#00A968", size = 1) + # 折れ線グラフ
+  geom_vline(xintercept = E_phi, color = "blue", size = 1, linetype = "dashed") + # 期待値
+  geom_vline(xintercept = E_phi-s_phi, color = "orange", size = 1, linetype = "dotted") + # 期待値 - 標準偏差
+  geom_vline(xintercept = E_phi+s_phi, color = "orange", size = 1, linetype = "dotted") + # 期待値 + 標準偏差
+  geom_vline(xintercept = mode_phi, color = "chocolate", size = 1, linetype = "dashed") + # 最頻値
+  labs(title = "Beta Distribution", 
+       subtitle = parse(text = paste0("list(alpha==", alpha, ", beta==", beta, ")")), 
+       x = expression(phi), y = "density") # ラベル
+```
+
+　期待値・標準偏差(分散の平方根)・最頻値を計算して、それぞれ`geom_vline()`で垂直線を引きます。標準偏差については期待値から足し引きした値を使います。\
+\
+
+　凡例を表示する場合は、垂直線を引く値をデータフレームにまとめます。
+
+```{r}
+# 統計量を格納
+stat_df <- tibble::tibble(
+  statistic = c(E_phi, E_phi-s_phi, E_phi+s_phi, mode_phi), # 統計量
+  type = c("mean", "sd", "sd", "mode") # 色分け用ラベル
+)
+stat_df
+```
+
+　各統計量を区別するための文字列も格納します。期待値と標準偏差の差・和は同じタイプとします。\
+
+　線の色や種類、凡例テキストを指定する場合は、設定用の名前付きベクトルを作成します。
+
+```{r}
+# 凡例用の設定を作成:(数式表示用)
+color_vec <- c(mean = "blue", sd = "orange", mode = "chocolate")
+linetype_vec <- c(mean = "dashed", sd = "dotted", mode = "dashed")
+label_vec <- c(mean = expression(E(x)), sd = expression(E(x) %+-% sqrt(V(x))), mode = expression(mode(x)))
+color_vec; linetype_vec; label_vec
+```
+
+　各要素(設定)の名前を`type`列の文字列と対応させて、設定(線の色・種類と数式用のテキスト)を指定します。\
+
+　凡例付きのグラフを作成します。
+
+```{r, fig.width=8, fig.height=6}
+# 統計量を重ねたベータ分布のグラフを作成:凡例付き
+ggplot(data = dens_df, mapping = aes(x = phi, y = density)) + # データ
+  geom_line(color = "#00A968", size = 1) + # 分布
+  geom_vline(data = stat_df, mapping = aes(xintercept = statistic, color = type, linetype = type), 
+             size = 1) + # 統計量
+  scale_color_manual(values = color_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
+  scale_linetype_manual(values = linetype_vec, labels = label_vec, name = "statistic") + # 線の種類:(線指定と数式表示用)
+  theme(legend.text.align = 0) + # 図の体裁:凡例
+  labs(title = "Beta Distribution", 
+       subtitle = parse(text = paste0("list(alpha==", alpha, ", beta==", beta, ")")), 
+       x = expression(phi), y = "density") # ラベル
+```
+
+　$\alpha \neq \beta$のとき、ベータ分布は非対称な形状になるので、期待値(オレンジ色の破線)と最頻値(茶色の破線)
+が一致しません。\
+\
+
+　ベータ分布のグラフを描画できました。以降は、ここまでの作図処理を用いて、パラメータの影響を確認していきます。\
+\
+
+
+## パラメータと分布の関係を並べて比較
+
+　複数のパラメータのグラフを比較することで、パラメータの値と分布の形状の関係を確認します。\
+\
+
+
+### αの影響
+
+　複数の$\alpha$を指定し、$\beta$を固定して、それぞれ分布を計算します。
+
+```{r}
+# パラメータとして利用する値を指定
+alpha_vals <- c(0.1, 0.5, 1, 2, 4, 8)
+
+# 固定するパラメータを指定
+beta <- 2
+
+# phiがとり得る値を作成
+phi_vals <- seq(from = 0, to = 1, length.out = 501)
+
+# パラメータごとにベータ分布を計算
+res_dens_df <- tidyr::expand_grid(
+  phi = phi_vals, 
+  alpha = alpha_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(alpha, phi) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    dens = dbeta(x = phi, shape1 = alpha, shape2 = beta), 
+    parameter = paste0("alpha=", alpha, ", beta=", beta) |> 
+      factor(levels = paste0("alpha=", sort(alpha_vals), ", beta=", beta)) # 色分け用ラベル
+  ) # 確率密度を計算
+res_dens_df
+```
+
+　確率変数`phi_vals`とパラメータ`alpha_vals`それぞれの要素の全ての組み合わせを`expand_grid()`で作成します。\
+　組み合わせごとに確率密度を計算して、パラメータごとにラベルを作成します。ラベルは、グラフの設定や凡例テキストとして使います。文字列型だと文字列の基準で順序が決まるので、因子型にしてパラメータに応じたレベル(順序)を設定します。\
+
+　凡例を数式で表示する場合は、`expression()`に対応した記法に変換します。
+
+```{r}
+# 凡例用のラベルを作成:(数式表示用)
+label_vec <- res_dens_df[["parameter"]] |> 
+  unique() |> # 重複を除去
+  stringr::str_replace_all(pattern = "=", replacement = "==") %>% # 等号表示用の記法に変換
+  paste0("list(", ., ")") |> # カンマ表示用の記法に変換
+  parse(text = _) # expression関数化
+names(label_vec) <- unique(res_dens_df[["parameter"]]) # ggplotに指定する文字列に対応する名前付きベクトルに変換
+label_vec[1]
+```
+
+　変換後の文字列のベクトルに対して`names()`を使って、各要素の名前として元の文字列を設定します。\
+
+　`res_dens_df`の`parameter`列の要素`alpha=0.1, beta=2`と、変換後の文字列` list(alpha == 0.1, beta == 2)`が対応しています。\
+
+　各パラメータにおけるベータ分布を作図します。
+
+```{r, fig.width=8, fig.height=6}
+# パラメータごとにベータ分布を作図
+ggplot(data = res_dens_df, mapping = aes(x = phi, y = dens, color = parameter)) + # データ
+  geom_line(size = 1, show.legend = TRUE) + # 折れ線グラフ
+  scale_color_hue(labels = label_vec) + # 線の色:(数式表示用)
+  theme(legend.text.align = 0) + # 図の体裁:凡例
+  coord_cartesian(ylim = c(0, 5)) + # 軸の表示範囲
+  labs(title = "Beta Distribution", 
+       x = expression(phi), y = "density") # ラベル
+```
+
+\ 
+
+
+### βの影響
+
+　続いて、$\alpha$を固定し、複数の$\beta$を指定して、それぞれ分布を計算します。
+
+```{r}
+# 固定するパラメータを指定
+alpha <- 2
+
+# パラメータとして利用する値を指定
+beta_vals <- c(0.1, 0.5, 1, 2, 4, 8)
+
+# パラメータごとにベータ分布を計算
+res_dens_df <- tidyr::expand_grid(
+  phi = phi_vals, 
+  beta = beta_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(beta, phi) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    dens = dbeta(x = phi, shape1 = alpha, shape2 = beta), 
+    parameter = paste0("alpha=", alpha, ", beta=", beta) |> 
+      factor(levels = paste0("alpha=", alpha, ", beta=", sort(beta_vals))) # 色分け用ラベル
+  ) # 確率密度を計算
+res_dens_df
+```
+
+　`phi_vals`と`beta_vals`の全ての組み合わせを作成して、同様に処理します。\
+
+　作図については同じコードで処理できます。
+
+```{r, echo=FALSE, fig.width=8, fig.height=6}
+### 資料作成用:(再掲)
+
+# 凡例用のラベルを作成:(数式表示用)
+label_vec <- res_dens_df[["parameter"]] |> 
+  unique() |> # 重複を除去
+  stringr::str_replace_all(pattern = "=", replacement = "==") %>% # 等号表示用の記法に変換
+  paste0("list(", ., ")") |> # カンマ表示用の記法に変換
+  parse(text = _) # expression関数化
+names(label_vec) <- unique(res_dens_df[["parameter"]]) # ggplotに指定する文字列に対応する名前付きベクトルに変換
+
+# パラメータごとにベータ分布を作図
+ggplot(data = res_dens_df, mapping = aes(x = phi, y = dens, color = parameter)) + # データ
+  geom_line(size = 1, show.legend = TRUE) + # 折れ線グラフ
+  scale_color_hue(labels = label_vec) + # 線の色:(数式表示用)
+  theme(legend.text.align = 0) + # 図の体裁:凡例
+  coord_cartesian(ylim = c(0, 5)) + # 軸の表示範囲
+  labs(title = "Beta Distribution", 
+       x = expression(phi), y = "density") # ラベル
+```
+
+\ 
+
+
+### αとβの影響
+
+　今度は、$\alpha, \beta$の組み合わせを指定して、それぞれ分布を計算します。
+
+```{r}
+# パラメータとして利用する値を指定
+alpha_vals <- c(1, 0.5, 2, 2, 0.9, 0.8)
+beta_vals  <- c(1, 0.5, 2, 4, 0.7, 1.2)
+
+# パラメータごとにベータ分布を計算
+res_dens_df <- tidyr::expand_grid(
+  phi = phi_vals, 
+  i = 1:length(alpha_vals) # パラメータ番号
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(i, phi) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    alpha = alpha_vals[i], 
+    beta = beta_vals[i]
+  ) |> # パラメータ列を追加
+  dplyr::mutate(
+    dens = dbeta(x = phi, shape1 = alpha, shape2 = beta), 
+    parameter = paste0("alpha=", alpha, ", beta=", beta) |> 
+      factor() # 色分け用ラベル
+  ) # 確率密度を計算
+res_dens_df
+```
+
+　同じ要素数となるように`alpha_vals, beta_vals`に値を指定します。同じインデックスの値を使って分布を計算します。\
+　`phi_vals`とパラメータのインデックスに対応する値の全ての組み合わせを作成して、`alpha_vals, beta_vals`から値を取り出し、それぞれ確率密度を計算します。\
+
+　作図については同じコードで処理できます。
+
+```{r, echo=FALSE, fig.width=8, fig.height=6}
+### 資料作成用:(再掲)
+
+# 凡例用のラベルを作成:(数式表示用)
+label_vec <- res_dens_df[["parameter"]] |> 
+  unique() |> # 重複を除去
+  stringr::str_replace_all(pattern = "=", replacement = "==") %>% # 等号表示用の記法に変換
+  paste0("list(", ., ")") |> # カンマ表示用の記法に変換
+  parse(text = _) # expression関数化
+names(label_vec) <- unique(res_dens_df[["parameter"]]) # ggplotに指定する文字列に対応する名前付きベクトルに変換
+
+# パラメータごとにベータ分布を作図
+ggplot(data = res_dens_df, mapping = aes(x = phi, y = dens, color = parameter)) + # データ
+  geom_line(size = 1, show.legend = TRUE) + # 折れ線グラフ
+  scale_color_hue(labels = label_vec) + # 線の色:(数式表示用)
+  theme(legend.text.align = 0) + # 図の体裁:凡例
+  coord_cartesian(ylim = c(0, 5)) + # 軸の表示範囲
+  labs(title = "Beta Distribution", 
+       x = expression(phi), y = "density") # ラベル
+```
+
+　$\alpha = \beta$のとき、期待値と最頻値が$\phi = 0.5$になりますが、値によって分布の形状が異なります。また、$\alpha < 1, \beta < 1$のとき$\phi = 0, 1$で発散していることから、$\alpha > 1, \beta > 1$でのみ最頻値が求められるのを確認できます。\
+　$\alpha$と$\beta$を比較して、$\alpha$が大きいほど$\phi$が1付近の確率密度が大きくなり、$\beta$が大きいほど$\phi$が0付近の確率密度が大きくなります。ただし、$\alpha > 1$のとき$\phi = 0$の確率密度が0、$\beta > 1$のとき$\phi = 1$の確率密度が0になります。\
+\
+
+
+## パラメータと分布の関係をアニメーションで可視化
+
+　前節では、複数のパラメータのグラフを並べて比較しました。次は、パラメータの値を少しずつ変化させて、分布の形状の変化をアニメーションで確認します。\
+\
+
+
+### αの影響
+
+　$\alpha$の値を変化させ、$\beta$を固定して、それぞれ分布を計算します。
+
+```{r}
+# パラメータとして利用する値を指定
+alpha_vals <- seq(from = 0.1, to = 15, by = 0.1)
+#length(alpha_vals) # フレーム数
+
+# 固定するパラメータを指定
+beta <- 2
+
+# phiがとり得る値を作成
+phi_vals <- seq(from = 0, to = 1, length.out = 501)
+
+# パラメータごとにベータ分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  phi = phi_vals, 
+  alpha = alpha_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(alpha, phi) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    dens = dbeta(x = phi, shape1 = alpha, shape2 = beta), 
+    parameter = paste0("alpha=", alpha, ", beta=", beta) |> 
+      factor(levels = paste0("alpha=", sort(alpha_vals), ", beta=", beta)) # フレーム切替用ラベル
+  ) # 確率密度を計算
+anime_dens_df
+```
+
+　値の間隔が一定になるように`alpha_vals`を作成します。パラメータごとにフレームを切り替えるので、`alpha_vals`の要素数がアニメーションのフレーム数になります。\
+　データフレームの変数名以外は「並べて比較」のときと同じ処理です。アニメーションの作図では、`parameter`列をフレーム切替用のラベルとして使います。\
+
+　ベータ分布のアニメーション(gif画像)を作成します。
+
+```{r, eval=TRUE}
+# ベータ分布のアニメーションを作図
+anime_dens_graph <- ggplot(data = anime_dens_df, mapping = aes(x = phi, y = dens)) + # データ
+  geom_line(color = "#00A968", size = 1) + # 折れ線グラフ
+  gganimate::transition_manual(parameter) + # フレーム
+  coord_cartesian(ylim = c(0, 5)) + # 軸の表示範囲
+  labs(title = "Beta Distribution", 
+       subtitle = "{current_frame}", 
+       x = expression(phi), y = "density") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(alpha_vals), fps = 10, width = 800, height = 600)
+```
+
+　`transition_manual()`にフレームの順序を表す列を指定します。この例では、因子型のラベルのレベルの順に描画されます。\
+　`animate()`のフレーム数の引数`nframes`にパラメータ数、フレームレートの引数`fps`に1秒当たりのフレーム数を指定します。`fps`引数の値が大きいほどフレームが早く切り替わります。ただし、値が大きいと意図通りに動作しません。\
+\
+
+
+### βの影響
+
+　続いて、$\alpha$を固定し、$\beta$の値を変化させて、それぞれ分布を計算します。
+
+```{r}
+# 固定するパラメータを指定
+alpha <- 2
+
+# パラメータとして利用する値を指定
+beta_vals <- seq(from = 0.1, to = 15, by = 0.1)
+#length(beta_vals) # フレーム数
+
+# パラメータごとにベータ分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  phi = phi_vals, 
+  beta = beta_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(beta, phi) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    dens = dbeta(x = phi, shape1 = alpha, shape2 = beta), 
+    parameter = paste0("alpha=", alpha, ", beta=", beta) |> 
+      factor(levels = paste0("alpha=", alpha, ", beta=", sort(beta_vals))) # フレーム切替用ラベル
+  ) # 確率密度を計算
+anime_dens_df
+```
+
+　「並べて比較」や「αの影響」と同様に処理します。\
+
+　「αの影響」のコードで作図できます。フレーム数は`beta_vals`の要素数です。
+
+```{r, echo=FALSE}
+# ベータ分布のアニメーションを作図
+anime_dens_graph <- ggplot(data = anime_dens_df, mapping = aes(x = phi, y = dens)) + # データ
+  geom_line(color = "#00A968", size = 1) + # 折れ線グラフ
+  gganimate::transition_manual(parameter) + # フレーム
+  coord_cartesian(ylim = c(0, 5)) + # 軸の表示範囲
+  labs(title = "Beta Distribution", 
+       subtitle = "{current_frame}", 
+       x = expression(phi), y = "density") # ラベル
+```
+
+```{r, eval=TRUE}
+gganimate::animate(anime_dens_graph, nframes = length(beta_vals), fps = 10, width = 800, height = 600)
+```
+
+\ 
+
+
+## 2パラメータの影響をアニメーションで可視化
+
+　前節では、1つのパラメータを固定して、もう1つのパラメータを変化させました。次は、固定するパラメータを複数個指定し、並べてアニメーションを作成します。\
+\
+
+
+### αの影響
+
+　複数の$\alpha$を指定し、$\beta$の値を変化させて、それぞれ分布を計算します。
+
+```{r}
+# 比較する値を指定
+alpha_vals <- c(0.1, 0.25, 0.5, 1, 1.5, 2, 5, 10, 15)
+
+# 変化する値を指定
+beta_vals <- seq(from = 0.5, to = 10, by = 0.5)
+#length(beta_vals) # フレーム数
+
+# phiがとり得る値を作成
+phi_vals <- seq(from = 0, to = 1, length.out = 501)
+
+# パラメータごとにベータ分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  phi = phi_vals, 
+  alpha = alpha_vals, 
+  beta = beta_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(alpha, beta, phi) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    dens = dbeta(x = phi, shape1 = alpha, shape2 = beta)
+  ) # 確率密度を計算
+anime_dens_df
+```
+
+　並べて比較する値を`alpha_vals`に指定してします。\
+　値の間隔が一定になるように`beta_vals`を作成します。\
+　`phi_vals`・`alpha_vals`・`beta_vals`の全ての組み合わせを作成して、それぞれ確率密度を計算します。\
+
+　パラメータごとに画面分割したアニメーション(gif画像)を作成します。
+
+```{r, eval=TRUE}
+# ベータ分布のアニメーションを作図
+anime_dens_graph <- ggplot(data = anime_dens_df, mapping = aes(x = phi, y = dens, color = as.factor(beta))) + # データ
+  geom_line(show.legend = FALSE) + # 折れ線グラフ
+  gganimate::transition_reveal(beta) + # フレーム
+  facet_wrap(. ~ alpha, labeller = label_bquote(alpha==.(alpha))) + # グラフの分割
+  coord_cartesian(ylim = c(0, 6)) + # 軸の表示範囲
+  labs(title = "Beta Distribution", 
+       subtitle = "beta={frame_along}", 
+       x = expression(phi), y = "density") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(beta_vals)+10, end_pause = 10, fps = 10, width = 1200, height = 900)
+```
+
+　`transition_reveal()`を使ってフレームを切り替えると、過去フレームのグラフがされ続けます。\
+　`facet_wrap()`に列を指定すると、その列の値ごとにグラフを分割して描画できます。\
+　`animate()`の`end_pause`引数を指定すると、最後のフレームでグラフが一時停止(最後のグラフを指定したフレーム数表示)します。\
+\
+
+
+### βの影響
+
+　続いて、$\alpha$の値を変化させ、複数の$\beta$を指定して、それぞれ分布を計算します。
+
+```{r}
+# 変化する値を指定
+alpha_vals <- seq(from = 0.5, to = 10, by = 0.5)
+#length(alpha_vals) # フレーム数
+
+# 比較する値を指定
+beta_vals <- c(0.1, 0.25, 0.5, 1, 1.5, 2, 5, 10, 15)
+
+# パラメータごとにベータ分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  phi = phi_vals, 
+  alpha = alpha_vals, 
+  beta = beta_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(beta, alpha, phi) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    dens = dbeta(x = phi, shape1 = alpha, shape2 = beta)
+  ) # 確率密度を計算
+anime_dens_df
+```
+
+　値の間隔が一定になるように`alpha_vals`を作成します。\
+　並べて比較する値を`beta_vals`に指定してします。\
+　`phi_vals`・`alpha_vals`・`beta_vals`の全ての組み合わせを作成して、それそれ確率密度を計算します。\
+
+　アニメーションを作成します。
+
+```{r, eval=TRUE}
+# ベータ分布のアニメーションを作図
+anime_dens_graph <- ggplot(data = anime_dens_df, mapping = aes(x = phi, y = dens, color = as.factor(alpha))) + # データ
+  geom_line(show.legend = FALSE) + # 折れ線グラフ
+  gganimate::transition_reveal(alpha) + # フレーム
+  facet_wrap(. ~ beta, labeller = label_bquote(beta==.(beta))) + # グラフの分割
+  coord_cartesian(ylim = c(0, 6)) + # 軸の表示範囲
+  labs(title = "Beta Distribution", 
+       subtitle = "alpha={frame_along}", 
+       x = expression(phi), y = "density") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(alpha_vals)+10, end_pause = 10, fps = 10, width = 1200, height = 900)
+```
+
+　「αの影響」の`alpha`と`beta`を置き換えて処理します。\
+\
+
+
+## パラメータと統計量の関係をアニメーションで可視化
+
+　ここまでは、パラメータと分布の関係を確認しました。次は、パラメータと統計量と歪度・尖度の関係をアニメーションで確認します。\
+\
+
+
+### αの影響
+
+　$\alpha$の値を変化させ、$\beta$を固定して、それぞれ歪度と尖度を計算し、フレーム切替用のラベルを作成します。
+
+```{r}
+# パラメータとして利用する値を作成
+alpha_vals <- seq(from = 0.1, to = 15, by = 0.1)
+
+# 固定するパラメータを指定
+beta <- 5
+
+# 歪度を計算
+denom_vec    <- 2 * (beta - alpha_vals) * sqrt(alpha_vals + beta + 1)
+numer_vec    <- (alpha_vals + beta + 2) * sqrt(alpha_vals * beta)
+skewness_vec <- denom_vec / numer_vec
+
+# 尖度を計算
+denom_vec    <- 6 * ((alpha_vals - beta)^2 * (alpha_vals + beta + 1) - alpha_vals * beta * (alpha_vals + beta + 2))
+numer_vec    <- alpha_vals * beta * (alpha_vals + beta + 2) * (alpha_vals + beta + 3)
+kurtosis_vec <- denom_vec / numer_vec
+
+# ラベル用のテキストを作成
+label_vec <- paste0(
+  "alpha=", alpha_vals, ", beta=", beta, 
+  ", skewness=", round(skewness_vec, 3), ", kurtosis=", round(kurtosis_vec, 3)
+)
+head(label_vec)
+```
+
+　パラメータごとに歪度と尖度を計算して、フレーム切替用のラベルとして利用します。\
+
+　パラメータごとに分布を計算します。
+
+```{r}
+# phiがとり得る値を作成
+phi_vals <- seq(from = 0, to = 1, length.out = 501)
+
+# パラメータごとにベータ分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  phi = phi_vals, 
+  alpha = alpha_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(alpha, phi) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    dens = dbeta(x = phi, shape1 = alpha, shape2 = beta), 
+    parameter = rep(label_vec, each = length(phi_vals)) |> 
+      factor(levels = label_vec) # フレーム切替用ラベル
+  ) # 確率密度を計算
+anime_dens_df
+```
+
+　これまでと同様に処理します。フレーム切替用のラベル(`parameter`列)の値には`label_vec`を使います。\
+
+　パラメータごとに統計量を計算します。
+
+```{r}
+# 統計量を格納
+anime_stat_df <- tibble::tibble(
+  mean = alpha_vals / (alpha_vals + beta), # 期待値
+  sd = sqrt(alpha_vals * beta / (alpha_vals + beta)^2 / (alpha_vals + beta + 1)), # 標準偏差
+  mode = (alpha_vals - 1) / (alpha_vals + beta - 2), # 最頻値
+  parameter = factor(label_vec, levels = label_vec) # フレーム切替用ラベル
+) |> # 統計量を計算
+  dplyr::mutate(
+    sd_m = mean - sd, 
+    sd_p = mean + sd
+  ) |> # 期待値±標準偏差を計算
+  dplyr::select(!sd) |> # 不要な列を削除
+  tidyr::pivot_longer(
+    cols = !parameter, 
+    names_to = "type", 
+    values_to = "statistic"
+  ) |> # 統計量の列をまとめる
+  dplyr::mutate(
+    type = stringr::str_replace(type, pattern = "sd_.", replacement = "sd")) # 期待値±標準偏差のカテゴリを統一
+anime_stat_df
+```
+
+　期待値・標準偏差・最頻値を計算して、さらに期待値から標準偏差を引いた値と足した値を求めます。\
+　期待値・標準偏差の和と差・最頻値の4つの列を`pivot_longer()`でまとめます。列名がラベルになるので、標準偏差の和と差のラベルを統一します。\
+
+　線と凡例の設定用の名前付きベクトルを作成します。
+
+```{r}
+# 凡例用の設定を作成:(数式表示用)
+color_vec <- c(mean = "blue", sd = "orange", mode = "chocolate")
+linetype_vec <- c(mean = "dashed", sd = "dotted", mode = "dashed")
+label_vec <- c(mean = expression(E(x)), sd = expression(E(x) %+-% sqrt(V(x))), mode = expression(mode(x)))
+```
+
+　「グラフの作成」のときと同じ処理です。\
+
+　統計量の情報を重ねたベータ分布のアニメーション(gif画像)を作成します。
+
+```{r, eval=TRUE}
+# 統計量を重ねた分布のアニメーションを作図
+anime_prob_graph <- ggplot() + # データ
+  geom_line(data = anime_dens_df, mapping = aes(x = phi, y = dens), 
+            color = "#00A968", size = 1) + # 分布
+  geom_vline(data = anime_stat_df, mapping = aes(xintercept = statistic, color = type, linetype = type), 
+             size = 1) + # 統計量
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_linetype_manual(values = linetype_vec, labels = label_vec, name = "statistic") + # 線の種類:(線指定と数式表示用)
+  scale_color_manual(values = color_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
+  theme(legend.text.align = 0) + # 図の体裁:凡例
+  coord_cartesian(xlim = c(0, 1), ylim = c(0, 5)) + # 軸の表示範囲
+  labs(title = "Beta Distribution", 
+       subtitle = "{current_frame}", 
+       x = expression(phi), y = "density") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_prob_graph, nframes = length(alpha_vals), fps = 10, width = 800, height = 600)
+```
+
+\ 
+
+
+### βの影響
+
+　続いて、$\alpha$を固定し、$\beta$の値を変化させて、それぞれ歪度と尖度を計算し、フレーム切替用のラベルを作成します。
+
+```{r}
+# 固定するパラメータを指定
+alpha <- 5
+
+# パラメータとして利用する値を作成
+beta_vals <- seq(from = 0.1, to = 15, by = 0.1)
+
+# 歪度を計算
+denom_vec    <- 2 * (beta_vals - alpha) * sqrt(alpha + beta_vals + 1)
+numer_vec    <- (alpha+ beta_vals  + 2) * sqrt(alpha * beta_vals)
+skewness_vec <- denom_vec / numer_vec
+
+# 尖度を計算
+denom_vec    <- 6 * ((alpha - beta_vals)^2 * (alpha + beta_vals + 1) - alpha * beta_vals * (alpha + beta_vals + 2))
+numer_vec    <- alpha * beta_vals * (alpha + beta_vals + 2) * (alpha + beta_vals + 3)
+kurtosis_vec <- denom_vec / numer_vec
+
+# ラベル用のテキストを作成
+label_vec <- paste0(
+  "alpha=", alpha, ", beta=", beta_vals, 
+  ", skewness=", round(skewness_vec, 3), ", kurtosis=", round(kurtosis_vec, 3)
+)
+head(label_vec)
+```
+
+　「αの影響」の`alpha_vals`を`alpha`、`beta`を`beta_vals`に置き換えると処理できます。\
+
+　パラメータごとに分布を計算します。
+
+```{r}
+# パラメータごとにベータ分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  phi = phi_vals, 
+  beta = beta_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(beta, phi) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    dens = dbeta(x = phi, shape1 = alpha, shape2 = beta), 
+    parameter = rep(label_vec, each = length(phi_vals)) |> 
+      factor(levels = label_vec) # フレーム切替用ラベル
+  ) # 確率密度を計算
+anime_dens_df
+```
+
+　`label_vec`を使って、これまでと同様に処理します。\
+
+　パラメータごとに統計量を計算します。
+
+```{r}
+# 統計量を格納
+anime_stat_df <- tibble::tibble(
+  mean = alpha / (alpha + beta_vals), # 期待値
+  sd = sqrt(alpha * beta_vals / (alpha + beta_vals)^2 / (alpha + beta_vals + 1)), # 標準偏差
+  mode = (alpha - 1) / (alpha + beta_vals - 2), # 最頻値
+  parameter = factor(label_vec, levels = label_vec) # フレーム切替用ラベル
+) |> # 統計量を計算
+  dplyr::mutate(
+    sd_m = mean - sd, 
+    sd_p = mean + sd
+  ) |> # 期待値±標準偏差を計算
+  dplyr::select(!sd) |> # 不要な列を削除
+  tidyr::pivot_longer(
+    cols = !parameter, 
+    names_to = "type", 
+    values_to = "statistic"
+  ) |> # 統計量の列をまとめる
+  dplyr::mutate(
+    type = stringr::str_replace(type, pattern = "sd_.", replacement = "sd")) # 期待値±標準偏差のカテゴリを統一
+anime_stat_df
+```
+
+　「αの影響」の`alpha_vals`を`alpha`、`beta`を`beta_vals`に置き換えると処理できます。\
+
+　「αの影響」のコードで作図できます。フレーム数は`beta_vals`の要素数です。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 凡例用の設定を作成:(数式表示用)
+color_vec <- c(mean = "blue", sd = "orange", mode = "chocolate")
+linetype_vec <- c(mean = "dashed", sd = "dotted", mode = "dashed")
+label_vec <- c(mean = expression(E(x)), sd = expression(E(x) %+-% sqrt(V(x))), mode = expression(mode(x)))
+
+# 統計量を重ねた分布のアニメーションを作図
+anime_prob_graph <- ggplot() + # データ
+  geom_line(data = anime_dens_df, mapping = aes(x = phi, y = dens), 
+            color = "#00A968", size = 1) + # 分布
+  geom_vline(data = anime_stat_df, mapping = aes(xintercept = statistic, color = type, linetype = type), 
+             size = 1) + # 統計量
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_linetype_manual(values = linetype_vec, labels = label_vec, name = "statistic") + # 線の種類:(線指定と数式表示用)
+  scale_color_manual(values = color_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
+  theme(legend.text.align = 0) + # 図の体裁:凡例
+  coord_cartesian(xlim = c(0, 1), ylim = c(0, 5)) + # 軸の表示範囲
+  labs(title = "Beta Distribution", 
+       subtitle = "{current_frame}", 
+       x = expression(phi), y = "density") # ラベル
+```
+
+```{r, eval=TRUE}
+# gif画像を作成
+gganimate::animate(anime_prob_graph, nframes = length(beta_vals), fps = 10, width = 800, height = 600) # (βの影響用)
+```
+
+\ 
+
+
+　この記事では、ベータ分布の作図を確認しました。次は、乱数を生成します。\
+\
+
+
+# Rでベータ分布の乱数生成
+
+　ベータ分布(Beta Distribution)の乱数を生成します。ベータ分布については「定義式の確認」を参照してください。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r, eval=FALSE}
+# 利用するパッケージ
+library(tidyverse)
+library(gganimate)
+```
+
+```{r, echo=FALSE}
+### 資料作成用
+
+# チェック用
+library(magrittr)
+library(ggplot2)
+```
+
+　この記事では、基本的に`パッケージ名::関数名()`の記法を使うので、パッケージを読み込む必要はありません。ただし、作図コードがごちゃごちゃしないようにパッケージ名を省略しているため、`ggplot2`は読み込む必要があります。また、基本的にベースパイプ(ネイティブパイプ)演算子`|>`を使いますが、パイプ演算子`%>%`ででないと処理できない部分があるため、`magrittr`も読み込む必要があります。  
+　分布の変化をアニメーション(gif画像)で確認するのに`gganimate`パッケージを利用します。不要であれば省略してください。\
+\
+
+
+## サンプリング
+
+　ベータ分布の乱数を生成します。\
+\
+
+　ベータ分布のパラメータ$\alpha, \beta$とデータ数$N$を設定します。
+
+```{r}
+# パラメータを指定
+alpha <- 5
+beta  <- 2
+
+# データ数(サンプルサイズ)を指定
+N <- 1000
+```
+
+　$\alpha > 0, \beta > 0$とデータ数(サンプルサイズ)$N$を指定します。\
+
+　ベータ分布に従う乱数を生成します。
+
+```{r}
+# ベータ分布に従う乱数を生成
+phi_n <- rbeta(n = N, shape1 = alpha, shape2 = beta)
+head(phi_n)
+```
+
+　ベータ分布の乱数は、`rbeta()`で生成できます。データ数(サンプルサイズ)の引数`n`に`N`、パラメータの引数`shape1, shape2`に`alpha, beta`を指定します。\
+\
+
+
+## 乱数の可視化
+
+　サンプルのヒストグラムを作成します。
+
+```{r, fig.width=8, fig.height=6}
+# サンプルを格納
+data_df <- tidyr::tibble(phi = phi_n)
+
+# サンプルのヒストグラムを作成：頻度
+ggplot(data = data_df, mapping = aes(x = phi)) + # データ
+  geom_histogram(fill = "#00A968", bins = 30) + # 度数
+  labs(title = "Beta Distribution", 
+       subtitle = paste0("alpha=", alpha, ", beta=", beta, ", N=", N), # (文字列表記用)
+       #subtitle = parse(text = paste0("list(alpha==", alpha, ", beta==", beta, ", N==", N, ")")), # (数式表記用)
+       x = expression(phi), y = "frequency") # ラベル
+```
+
+　サンプルをデータフレームに格納して、`geom_histgram()`でヒストグラムを描画します。バーの数の引数`bins`またはバーのサイズの引数`binwidth`を指定します。\
+　ギリシャ文字などの記号を使った数式を表示する場合は、`expression()`の記法を使います。等号は`"=="`、複数の(数式上の)変数を並べるには`"list(変数1, 変数2)"`とします。(プログラム上の)変数の値を使う場合は、`parse()`の`text`引数に指定します。\
+\
+
+　サンプルの密度を確率分布と重ねて描画します。
+
+```{r, fig.width=8, fig.height=6}
+# phiのとり得る値を作成
+phi_vals <- seq(from = 0, to = 1, length.out = 501)
+
+# ベータ分布を計算
+dens_df <- tidyr::tibble(
+  phi = phi_vals, # x軸の値
+  dens = dbeta(x = phi_vals, shape1 = alpha, shape2 = beta) # 確率密度
+)
+
+# サンプルのヒストグラムを作成：密度
+ggplot() + 
+  geom_histogram(data = data_df, mapping = aes(x = phi, y = ..density..), 
+                 fill = "#00A968", bins = 30) + # 密度
+  geom_line(data = dens_df, mapping = aes(x = phi, y = dens), 
+            color = "darkgreen", size = 1,linetype = "dashed") + # 元の分布
+  labs(title = "Beta Distribution", 
+       subtitle = parse(text = paste0("list(alpha==", alpha, ", beta==", beta, ", N==", N, ")")), 
+       x = expression(phi), y = "density") # ラベル
+```
+
+　`geom_histogram()`のy軸の引数`y`に`..density..`を指定すると、密度に変換したヒストグラムを描画します。\
+
+　データ数(サンプルサイズ)が十分に増えると、ヒストグラムの形が分布の形に近付きます。\
+\
+
+
+## 乱数と分布の関係をアニメーションで可視化
+
+　サンプルサイズとヒストグラムの形状の関係をアニメーションで確認します。\
+\
+
+　パラメータ$\alpha, \beta$とデータ数$N$を指定して、ベータ分布の乱数を生成します。
+
+```{r}
+# パラメータを指定
+alpha <- 5
+beta  <- 2
+
+# データ数(フレーム数)を指定
+N <- 100
+
+# ベータ分布に従う乱数を生成
+phi_n <- rbeta(n = N, shape1 = alpha, shape2 = beta)
+head(phi_n)
+```
+
+　`phi_n`の`n`番目の要素を、`n`回目にサンプリングされた値とみなします。アニメーションの`n`番目のフレームでは、`n`個のサンプル`phi_n[1:n]`のヒストグラムを描画します。\
+
+　サンプリング回数ごとに、それまでのサンプルを持つデータフレームを作成します。
+
+```{r}
+# サンプルを複製して格納
+anime_freq_df <- tibble::tibble(
+  phi = rep(phi_n, times = N), # サンプル
+  n = rep(1:N, times = N), # データ番号
+  frame = rep(1:N, each = N) # フレーム番号
+) |> 
+  dplyr::filter(n <= frame) |> # サンプリング回数以前のサンプルを抽出
+  dplyr::mutate(
+    parameter = paste0("alpha=", alpha, ", beta=", beta, ", N=", frame) |> 
+      factor(levels = paste0("alpha=", alpha, ", beta=", beta, ", N=", 1:N))
+  ) # フレーム切替用ラベルを追加
+anime_freq_df
+```
+
+　データ番号(`n`列)は`1`から`N`の整数が`N`回繰り返すように、フレーム番号(`frame`列)は`1`から`N`の整数が`N`個ずつ並ぶように作成します。サンプルはデータ番号に対応するように複製します。\
+　フレーム番号ごとに、それ以下の番号のサンプルを`filter()`で抽出します。\
+　フレーム番号をデータ番号として、フレーム切替用のラベル列を作成します。これにより、各フレーム(サンプリング回数)ごとにそれ以前のサンプルを使ってグラフを作成できます。ラベルが文字列型だと文字列の基準で順序が決まるので、因子型にしてサンプリング回数に応じたレベル(順序)を設定します。\
+
+　このデータフレームは、ヒストグラムを描画するのに使います。\
+
+　サンプルと対応するラベルをデータフレームに格納します。
+
+```{r}
+# サンプルを格納
+anime_data_df <- tidyr::tibble(
+  phi = phi_n, 
+  parameter = paste0("alpha=", alpha, ", beta=", beta, ", N=", 1:N) |> 
+    factor(levels = paste0("alpha=", alpha, ", beta=", beta, ", N=", 1:N)) # フレーム切替用ラベル
+)
+anime_data_df
+```
+
+　このデータフレームは、各サンプリングにおけるサンプルの値を描画するのに使います。\
+
+　サンプルのヒストグラムのアニメーション(gif画像)を作成します。
+
+```{r, eval=TRUE}
+# サンプルのヒストグラムを作成：頻度
+anime_freq_graph <- ggplot() + 
+  geom_histogram(data = anime_freq_df, mapping = aes(x = phi), 
+                 breaks = seq(from = 0, to = 1, length.out = 30), 
+                 fill = "#00A968") + # 度数
+  geom_point(data = anime_data_df, mapping = aes(x = phi, y = 0), 
+            color = "orange", size = 6) + # 
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Beta Distribution", 
+       subtitle = "{current_frame}", 
+       x = expression(phi), y = "frequency") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_freq_graph, nframes = N, fps = 10, width = 800, height = 600)
+```
+
+　`transition_manual()`にフレームの順序を表す列を指定します。この例では、因子型のラベルのレベルの順に描画されます。\
+　`animate()`のフレーム数の引数`nframes`にデータ数(サンプルサイズ)、フレームレートの引数`fps`に1秒当たりのフレーム数を指定します。`fps`引数の値が大きいほどフレームが早く切り替わります。\
+
+　サンプルの密度を確率分布と重ねたアニメーションを作成します。
+
+```{r, eval=TRUE}
+# phiのとり得る値を作成
+phi_vals <- seq(from = 0, to = 1, length.out = 501)
+
+# ベータ分布を計算
+dens_df <- tidyr::tibble(
+  phi = phi_vals, # x軸の値
+  density = dbeta(x = phi_vals, shape1 = alpha, shape2 = beta) # 確率密度
+)
+
+# サンプルのヒストグラムを作成：密度
+anime_freq_graph <- ggplot() + 
+  geom_histogram(data = anime_freq_df, mapping = aes(x = phi, y = ..density..), 
+                 breaks = seq(from = 0, to = 1, length.out = 30), 
+                 fill = "#00A968") + # 度数
+  geom_line(data = dens_df, mapping = aes(x = phi, y = density), 
+            color = "darkgreen", size = 1, linetype = "dashed") + # 元の分布
+  geom_point(data = anime_data_df, mapping = aes(x = phi, y = 0), 
+             color = "orange", size = 6) + # 
+  gganimate::transition_manual(parameter) + # フレーム
+  coord_cartesian(ylim = c(0, 5)) + # 軸の表示範囲
+  labs(title = "Beta Distribution", 
+       subtitle = "{current_frame}", 
+       x = expression(phi), y = "density") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_freq_graph, nframes = N, fps = 10, width = 800, height = 600)
+```
+
+　サンプルが増えるに従って、ヒストグラムが元の分布に近付くのを確認できます。\
+\
+
+　この記事では、ベータ分布の乱数生成を確認しました。次は、ベータ分布から確率分布を生成します。\
+\
+
+
+# Rでベータ分布から確率分布の生成
+
+　ベータ分布(Beta Distribution)からベルヌーイ分布(Bernoulli Distribution)と二項分布(Binomial Distribution)を生成します。ベータ分布・ベルヌーイ分布・二項分布についてはそれぞれ「定義式の確認」を参照してください。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r, eval=FALSE}
+# 利用するパッケージ
+library(tidyverse)
+library(patchwork)
+```
+
+```{r, echo=FALSE}
+### 資料作成用
+
+# チェック用
+library(ggplot2)
+library(patchwork)
+```
+
+　この記事では、基本的に`パッケージ名::関数名()`の記法を使うので、パッケージを読み込む必要はありません。ただし、作図コードがごちゃごちゃしないようにパッケージ名を省略しているため、`ggplot2`は読み込む必要があります。\
+　`magrittr`パッケージのパイプ演算子`%>%`ではなく、ベースパイプ(ネイティブパイプ)演算子`|>`を使っています。`%>%`に置き換えても処理できます。  
+\
+
+
+## 生成分布の設定
+
+　パラメータの生成分布としてベータ分布を設定して、ベルヌーイ分布と二項分布のパラメータを生成(サンプリング)します。\
+\
+
+　ベータ分布のパラメータ$\alpha, \beta$とサンプルサイズ$N$を設定します。
+
+```{r}
+# パラメータを指定
+alpha <- 5
+beta  <- 2
+
+# データ数(サンプルサイズ)を指定
+N <- 10
+```
+
+　$\alpha > 0, \beta > 0$の値とサンプルサイズ(パラメータ数)$N$を指定します。\
+
+　ベータ分布に従う乱数を生成します。
+
+```{r}
+# ベータ分布に従う乱数を生成
+phi_n <- rbeta(n = N, shape1 = alpha, shape2 = beta) |> 
+  sort()
+
+# パラメータを格納
+param_df <- tibble::tibble(
+  phi = phi_n, 
+  label = round(phi, 3) |> 
+    factor() # 色分け用ラベル
+)
+param_df
+```
+
+　ベータ分布の乱数生成関数`rbeta()`のデータ数(サンプルサイズ)の引数`n`に`N`、パラメータの引数`shape1, shape2`に`alpha, beta`を指定します。\
+
+　生成した値をベルヌーイ分布と二項分布のパラメータ$\phi$として使います。\
+
+　ベータ分布を計算します。
+
+```{r}
+# phiがとり得る値を作成
+phi_vals <- seq(from = 0, to = 1, length.out = 501)
+
+# ベータ分布を計算
+beta_df <- tibble::tibble(
+  phi = phi_vals, # 確率変数
+  density = dbeta(x = phi_vals, shape1 = alpha, shape2 = beta) # 確率密度
+)
+beta_df
+```
+
+　ベータ分布の確率変数がとり得る値$0 \leq \phi \leq 1$の値を作成して、確率密度を計算します。\
+　ベータ分布の確率密度は、`dbeta()`で計算できます。確率変数の引数`x`に`phi_vals`、パラメータの引数`shape1, shape2`に`alpha, beta`を指定します。\
+　`phi_vals`と、`phi_vals`の各要素に対応する確率密度をデータフレームに格納します。\
+
+　ベータ分布の期待値$\mathbb{E}[\phi]$を計算します。
+
+```{r}
+# ベータ分布の期待値を計算
+E_phi <- alpha / (alpha + beta)
+E_phi
+```
+
+　サンプリングされたパラメータとその分布の基準を示すのに使います。\
+
+　ベータ分布のグラフを作成します。
+
+```{r, fig.width=8, fig.height=6}
+# ベータ分布を作図
+beta_graph <- ggplot() + 
+  geom_line(data = beta_df, mapping = aes(x = phi, y = density), 
+            color = "#00A968", size = 1) + # パラメータの生成分布
+  geom_point(data = param_df, mapping = aes(x = phi, y = 0, color = label), 
+             size = 6, alpha = 0.5, show.legend = FALSE) + # パラメータのサンプル
+  geom_vline(mapping = aes(xintercept = E_phi), 
+             color = "red", size = 1, linetype = "dashed") + # 
+  labs(title = "Beta Distribution", 
+       subtitle = parse(text = paste0("list(alpha==", alpha, ", beta==", beta, ")")), 
+       x = expression(phi), y = "density")
+beta_graph
+```
+
+　以上で、生成分布を設定して、パラメータを生成しました。次は、パラメータのサンプルを用いて、ベルヌーイ分布と二項分布を作図します。\
+\
+
+
+## 分布の作図：ベルヌーイ分布
+
+　まずは、サンプリングされたパラメータをベルヌーイ分布のパラメータとして利用します。グラフ作成については「ベルヌーイ分布の作図」を参照してください。\
+\
+
+　パラメータのサンプルごとにベルヌーイ分布を計算します。
+
+```{r}
+# xがとり得る値を作成
+x_vals <- 0:1
+
+# パラメータのサンプルごとにベルヌーイ分布を計算
+res_bern_df <- tidyr::expand_grid(
+  x = x_vals, # 確率変数
+  phi = phi_n # パラメータ
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(phi, x) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    probability = dbinom(x = x, size = 1, prob = phi), # 確率
+    label = round(phi, 3) |> 
+      factor() # 色分け用ラベル
+  ) # 確率を計算
+res_bern_df
+```
+
+　ベルヌーイ分布の確率変数がとり得る値$x \in \{0, 1\}$を作成して`x_vals`とします。\
+　`x_vals`と`phi_n`それぞれの要素の全ての組み合わせを`expand_grid()`で作成して、組み合わせごとに確率を計算します。\
+　ベルヌーイ分布の確率は、二項分布の確率関数`binom()`の試行回数の`size`に`1`を指定すると計算できます。確率変数(成功回数)の引数`x`に`x_vals`の値、成功確率の引数`prob`に`phi_n`の値を指定します。\
+
+　ベータ分布の期待値(ベルヌーイ分布のパラメータの期待値)を用いて、ベルヌーイ分布を計算します。
+
+```{r}
+# パラメータの期待値により二項分布を計算
+E_bern_df <- tibble::tibble(
+  x = x_vals, 
+  probability = dbinom(x = x, size = 1, prob = E_phi)
+)
+E_bern_df
+```
+
+　各パラメータのグラフに重ねて描画します。\
+
+　ベルヌーイ分布のグラフをパラメータごとに並べて作成します。
+
+```{r, fig.width=8, fig.height=6}
+# サンプルごとにベルヌーイ分布を作図
+bern_graph <- ggplot() + 
+  geom_bar(data = res_bern_df, mapping = aes(x = x, y = probability, fill = label), 
+           stat = "identity", show.legend = FALSE) + # サンプルによる分布
+  geom_bar(data = E_bern_df, mapping = aes(x = x, y = probability), 
+           stat = "identity", fill = NA, color = "red", linetype = "dashed") + # 期待値による分布
+  facet_wrap(. ~ phi, nrow = 2, labeller = label_bquote(phi==.(round(phi, 3)))) + # グラフを分割
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  ylim(c(0, 1)) + # y軸の表示範囲
+  labs(title = "Bernoulli Distribution", 
+       subtitle = parse(text = paste0("E(phi)==", round(E_phi, 3))), 
+       fill = expression(phi), 
+       x = "x", y = "probability") # ラベル
+bern_graph
+```
+
+　`facet_wrap()`に列を指定すると、その列の値ごとにグラフを分割して描画できます。\
+\
+
+　パラメータの生成分布(ベータ分布)と生成された分布(ベルヌーイ分布)を並べて描画します。
+
+```{r, fig.width=12, fig.height=12}
+# グラフを並べて描画
+beta_graph / bern_graph
+```
+
+　`patchwork`パッケージの`/`演算子を使うと上下に並べて描画できます。\
+
+　$\phi$が0に近いほど$x = 0$となる確率(失敗確率)が高く、$\phi$が1に近いほど$x = 1$となる確率(成功確率)が高くなります。\
+\
+
+
+## 分布の作図：二項分布
+
+　次は、サンプリングされたパラメータを二項分布のパラメータとして利用します。グラフ作成については「二項分布の作図」を参照してください。\
+\
+
+　試行回数$M$を指定して、パラメータのサンプルごとに確率を計算します。
+
+```{r}
+# 試行回数を指定
+M <- 10
+
+# xがとり得る値を作成
+x_vals <- 0:M
+
+# パラメータのサンプルごとに二項分布を計算
+res_binom_df <- tidyr::expand_grid(
+  x = x_vals, # 確率変数
+  phi = phi_n # パラメータ
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(phi, x) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    probability = dbinom(x = x, size = M, prob = phi), 
+    label = round(phi, 3) |> 
+      factor() # 色分け用ラベル
+  ) # 確率を計算
+res_binom_df
+```
+
+　二項分布の確率変数がとり得る値$x \in \{0, 1, \ldots, M\}$を作成して`x_vals`とします。\
+　`x_vals`と`phi_n`それぞれの要素の全ての組み合わせを`expand_grid()`で作成して、組み合わせごとに確率を計算します。\
+　二項分布の確率は、`binom()`で計算できます。確率変数(成功回数)の引数`x`に`x_vals`の値、試行回数の`size`に`M`、成功確率の引数`prob`に`phi_n`の値を指定します。\
+
+　ベータ分布の期待値(二項分布のパラメータの期待値)を用いて、二項分布を計算します。
+
+```{r}
+# パラメータの期待値により二項分布を計算
+E_binom_df <- tibble::tibble(
+  x = x_vals, 
+  probability = dbinom(x = x, size = M, prob = E_phi)
+)
+E_binom_df
+```
+
+　各パラメータのグラフに重ねて描画します。\
+
+　全てのパラメータの二項分布のグラフを作成します。
+
+```{r, fig.width=8, fig.height=6}
+# サンプルごとに二項分布を作図
+binom_graph <- ggplot() + 
+  geom_point(data = E_binom_df, mapping = aes(x = x, y = probability), 
+             color = "red", size = 3) + # 期待値による分布
+  geom_line(data = E_binom_df, mapping = aes(x = x, y = probability), 
+            color = "red", size = 1, linetype = "dashed") + # 期待値による分布
+  geom_point(data = res_binom_df, mapping = aes(x = x, y = probability, color = label), 
+             size = 3, alpha = 0.5) + # サンプルによる分布
+  geom_line(data = res_binom_df, mapping = aes(x = x, y = probability, color = label), 
+            size = 1, alpha = 0.5) + # サンプルによる分布
+  scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
+  theme(panel.grid.minor.x = element_blank()) + # 図の体裁
+  guides(color = guide_legend(override.aes = list(alpha = 1))) + # 凡例の体裁
+  labs(title = "Binomial Distribution", 
+       subtitle = parse(text = paste0("list(E(phi)==", round(E_phi, 3), ", M==", M, ")")), 
+       color = expression(phi), 
+       x = "x", y = "probability") # タイトル
+binom_graph
+```
+
+　(棒グラフだと分かりにくいので)散布図と折れ線グラフで二項分布を描画します。\
+\
+
+　パラメータの生成分布(ベータ分布)と生成された分布(二項分布)を並べて描画します。
+
+```{r, fig.width=12, fig.height=12}
+# グラフを並べて描画
+beta_graph / binom_graph + 
+  patchwork::plot_layout(guides = "collect")
+```
+
+　$\phi$が0に近いほど$x$が小さい(失敗回数が多い)確率が高く、$\phi$が1に近いほど$x$が大きい(成功回数が多い)確率が高くなります。\
+\
+
+　この記事では、ベータ分布からの分布生成を確認しました。\
+\
+
+
+# 参考書籍{-}
+
+- 岩田具治『トピックモデル』(機械学習プロフェッショナルシリーズ)講談社,2015年.
+- 須山敦志『ベイズ推論による機械学習入門』(機械学習スタートアップシリーズ)杉山将監修,講談社,2017年.
+- C.M.ビショップ著,元田 浩・他訳『パターン認識と機械学習 上』丸善出版,2012年.
+
+
