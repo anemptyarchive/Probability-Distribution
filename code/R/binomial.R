@@ -108,7 +108,7 @@ prob_df <- tidyr::tibble(
 
 # 二項分布のグラフを作成
 ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
-  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 棒グラフ
+  geom_bar(stat = "identity", fill = "#00A968") + # 棒グラフ
   scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   labs(title = "Binomial Distribution", 
        subtitle = paste0("phi=", phi, ", M=", M), # (文字列表記用)
@@ -123,7 +123,7 @@ mode_x <- floor(phi * (M + 1))
 
 # 統計量を重ねた二項分布のグラフを作成:線のみ
 ggplot(data = prob_df, mapping = aes(x = x, y = probability)) + # データ
-  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 分布
+  geom_bar(stat = "identity", fill = "#00A968") + # 分布
   geom_vline(xintercept = E_x, color = "blue", size = 1, linetype = "dashed") + # 期待値
   geom_vline(xintercept = c(E_x-s_x, E_x+s_x), color = "orange", size = 1, linetype = "dotted") + # 期待値 ± 標準偏差
   geom_vline(xintercept = mode_x, color = "chocolate", size = 1, linetype = "dashed") + # 最頻値
@@ -147,7 +147,7 @@ label_vec <- c(mean = expression(E(x)), sd = expression(E(x) %+-% sqrt(V(x))), m
 # 統計量を重ねた二項分布のグラフを作成:凡例付き
 ggplot() + # データ
   geom_bar(data = prob_df, mapping = aes(x = x, y = probability), 
-           stat = "identity", position = "dodge", fill = "#00A968") + # 分布
+           stat = "identity", fill = "#00A968") + # 分布
   geom_vline(data = stat_df, mapping = aes(xintercept = statistic, color = type, linetype = type), 
              size = 1) + # 統計量
   scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
@@ -293,7 +293,7 @@ anime_prob_df <- tidyr::expand_grid(
 
 # 二項分布のアニメーションを作図
 anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = x, y = probability)) + # データ
-  geom_bar(stat = "identity", position = "dodge", fill = "#00A968", color = "#00A968") + # 分布
+  geom_bar(stat = "identity", fill = "#00A968", color = "#00A968") + # 分布
   gganimate::transition_manual(parameter) + # フレーム
   #gganimate::view_follow(fixed_x = FALSE, fixed_y = TRUE) + # 表示範囲の調整
   #scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
@@ -435,7 +435,7 @@ label_vec <- c(mean = expression(E(x)), sd = expression(E(x) %+-% sqrt(V(x))), m
 # 統計量を重ねた二項分布のアニメーションを作図
 anime_prob_graph <- ggplot() + # データ
   geom_bar(data = anime_prob_df, mapping = aes(x = x, y = probability), 
-           stat = "identity", position = "dodge", fill = "#00A968") + # 分布
+           stat = "identity", fill = "#00A968") + # 分布
   geom_vline(data = anime_stat_df, mapping = aes(xintercept = statistic, color = type, linetype = type), 
              size = 1) + # 統計量
   gganimate::transition_manual(parameter) + # フレーム
@@ -491,7 +491,7 @@ prob_df <- tidyr::tibble(
 
 # サンプルのヒストグラムを作成:度数
 ggplot(data = freq_df, mapping = aes(x = x, y = frequency)) + # データ
-  geom_bar(stat = "identity", position = "dodge", fill = "#00A968") + # 度数
+  geom_bar(stat = "identity", fill = "#00A968") + # 度数
   scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   labs(title = "Binomial Distribution", 
        subtitle = paste0("phi=", phi, ", M=", M, ", N=", N), 
@@ -500,9 +500,9 @@ ggplot(data = freq_df, mapping = aes(x = x, y = frequency)) + # データ
 # サンプルのヒストグラムを作成:相対度数
 ggplot() + 
   geom_bar(data = freq_df, mapping = aes(x = x, y = frequency/N), 
-           stat = "identity", position = "dodge", fill = "#00A968") + # 相対度数
+           stat = "identity", fill = "#00A968") + # 相対度数
   geom_bar(data = prob_df, mapping = aes(x = x, y = probability), 
-           stat = "identity", position = "dodge", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
+           stat = "identity", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
   scale_x_continuous(breaks = x_vals, labels = x_vals) + # x軸目盛
   labs(
     title = "Binomial Distribution", 
@@ -584,7 +584,7 @@ anime_prob_df <- tibble::tibble(
 # 二項乱数のヒストグラムのアニメーションを作図:度数
 anime_hist_graph <- ggplot() + 
   geom_bar(data = anime_freq_df, mapping = aes(x = x, y = frequency), 
-           stat = "identity", position = "dodge", fill = "#00A968") + # 度数
+           stat = "identity", fill = "#00A968") + # 度数
   geom_point(data = anime_data_df, mapping = aes(x = x, y = 0), 
              color = "orange", size = 5) + # サンプル
   gganimate::transition_manual(parameter) + # フレーム
@@ -600,9 +600,9 @@ gganimate::animate(anime_hist_graph, nframes = N, fps = 100, width = 800, height
 # 二項乱数のヒストグラムのアニメーションを作図:相対度数
 anime_hist_graph <- ggplot() + 
   geom_bar(data = anime_freq_df, mapping = aes(x = x, y = frequency/n), 
-           stat = "identity", position = "dodge", fill = "#00A968") + # 相対度数
+           stat = "identity", fill = "#00A968") + # 相対度数
   geom_bar(data = anime_prob_df, mapping = aes(x = x, y = probability), 
-           stat = "identity", position = "dodge", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
+           stat = "identity", alpha = 0, color = "darkgreen", linetype = "dashed") + # 元の分布
   geom_point(data = anime_data_df, mapping = aes(x = x, y = 0), 
              color = "orange", size = 5) + # サンプル
   gganimate::transition_manual(parameter) + # フレーム

@@ -151,7 +151,7 @@ ggplot() + # データ
   scale_linetype_manual(values = linetype_vec, labels = label_vec, name = "statistic") + # 線の種類:(線指定と数式表示用)
   theme(legend.text.align = 0) + # 図の体裁:凡例
   ylim(c(0, 1)) + # y軸の表示範囲
-  labs(title = "Bernoulii Distribution", 
+  labs(title = "Bernoulli Distribution", 
        subtitle = parse(text = paste0("phi==", phi)), 
        x = "x", y = "probability") # ラベル
 
@@ -260,7 +260,7 @@ anime_prob_graph <- ggplot(data = anime_stat_df, ) +
   scale_linetype_manual(values = linetype_vec, labels = label_vec, name = "statistic") + # 線の種類:(線指定と数式表示用)
   scale_color_manual(values = color_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
   theme(legend.text.align = 0) + # 図の体裁:凡例
-  labs(title = "Bernoulii Distribution", 
+  labs(title = "Bernoulli Distribution", 
        subtitle = "{current_frame}", 
        x = "x", y = "probability") # ラベル
 
@@ -297,7 +297,7 @@ prob_df <- tidyr::tibble(
 # サンプルを集計
 freq_df <- tidyr::tibble(
   x = x_vals, # 確率変数
-  frequency = c(sum(x_n == 0), sum(x_n == 1)) # 度数
+  frequency = c(N - sum(x_n), sum(x_n)) # 度数
 )
 
 
