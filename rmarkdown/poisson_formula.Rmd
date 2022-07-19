@@ -1,0 +1,1016 @@
+---
+title: "ポアソン分布"
+author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M:%S')`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_section: true
+    toc: true
+    toc_depth: 4
+    keep_tex: false
+header-includes:
+  - \usepackage{bookmark}
+  - \usepackage{xltxtra}
+  - \usepackage{zxjatype}
+  - \usepackage[ipa]{zxjafont}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, error = FALSE, warning = FALSE, # メッセージを非表示
+  fig.align = "center", # 画像を中央揃え
+  fig.width = 5, fig.height = 4, # 画像のサイズ
+  dev = "cairo_pdf", dev.args = list(family = "ipaexg"), # {ggplot2}に日本語を組み込む場合の対処
+  class.source = "numberLines lineAnchors", # ソースを番号付けする
+  class.output = "numberLines lineAnchors chunkout" # 出力を番号付けする
+)
+```
+
+----
+
+【編集履歴】
+
+- 2022/01/25：執筆開始
+- 2022/02/21：初稿
+
+----
+
+\newpage
+
+
+# ポアソン分布の定義式の確認
+
+　ポアソン分布(Poisson Distribution)の定義を確認します。\
+\
+
+
+## 定義式
+
+　稀に起こる(発生確率が低い)事象が、一定期間に発生する回数の確率分布をポアソン分布と言います。\
+\
+
+　単位時間における生起回数を$x$で表します。$x$は、0以上の整数になります。$x$が非負の整数をとることを
+
+$$
+x \in \{0, 1, 2, \ldots\}
+$$
+
+で表します。\
+
+　単位時間における生起回数の期待値を$\lambda$で表すことにします。$\lambda$は、0より大きい実数
+
+$$
+\lambda > 0
+$$
+
+を満たす必要があります。\
+
+　ポアソン分布は、パラメータ$\lambda$を用いて次の式で定義されます。
+
+$$
+\mathrm{Poi}(x | \lambda)
+    = \frac{\lambda^x}{x!}
+      e^{-\lambda}
+$$
+
+　$x!$は$x$の階乗、$e$はネイピア数です。\
+
+　ポアソン分布の対数をとると
+
+$$
+\log \mathrm{Poi}(x | \lambda)
+    = x \log \lambda
+      - \log x!
+      - \lambda
+$$
+
+となります。対数の性質より$\log x^a = a \log x$、$\log \frac{x}{y} = \log x - \log y$です。\
+\
+
+
+## 他の分布との関係
+
+　二項分布との関係性をいつか書きたい。\
+\
+
+
+## 統計量の計算式
+
+　ポアソン分布の平均と分散は、どちらも$\lambda$になります。詳しくは「統計量の導出」を参照してください。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \lambda
+\\
+\mathbb{V}[x]
+   &= \lambda
+\end{aligned}
+$$
+
+\ 
+
+
+# ポアソン分布の定義式の導出
+
+　ポアソン分布(Poisson Distribution)の定義式を導出します。\
+\
+
+
+# ポアソン分布のモーメント母関数の導出
+
+　ポアソン分布(Poisson Distribution)のモーメント母関数(積率母関数)を導出します。ポアソン分布については「定義式の確認」を参照してください。\
+\
+
+　モーメント母関数は、$e^{tx}$の期待値として定義されます。$e$はネイピア数です。
+
+$$
+\begin{aligned}
+M(t)
+   &= \mathbb{E}[e^{tx}]
+\\
+   &= \sum_{x=0}^{\infty}
+          e^{tx}
+          \mathrm{Poi}(x | \lambda)
+\\
+   &= \sum_{x=0}^{\infty}
+          e^{tx}
+          \frac{\lambda^x}{x!}
+          e^{-\lambda}
+\end{aligned}
+$$
+
+　ここで、$\mathrm{Poi}(x | \lambda)$はポアソン分布を表し、$x$は単位時間における事象の発生回数、$\lambda$は発生回数の期待値です。\
+　$e^{tx} = (e^t)^x$と$\lambda^x$をまとめます。
+
+$$
+M(t)
+    = e^{-\lambda}
+      \sum_{x=0}^{\infty}
+          \frac{(e^t \lambda)^x}{x!}
+$$
+
+　指数関数のマクローリン展開$e^x = \sum_{x=0}^{\infty} \frac{x^n}{x!}$の形をしているので、右辺から左辺の式に変形します。
+
+$$
+\begin{aligned}
+M(t)
+   &= e^{-\lambda}
+      e^{e^t \lambda}
+\\
+   &= e^{e^t \lambda-\lambda}
+\\
+   &= e^{\lambda(e^t-1)}
+\end{aligned}
+$$
+
+　モーメント母関数の式が得られました。\
+
+　指数部分が分かりやすいように、指数関数を$e^x = \exp(x)$で表現すると
+
+$$
+\begin{aligned}
+M(t)
+   &= \exp(- \lambda)
+      \exp \Bigl(
+          \exp(t) \lambda
+      \Bigr)
+\\
+   &= \exp \Bigl(
+          \exp(t) \lambda
+          - \lambda
+      \Bigr)
+\\
+   &= \exp \Bigl(
+          \lambda
+          (\exp(t) - 1)
+      \Bigr)
+\end{aligned}
+$$
+
+となります。\
+\
+
+
+# ポアソン分布の特性関数の導出
+
+　ポアソン分布(Poisson Distribution)の特性関数を導出します。ポアソン分布については「定義式の確認」を参照してください。\
+\
+
+　特性関数は、$e^{itx}$の期待値として定義されます。$e$はネイピア数、$i$は虚数単位です。
+
+$$
+\begin{aligned}
+\varphi(t)
+   &= \mathbb{E}[e^{itx}]
+\\
+   &= \sum_{x=0}^{\infty}
+          e^{itx}
+          \mathrm{Poi}(x | \lambda)
+\\
+   &= \sum_{x=0}^{\infty}
+          e^{itx}
+          \frac{\lambda^x}{x!}
+          e^{-\lambda}
+\end{aligned}
+$$
+
+　ここで、$\mathrm{Poi}(x | \lambda)$はポアソン分布を表し、$x$は単位時間における事象の発生回数、$\lambda$は発生回数の期待値です。\
+　$e^{itx} = (e^{it})^x$と$\lambda^x$をまとめます。
+
+$$
+\varphi(t)
+    = e^{-\lambda}
+      \sum_{x=0}^{\infty}
+          \frac{(e^{it} \lambda)^x}{x!}
+$$
+
+　指数関数のマクローリン展開$e^x = \sum_{x=0}^{\infty} \frac{x^n}{x!}$の形をしているので、右辺から左辺の式に変形します。
+
+$$
+\begin{aligned}
+\varphi(t)
+   &= e^{-\lambda}
+      e^{e^{it} \lambda}
+\\
+   &= e^{e^{it} \lambda-\lambda}
+\\
+   &= e^{\lambda(e^{it}-1)}
+\end{aligned}
+$$
+
+　特性関数の式が得られました。モーメント母関数の$t$を$it$に置き換えた式と一致します。\
+
+　指数部分が分かりやすいように、指数関数を$e^x = \exp(x)$で表現すると
+
+$$
+\begin{aligned}
+\varphi(t)
+   &= \exp(- \lambda)
+      \exp \Bigl(
+          \exp(i t) \lambda
+      \Bigr)
+\\
+   &= \exp \Bigl(
+          \exp(i t) \lambda
+          - \lambda
+      \Bigr)
+\\
+   &= \exp \Bigl(
+          \lambda (\exp(i t) - 1)
+      \Bigr)
+\end{aligned}
+$$
+
+となります。\
+\
+
+
+# ポアソン分布の統計量の導出
+
+　ポアソン分布(Poisson Distribution)の平均(期待値)と分散を導出します。ポアソン分布については「定義式の確認」を参照してください。\
+\
+
+
+## 定義式から導出
+
+　定義式を利用して、平均と分散の計算式を導出します。\
+
+　ポアソン分布は、次の式で定義されます。
+
+$$
+\mathrm{Poi}(x | \lambda)
+    = \frac{\lambda^x}{x!}
+      e^{-\lambda}
+$$
+
+　ここで、$x$は単位時間における事象の発生回数、$\lambda$は発生回数の期待値です。\
+　確率変数の値$x$は0以上の整数となります。パラメータ$\lambda$は、$\lambda > 0$を満たす必要があります。\
+
+　ポアソン分布の平均と分散は、どちらもパラメータ$\lambda$になります。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \lambda
+\\
+\mathbb{V}[x]
+   &= \lambda
+\end{aligned}
+$$
+
+　定義式を用いて、平均と分散の計算式を導出します。\
+\
+
+
+### 平均の計算
+
+　ポアソン分布の平均を導出します。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \sum_{x=0}^{\infty}
+          x
+          \mathrm{Poi}(x | \lambda)
+\\
+   &= \sum_{x=0}^{\infty}
+          x
+          \frac{\lambda^x}{x!}
+          e^{-\lambda}
+\end{aligned}
+$$
+
+　$x = 0$について、0になり計算結果に影響しないので、$\sum_{x=0}^{\infty}$から取り出します。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= 0
+      \frac{\lambda^0}{0!}
+      e^{-\lambda}
+      + \sum_{x=1}^{\infty}
+          x
+          \frac{\lambda^x}{x!}
+          e^{-\lambda}
+\\
+   &= e^{-\lambda}
+      \sum_{x=1}^{\infty}
+          x
+          \frac{\lambda^x}{x!}
+\end{aligned}
+$$
+
+　階乗の項について
+
+$$
+\frac{1}{x!}
+    = \frac{1}{x}
+      \frac{1}{(x - 1)!}
+$$
+
+と分割します。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= e^{-\lambda}
+      \sum_{x=1}^{\infty}
+          x
+          \frac{1}{x}
+          \frac{\lambda^x}{(x - 1)!}
+\\
+   &= e^{-\lambda}
+      \sum_{x=1}^{\infty}
+          \frac{\lambda^x}{(x - 1)!}
+\end{aligned}
+$$
+
+　総和について$\sum_{x=1}^{\infty} = \sum_{x-1=0}^{\infty}$と変形して、さらに$x' = x - 1$に置き換えます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= e^{-\lambda}
+      \sum_{x-1=0}^{\infty}
+          \frac{\lambda^x}{(x - 1)!}
+\\
+   &= e^{-\lambda}
+      \sum_{x'=0}^{\infty}
+          \frac{\lambda^{x'+1}}{x'!}
+\end{aligned}
+$$
+
+　$\lambda^{x'+1} = \lambda \lambda^{x'}$に分割します。
+
+$$
+\mathbb{E}[x]
+    = \lambda
+      e^{-\lambda}
+      \sum_{x'=0}^{\infty}
+          \frac{\lambda^{x'}}{x'!}
+\tag{1}
+$$
+
+　式(1)は指数関数のマクローリン展開$e^x = \sum_{x=0}^{\infty} \frac{x^n}{x!}$の形をしているので、右辺から左辺の式に変形します。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \lambda
+      e^{-\lambda}
+      e^{\lambda}
+\\
+   &= \lambda
+      e^{\lambda-\lambda}
+\\
+   &= \lambda
+\end{aligned}
+$$
+
+　平均の計算式が得られました。\
+
+　次のようにも解釈できます。式(1)はパラメータ$\lambda$のポアソン分布になっています。
+
+$$
+\mathbb{E}[x]
+    = \lambda
+      \sum_{x'=0}^{\infty}
+          \mathrm{Poi}(x' | \lambda)
+$$
+
+　全事象$x' = 0, 1, \ldots, \infty$の和なので1になります。
+
+$$
+\mathbb{E}[x]
+    = \lambda
+$$
+
+　先ほどの結果と一致しました。\
+\
+
+
+### 二乗の平均の計算
+
+　続いて、$x^2$の平均を求めます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= \sum_{x=0}^{\infty}
+          x^2
+          \mathrm{Poi}(x | \lambda)
+\\
+   &= \sum_{x=0}^{\infty}
+          x^2
+          \frac{\lambda^x}{x!}
+          e^{-\lambda}
+\end{aligned}
+$$
+
+　$x^2 = x (x - 1) + x$に分割します。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= \sum_{x=0}^{\infty}
+          \{x (x - 1) + x\}
+          \frac{\lambda^x}{x!}
+          e^{-\lambda}
+\\
+   &= \sum_{x=0}^{\infty}
+          x (x - 1)
+          \frac{\lambda^x}{x!}
+          e^{-\lambda}
+      + \sum_{x=0}^{\infty}
+          x
+          \frac{\lambda^x}{x!}
+          e^{-\lambda}
+\end{aligned}
+$$
+
+　前の項に関して、$x = 0, 1$は0になるので取り出します。後の項は、$x$の平均なので置き換えます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= 0 (0 - 1)
+      \frac{\lambda^0}{0!}
+      e^{-\lambda} \\
+   &\quad
+      + 1 (1 - 1)
+        \frac{\lambda^1}{1!}
+        e^{-\lambda} \\
+   &\quad
+      + \sum_{x=2}^{\infty}
+          x (x - 1)
+          \frac{\lambda^x}{x!}
+          e^{-\lambda} \\
+   &\quad
+      + \mathbb{E}[x]
+\\
+   &= e^{-\lambda}
+      \sum_{x=2}^{\infty}
+          x (x - 1)
+          \frac{\lambda^x}{x!}
+      + \lambda
+\end{aligned}
+$$
+
+　階乗の項について
+
+$$
+\frac{1}{x!}
+    = \frac{1}{x (x - 1)}
+      \frac{1}{(x - 2)!}
+$$
+
+と分割します。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= e^{-\lambda}
+      \sum_{x=2}^{\infty}
+          x (x - 1)
+          \frac{1}{x (x - 1)}
+          \frac{\lambda^x}{(x - 2)!}
+      + \lambda
+\\
+   &= e^{-\lambda}
+      \sum_{x=2}^{\infty}
+          \frac{\lambda^x}{(x - 2)!}
+      + \lambda
+\end{aligned}
+$$
+
+　総和について$\sum_{x=2}^{\infty} = \sum_{x-2=0}^{\infty}$と変形して、さらに$x' = x - 2$に置き換えます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= e^{-\lambda}
+      \sum_{x-2=0}^{\infty}
+          \frac{\lambda^x}{(x - 2)!}
+      + \lambda
+\\
+   &= e^{-\lambda}
+      \sum_{x'=0}^{\infty}
+          \frac{\lambda^{x'+2}}{x'!}
+      + \lambda
+\end{aligned}
+$$
+
+　$\lambda^{x'+2} = \lambda^2 \lambda^{x'}$に分割します。
+
+$$
+\mathbb{E}[x^2]
+    = \lambda^2 e^{-\lambda}
+      \sum_{x'=0}^{\infty}
+          \frac{\lambda^{x'}}{x'!}
+      + \lambda
+\tag{2}
+$$
+
+　指数関数のマクローリン展開$e^x = \sum_{x=0}^{\infty} \frac{x^n}{x!}$の変形を行います。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= \lambda^2 e^{-\lambda}
+      e^{\lambda}
+      + \lambda
+\\
+   &= \lambda^2 e^{\lambda-\lambda}
+      + \lambda
+\\
+   &= \lambda^2 + \lambda
+\end{aligned}
+$$
+
+　二乗の平均が求まりました。\
+
+　あるいは、式(2)をパラメータ$\lambda$のポアソン分布の全事象の和と考えても同じ結果が得られます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= \lambda^2
+      \sum_{x'=0}^{\infty}
+          \mathrm{Poi}(x' | \lambda)
+      + \lambda
+\\
+   &= \lambda^2 + \lambda
+\end{aligned}
+$$
+
+\ 
+
+
+### 分散の計算
+
+　分散は「$x$の2乗の平均」と「$x$の平均の2乗」の差で求められます。
+
+$$
+\begin{aligned}
+\mathbb{V}[x]
+   &= \mathbb{E}[x^2]
+      - (\mathbb{E}[x])^2
+\\
+   &= \lambda^2 + \lambda
+      - \lambda^2
+\\
+   &= \lambda
+\end{aligned}
+$$
+
+　分散の計算式が得られました。\
+\
+
+
+## モーメント母関数から導出
+
+　モーメント母関数(積率母関数)を利用して、平均と分散の計算式を導出します。\
+
+　ポアソン分布のモーメント母関数は、次の式になります。詳しくは「モーメント母関数の導出」を参照してください。
+
+$$
+M(t)
+    = e^{\lambda (e^t-1)}
+    = \exp \Bigl(
+          \lambda
+          (\exp(t) - 1)
+      \Bigr)
+$$
+
+　ここで、$\lambda$はポアソン分布のパラメータで発生回数の期待値、$e$はネイピア数です。指数分布が分かりやすいように、$e^x = \exp(x)$でも表します。\
+
+　ポアソン分布の平均と分散は、どちらもパラメータ$\lambda$になります。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \lambda
+\\
+\mathbb{V}[x]
+   &= \lambda
+\end{aligned}
+$$
+
+　モーメント母関数の微分を用いて、平均と分散の計算式を導出します。\
+\
+
+
+### モーメント母関数の1階微分の計算
+
+　モーメント母関数を$t$に関して微分します。
+
+$$
+\frac{d M(t)}{d t}
+    = \frac{d}{d t} \Bigl\{
+          e^{\lambda (e^t-1)}
+      \Bigr\}
+$$
+
+　式全体を$g(f(x))$、指数部分を$f(x)$として、合成関数の微分$\frac{d g(f(x))}{d x} = \frac{d g(x)}{d f(x)} \frac{d f(x)}{d x}$を行います。
+
+$$
+\begin{aligned}
+\frac{d M(t)}{d t}
+   &= e^{\lambda (e^t-1)}
+      \frac{d}{d t} \Bigl\{
+          \lambda (e^t-1)
+      \Bigr\}
+\\
+   &= e^{\lambda (e^t-1)} \left\{
+          \frac{d \lambda e^t}{d t}
+          - \frac{d \lambda}{d t}
+      \right\}
+\\
+   &= e^{\lambda (e^t-1)}
+      \lambda
+      e^t
+\end{aligned}
+$$
+
+　指数関数の微分は$\frac{d e^x}{d x} = e^x$です。\
+　式を整理します。
+
+$$
+\frac{d M(t)}{d t}
+    = \lambda
+      e^{\lambda (e^t-1)+t}
+$$
+
+　1階微分が求まりました。\
+\
+
+
+### モーメント母関数の2階微分の計算
+
+　続いて、モーメント母関数を$t$に関して2階微分します。1階微分$\frac{d M(t)}{d t}$を更に微分します。
+
+$$
+\begin{aligned}
+\frac{d^2 M(t)}{d t^2}
+   &= \frac{d}{d t} \frac{d M(t)}{d t} 
+\\
+   &= \frac{d}{d t} \Bigl\{
+          \lambda
+          e^{\lambda (e^t-1)+t}
+      \Bigr\}
+\end{aligned}
+$$
+
+　指数関数の微分(合成関数の微分)を行います。
+
+$$
+\begin{aligned}
+\frac{d^2 M(t)}{d t^2}
+   &= \lambda
+      e^{\lambda (e^t-1)+t}
+      \frac{d}{d t} \Bigl\{
+          \lambda (e^t - 1) + t
+      \Bigr\}
+\\
+   &= \lambda
+      e^{\lambda (e^t-1)+t} \left\{
+          \frac{d \lambda e^t}{d t}
+          - \frac{d \lambda}{d t}
+          + \frac{d t}{d t}
+      \right\}
+\\
+   &= \lambda
+      e^{\lambda (e^t-1)+t} (
+          \lambda e^t + 1
+      )
+\end{aligned}
+$$
+
+　2階微分が求まりました。\
+\
+
+
+### 平均の計算
+
+　モーメント母関数の微分に$t = 0$を代入すると、平均が得られます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \frac{d M(0)}{d t}
+\\
+   &= \lambda
+      e^{\lambda (e^0-1)+0}
+\\
+   &= \lambda e^0
+\\
+   &= \lambda
+\end{aligned}
+$$
+
+　0乗は$x^0 = 1$です。\
+\
+
+
+### 二乗の平均の計算
+
+　同様に、モーメント母関数の2階微分に$t = 0$を代入すると、二乗の平均が得られます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= \frac{d^2 M(0)}{d t^2}
+\\
+   &= \lambda
+      e^{\lambda (e^0-1)+0} (
+          \lambda e^0 + 1
+      )
+\\
+   &= \lambda e^0
+      (\lambda + 1)
+\\
+   &= \lambda^2 + \lambda
+\end{aligned}
+$$
+
+\ 
+
+
+### 分散の計算
+
+　分散は「$x$の2乗の平均」と「$x$の平均の2乗」の差で求められます。
+
+$$
+\begin{aligned}
+\mathbb{V}[x]
+   &= \mathbb{E}[x^2]
+      - (\mathbb{E}[x])^2
+\\
+   &= \lambda^2 + \lambda
+      - \lambda^2
+\\
+   &= \lambda
+\end{aligned}
+$$
+
+　分散の計算式が得られました。\
+\
+
+
+## 特性関数から導出
+
+　特性関数を利用して、平均と分散の計算式を導出します。\
+
+　ポアソン分布の特性関数は、次の式になります。詳しくは「特性関数の導出」を参照してください。
+
+$$
+\varphi(t)
+    = e^{\lambda(e^{it}-1)}
+    = \exp \Bigl(
+          \lambda (\exp(i t) - 1)
+      \Bigr)
+$$
+
+　ここで、$\lambda$はポアソン分布のパラメータで発生回数の期待値、$e$はネイピア数、$i$は虚数単位です。指数分布が分かりやすいように、$e^x = \exp(x)$でも表します。\
+
+　ポアソン分布の平均と分散は、どちらもパラメータ$\lambda$になります。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \lambda
+\\
+\mathbb{V}[x]
+   &= \lambda
+\end{aligned}
+$$
+
+　関数の微分を用いて、平均と分散の計算式を導出します。\
+\
+
+
+### 特性関数の1階微分の計算
+
+　特性関数を$t$に関して微分します。
+
+$$
+\frac{d \varphi(t)}{d t}
+    = \frac{d}{d t} \Bigl\{
+          e^{\lambda(e^{it}-1)}
+      \Bigr\}
+$$
+
+　式全体を$g(f(x))$、指数部分を$f(x)$として、合成関数の微分$\frac{d g(f(x))}{d x} = \frac{d g(x)}{d f(x)} \frac{d f(x)}{d x}$を行います。
+
+$$
+\begin{aligned}
+\frac{d \varphi(t)}{d t}
+   &= e^{\lambda (e^{it}-1)}
+      \frac{d}{d t} \Bigl\{
+          \lambda (e^{it}-1)
+      \Bigr\}
+\\
+   &= e^{\lambda(e^{it}-1)} \left\{
+          \frac{d \lambda e^{it}}{d t}
+          - \frac{d \lambda}{d t}
+      \right\}
+\\
+   &= e^{\lambda(e^{it}-1)}
+      \lambda
+      e^{it}
+      \frac{d i t}{d t}
+\\
+   &= e^{\lambda(e^{it}-1)}
+      \lambda
+      e^{it} i
+\end{aligned}
+$$
+
+　指数に係数を含む指数関数の微分は$\frac{d e^{ax}}{d x} = e^{ax} \frac{d ax}{d x} = a e^{ax}$です。\
+　式を整理します。
+
+$$
+\frac{d \varphi(t)}{d t}
+    = i \lambda
+      e^{\lambda(e^{it}-1)+it}
+$$
+
+　1階微分が求まりました。\
+\
+
+
+### 特性関数の2階微分の計算
+
+　続いて、特性関数を$t$に関して2階微分します。1階微分$\frac{d \varphi(t)}{d t}$を更に微分します。
+
+$$
+\begin{aligned}
+\frac{d^2 \varphi(t)}{d t^2}
+   &= \frac{d}{d t} \frac{d \varphi(t)}{d t} 
+\\
+   &= \frac{d}{d t} \Bigl\{
+          i \lambda
+          e^{\lambda (e^{it}-1)+it}
+      \Bigr\}
+\end{aligned}
+$$
+
+　指数関数の微分(合成関数の微分)を行います。
+
+$$
+\begin{aligned}
+\frac{d^2 \varphi(t)}{d t^2}
+   &= i \lambda
+      e^{\lambda (e^{it}-1)+it}
+      \frac{d}{d t} \Bigl\{
+          \lambda (e^{it} - 1) + i t
+      \Bigr\}
+\\
+   &= i \lambda
+      e^{\lambda (e^{it}-1)+it} \left\{
+          \frac{d \lambda e^{it}}{d t}
+          - \frac{d \lambda}{d t}
+          + \frac{d i t}{d t}
+      \right\}
+\\
+   &= i \lambda
+      e^{\lambda (e^{it}-1)+it} \left(
+          \lambda e^{it} \frac{d i t}{d t}
+          + i
+      \right)
+\\
+   &= i \lambda
+      e^{\lambda (e^{it}-1)+it} (
+          i \lambda e^{it} + i
+      )
+\end{aligned}
+$$
+
+　2階微分が求まりました。\
+\
+
+
+### 平均の計算
+
+　特性関数の微分に$t = 0$を代入し、$i$の逆数を掛けると、平均が得られます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \frac{1}{i}
+      \frac{d \varphi(0)}{d t}
+\\
+   &= \frac{1}{i}
+      i \lambda
+      e^{\lambda(e^{0}-1)+0}
+\\
+   &= \lambda e^0
+\\
+   &= \lambda
+\end{aligned}
+$$
+
+　0乗は$x^0 = 1$です。\
+\
+
+
+### 二乗の平均の計算
+
+　同様に、特性関数の2階微分に$t = 0$を代入し、$i$の2乗の逆数を掛けると、二乗の平均が得られます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x^2]
+   &= \frac{1}{i^2}
+      \frac{d^2 \varphi(0)}{d t^2}
+\\
+   &= \frac{1}{-1} \Bigl\{
+          i \lambda
+          e^{\lambda(e^{0}-1)+0} (
+               i \lambda e^{0} + i
+          )
+      \Bigr\}
+\\
+   &= - \Bigl\{
+          i \lambda e^0
+          (i \lambda + i)
+      \Bigr\}
+\\
+   &= \lambda^2 + \lambda
+\end{aligned}
+$$
+
+　虚数単位の2乗は$i^2 = -1$です。\
+\
+
+
+### 分散の計算
+
+　分散は「$x$の2乗の平均」と「$x$の平均の2乗」の差で求められます。
+
+$$
+\begin{aligned}
+\mathbb{V}[x]
+   &= \mathbb{E}[x^2]
+      - (\mathbb{E}[x])^2
+\\
+   &= \lambda^2 + \lambda
+      - \lambda^2
+\\
+   &= \lambda
+\end{aligned}
+$$
+
+　分散の計算式が得られました。\
+\
+
+
+# 参考書籍{-}
+
+- 須山敦志『ベイズ推論による機械学習入門』(機械学習スタートアップシリーズ)杉山将監修,講談社,2017年.
+- 星野満博・西崎雅仁『数理統計の探求』晃洋書房,2012年.
+
+
