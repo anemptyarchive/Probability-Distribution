@@ -1,0 +1,516 @@
+---
+title: "1次元スチューデントのt分布"
+author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M:%S')`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_section: true
+    toc: true
+    toc_depth: 4
+    keep_tex: false
+header-includes:
+  - \usepackage{bookmark}
+  - \usepackage{xltxtra}
+  - \usepackage{zxjatype}
+  - \usepackage[ipa]{zxjafont}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, error = FALSE, warning = FALSE, # メッセージを非表示
+  fig.align = "center", # 画像を中央揃え
+  fig.width = 5, fig.height = 4, # 画像のサイズ
+  dev = "cairo_pdf", dev.args = list(family = "ipaexg"), # {ggplot2}に日本語を組み込む場合の対処
+  class.source = "numberLines lineAnchors", # ソースを番号付けする
+  class.output = "numberLines lineAnchors chunkout" # 出力を番号付けする
+)
+```
+
+----
+
+【編集履歴】
+
+- 2022/07/25：執筆開始
+- 2022/07/28：「定義式の確認」を追加
+
+----
+
+\newpage
+
+
+# 1次元スチューデントのt分布の定義式の確認
+
+　1次元スチューデントのt分布(Student's t-Distribution)の定義を確認します。\
+\
+
+
+## 定義式
+
+　標準化されたスチューデントのt分布と一般化された(標準化されていない)スチューデントのt分布の定義式を確認します。(標準化・一般化という表現は雰囲気です。正しい言い方があれば教えてください。)\
+\
+
+
+### 標準化t分布
+
+　標準化t分布は、自由度$\nu$を用いて、次の式で定義されます。
+
+$$
+\mathrm{St}(x | \nu)
+    = \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \sqrt{\pi \nu}
+          \Gamma(\frac{\nu}{2})
+      }
+      \Bigl(
+          1 + \frac{x^2}{\nu}
+      \Bigr)^{-\frac{(\nu+1)}{2}}
+\tag{1}
+$$
+
+　ここで、$\pi$は円周率、$\Gamma(x)$はガンマ関数です。\
+　$x$は実数をとり、$\nu$は正の整数を満たす必要があります。\
+\
+
+　標準化t分布の対数をとると
+
+$$
+\log \mathrm{St}(x | \nu)
+    = \log \Gamma \Bigl(\frac{\nu + 1}{2}\Bigr)
+      - \log \Gamma \Bigl(\frac{\nu}{2}\Bigr)
+      - \frac{1}{2} \left\{
+          \log (\pi \nu)
+          + (\nu + 1)
+            \log \Bigl(
+              1 + \frac{x^2}{\nu}
+          \Bigr)
+      \right\}
+$$
+
+となります。対数の性質より$\log x^a = a \log x$、$\log (x y) = \log x + \log y$、$\log \frac{x}{y} = \log x - \log y$です。また、平方根は2分の1乗$\sqrt{x} = x^{\frac{1}{2}}$です。\
+\
+
+
+### 一般化t分布
+
+　一般化t分布は、パラメータ$\nu, \mu, \sigma$を用いて、次の式で定義されます。
+
+$$
+\mathrm{St}(x | \nu, \mu, \sigma)
+    = \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{1}{\sqrt{\pi \nu} \sigma}
+      \left\{
+          1
+          + \frac{1}{\nu} \Bigl(
+              \frac{x - \mu}{\sigma}
+          \Bigr)^2
+      \right\}^{-\frac{(\nu+1)}{2}}
+\tag{2}
+$$
+
+　または、$\lambda$を用いて、次の式でも定義されます。
+
+$$
+\mathrm{St}(x | \nu, \mu, \lambda)
+    = \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \Bigl(
+          \frac{\lambda}{\pi \nu}
+      \Bigr)^{\frac{1}{2}}
+      \left\{
+          1 + \frac{\lambda (x - \mu)^2}{\nu}
+      \right\}^{-\frac{(\nu+1)}{2}}
+\tag{3}
+$$
+
+　ここで、$\nu$は形状パラメータ(自由度)、$\mu$は位置パラメータ、$\sigma$はスケールパラメータ、$\lambda$は逆スケールパラメータです。  
+　$\mu$は実数、$\sigma$は正の実数、$\lambda$は正の実数を満たす必要があります。また、$\sigma = \frac{1}{\sqrt{\lambda}}$、$\lambda = \frac{1}{\sigma^2}$の関係が成り立ちます。\
+\
+
+　一般化t分布の対数をとると、それぞれ
+
+$$
+\begin{aligned}
+\log \mathrm{St}(x | \nu, \mu, \sigma)
+   &= \log \Gamma \Bigl(\frac{\nu + 1}{2}\Bigr)
+      - \log \Gamma \Bigl(\frac{\nu}{2}\Bigr) \\
+   &\quad
+      - \frac{1}{2} \left[
+          \log (\pi \nu \sigma^2)
+          + (\nu + 1)
+            \log \left\{
+              1
+              + \frac{1}{\nu} \Bigl(
+                  \frac{x - \mu}{\sigma}
+              \Bigr)^2
+          \right\}
+      \right]
+\\
+\log \mathrm{St}(x | \nu, \mu, \lambda)
+   &= \log \Gamma \Bigl(\frac{\nu + 1}{2}\Bigr)
+      - \log \Gamma \Bigl(\frac{\nu}{2}\Bigr) \\
+   &\quad
+      - \frac{1}{2} \left[
+          \log (\pi \nu)
+          - \log \lambda
+          + (\nu + 1)
+            \log \left\{
+              1 + \frac{\lambda (x - \mu)^2}{\nu}
+          \right\}
+      \right]
+\end{aligned}
+$$
+
+となります。\
+\
+
+
+## 定義式の関係
+
+　3つの定義式の対応関係を導出します。\
+\
+
+
+### スケールパラメータと逆スケールパラメータの変換
+
+　まずは、$\sigma$と$\lambda$の関係を考えます。\
+\
+
+　$\sigma$の2乗の逆数で$\lambda$が定義されます。
+
+$$
+\frac{1}{\sigma^2}
+    = \lambda
+$$
+
+　両辺の逆数をとり
+
+$$
+\sigma^2
+    = \frac{1}{\lambda}
+$$
+
+さらに平方根をとると
+
+$$
+\sigma
+    = \sqrt{\frac{1}{\lambda}}
+    = \frac{1}{\sqrt{\lambda}}
+$$
+
+$\sigma$と$\lambda$の関係が得られます。\
+\
+
+
+
+### スケールパラメータによる式と逆スケールパラメータによる式の変換
+
+　続いて、$\sigma$を用いた定義式と$\lambda$を用いた定義式の関係を考えます。\
+\
+
+　$\sigma$を用いた定義式(2)について、$\sqrt{a} = a^{\frac{1}{2}}$、$a = (a^2)^{\frac{1}{2}}$より、変形します。
+
+
+\begin{align*}
+\mathrm{St}(x | \nu, \mu, \sigma)
+   &= \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{1}{\sqrt{\pi \nu} \sigma}
+      \left\{
+          1
+          + \frac{1}{\nu} \Bigl(
+              \frac{x - \mu}{\sigma}
+          \Bigr)^2
+      \right\}^{-\frac{(\nu+1)}{2}}
+\tag{2}\\
+   &= \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \Bigl(
+          \frac{1}{\pi \nu \sigma^2}
+      \Bigr)^{\frac{1}{2}}
+      \left\{
+          1
+          + \frac{1}{\nu}
+            \frac{(x - \mu)^2}{\sigma^2}
+      \right\}^{-\frac{(\nu+1)}{2}}
+\end{align*}
+
+
+　$\sigma^2 = \frac{1}{\lambda}$を代入します。
+
+$$
+\mathrm{St}(x | \nu, \mu, \lambda)
+    = \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \Bigl(
+          \frac{\lambda}{\pi \nu}
+      \Bigr)^{\frac{1}{2}}
+      \left\{
+          1 + \frac{\lambda (x - \mu)^2}{\nu}
+      \right\}^{-\frac{(\nu+1)}{2}}
+\tag{3}
+$$
+
+　$\lambda$を用いた定義式(3)が得られました。\
+\
+
+
+### 一般化された式と標準化された式の関係
+
+　一般化した定義式と標準化した定義式の関係を考えます。\
+\
+
+　$\sigma$を用いた定義式(2)に、$\mu = 0$と$\sigma = 1$を代入します。
+
+
+\begin{align*}
+\mathrm{St}(x | \nu, \mu = 0, \sigma = 1)
+   &= \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{1}{\sqrt{\pi \nu} \sigma}
+      \left\{
+          1
+          + \frac{1}{\nu} \Bigl(
+              \frac{x - \mu}{\sigma}
+          \Bigr)^2
+      \right\}^{-\frac{(\nu+1)}{2}}
+\tag{2}\\
+   &= \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{1}{\sqrt{\pi \nu}}
+      \Bigl(
+          1 + \frac{1}{\nu} x^2
+      \Bigr)^{-\frac{(\nu+1)}{2}}
+\\
+   &= \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \sqrt{\pi \nu}
+          \Gamma(\frac{\nu}{2})
+      }
+      \Bigl(
+          1 + \frac{x^2}{\nu}
+      \Bigr)^{-\frac{(\nu+1)}{2}}
+    = \mathrm{St}(x | \nu)
+\tag{1}
+\end{align*}
+
+
+　標準化した定義式(1)が得られました。\
+\
+
+　同様に、$\lambda$を用いた定義式(3)に、$\mu = 0$と$\lambda = 1$を代入します。
+
+
+\begin{align*}
+\mathrm{St}(x | \nu, \mu = 0, \lambda = 1)
+   &= \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \Bigl(
+          \frac{\lambda}{\pi \nu}
+      \Bigr)^{\frac{1}{2}}
+      \left\{
+          1 + \frac{\lambda (x - \mu)^2}{\nu}
+      \right\}^{-\frac{(\nu+1)}{2}}
+\tag{3}\\
+   &= \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \Bigl(
+          \frac{1}{\pi \nu}
+      \Bigr)^{\frac{1}{2}}
+      \left(
+          1 + \frac{x^2}{\nu}
+      \right)^{-\frac{(\nu+1)}{2}}
+\\
+   &= \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \sqrt{\pi \nu}
+          \Gamma(\frac{\nu}{2})
+      }
+      \Bigl(
+          1 + \frac{x^2}{\nu}
+      \Bigr)^{-\frac{(\nu+1)}{2}}
+    = \mathrm{St}(x | \nu)
+\tag{1}
+\end{align*}
+
+
+　標準化した定義式(1)が得られました。\
+\
+
+
+### 標準化の計算
+
+　一般化t分布の計算を標準化t分布の計算で代用することを考えます。確率密度を計算する(プログラム上の)関数が、標準化t分布の場合を想定しています。\
+\
+
+　$\sigma$を用いた定義式(2)を考えます。
+
+$$
+\mathrm{St}(x | \nu, \mu, \sigma)
+    = \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{1}{\sqrt{\pi \nu} \sigma}
+      \left\{
+          1
+          + \frac{1}{\nu} \Bigl(
+              \frac{x - \mu}{\sigma}
+          \Bigr)^2
+      \right\}^{-\frac{(\nu+1)}{2}}
+\tag{2}
+$$
+
+　$x$に関する項について
+
+$$
+y   = \frac{x - \mu}{\sigma}
+$$
+
+とおきます。
+
+$$
+\mathrm{St}(x | \nu, \mu, \sigma)
+    = \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{1}{\sqrt{\pi \nu}}
+      \frac{1}{\sigma}
+      \Bigl(
+          1 + \frac{y^2}{\nu}
+      \Bigr)^{-\frac{(\nu+1)}{2}}
+$$
+
+　$\frac{1}{\sigma}$以外の項に注目すると、自由度$\nu$の$y$の標準化t分布の式になっています。
+
+$$
+\mathrm{St}(x | \nu, \mu, \sigma)
+    = \frac{1}{\sigma}
+      \mathrm{St}(y | \nu)
+$$
+
+　自由度$\nu$の$y$の確率密度に$\sigma$の逆数を掛けて計算できます。\
+\
+
+　$\lambda$を用いた定義式(3)の場合も同様です。
+
+$$
+\mathrm{St}(x | \nu, \mu, \lambda)
+    = \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \Bigl(
+          \frac{\lambda}{\pi \nu}
+      \Bigr)^{\frac{1}{2}}
+      \left\{
+          1 + \frac{\lambda (x - \mu)^2}{\nu}
+      \right\}^{-\frac{(\nu+1)}{2}}
+\tag{3}
+$$
+
+　$x$に関する項について
+
+$$
+y   = \lambda (x - \mu)^2
+$$
+
+とおきます。
+
+$$
+\mathrm{St}(x | \nu, \mu, \sigma)
+    = \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{1}{\sqrt{\pi \nu}}
+      \sqrt{\lambda}
+      \Bigl(
+          1 + \frac{y^2}{\nu}
+      \Bigr)^{-\frac{(\nu+1)}{2}}
+$$
+
+　$\sqrt{\lambda}$以外の項に注目すると、自由度$\nu$の$y$の標準化t分布の式になっています。
+
+$$
+\mathrm{St}(x | \nu, \mu, \lambda)
+    = \sqrt{\lambda}
+      \mathrm{St}(y | \nu)
+$$
+
+　自由度$\nu$の$y$の確率密度に$\lambda$の平方根を掛けて計算できます。\
+\
+
+
+## 統計量の計算式
+
+　t分布の期待値・分散・最頻値は、次の式で計算できます。詳しくはいつか書きます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \mu
+    \quad (\nu > 1)
+\\
+\mathbb{V}[x]
+   &= \sigma^2
+       \frac{\nu}{\nu - 2}
+    \quad (\nu > 2)
+\\
+   &= \frac{1}{\lambda}
+       \frac{\nu}{\nu - 2}
+    \quad (\nu > 2)
+\\
+\mathrm{mode}[x]
+   &= \mu
+\end{aligned}
+$$
+
+　$\nu$が1未満の場合は期待値が定義されません。また、2未満であれば分散が定義されません。\
+　スケールパラメータ$\sigma$の2乗が分散ではないことが分かります。また、逆スケールパラメータ$\lambda$が、ガウス分布における精度パラメータではないことも分かります。\
+\
+
+
+# 参考書籍
+
+- 須山敦志『ベイズ推論による機械学習入門』(機械学習スタートアップシリーズ)杉山将監修,講談社,2017年.
+- C.M.ビショップ著,元田 浩・他訳『パターン認識と機械学習 上』丸善出版,2012年.
+
+
