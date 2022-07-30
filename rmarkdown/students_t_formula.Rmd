@@ -132,7 +132,7 @@ $$
 \tag{3}
 $$
 
-　ここで、$\nu$は形状パラメータ(自由度)、$\mu$は位置パラメータ、$\sigma$はスケールパラメータ、$\lambda$は逆スケールパラメータです。  
+　ここで、$\nu$は形状パラメータ(自由度)、$\mu$は位置パラメータ、$\sigma$はスケールパラメータ、$\lambda$は逆スケールパラメータです。\
 　$\mu$は実数、$\sigma$は正の実数、$\lambda$は正の実数を満たす必要があります。また、$\sigma = \frac{1}{\sqrt{\lambda}}$、$\lambda = \frac{1}{\sigma^2}$の関係が成り立ちます。\
 \
 
@@ -209,7 +209,6 @@ $$
 
 $\sigma$と$\lambda$の関係が得られます。\
 \
-
 
 
 ### スケールパラメータによる式と逆スケールパラメータによる式の変換
@@ -404,13 +403,13 @@ $$
 
 $$
 \mathrm{St}(x | \nu, \mu, \sigma)
-    = \frac{
+    = \frac{1}{\sigma}
+      \frac{
           \Gamma(\frac{\nu + 1}{2})
       }{
+          \sqrt{\pi \nu}
           \Gamma(\frac{\nu}{2})
       }
-      \frac{1}{\sqrt{\pi \nu}}
-      \frac{1}{\sigma}
       \Bigl(
           1 + \frac{y^2}{\nu}
       \Bigr)^{-\frac{(\nu+1)}{2}}
@@ -427,11 +426,12 @@ $$
 　自由度$\nu$の$y$の確率密度に$\sigma$の逆数を掛けて計算できます。\
 \
 
-　$\lambda$を用いた定義式(3)の場合も同様です。
+　続いて、$\lambda$を用いた定義式(3)を考えます。式を変形します。
 
-$$
+
+\begin{align*}
 \mathrm{St}(x | \nu, \mu, \lambda)
-    = \frac{
+   &= \frac{
           \Gamma(\frac{\nu + 1}{2})
       }{
           \Gamma(\frac{\nu}{2})
@@ -442,26 +442,36 @@ $$
       \left\{
           1 + \frac{\lambda (x - \mu)^2}{\nu}
       \right\}^{-\frac{(\nu+1)}{2}}
-\tag{3}
-$$
+\tag{3}\\
+   &= \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{\sqrt{\lambda}}{\sqrt{\pi \nu}}
+      \left[
+          1 + \frac{\{\sqrt{\lambda} (x - \mu)\}^2}{\nu}
+      \right]^{-\frac{(\nu+1)}{2}}
+\end{align*}
+
 
 　$x$に関する項について
 
 $$
-y   = \lambda (x - \mu)^2
+y   = \sqrt{\lambda} (x - \mu)
 $$
 
 とおきます。
 
 $$
 \mathrm{St}(x | \nu, \mu, \sigma)
-    = \frac{
+    = \sqrt{\lambda}
+      \frac{
           \Gamma(\frac{\nu + 1}{2})
       }{
+          \sqrt{\pi \nu}
           \Gamma(\frac{\nu}{2})
       }
-      \frac{1}{\sqrt{\pi \nu}}
-      \sqrt{\lambda}
       \Bigl(
           1 + \frac{y^2}{\nu}
       \Bigr)^{-\frac{(\nu+1)}{2}}
