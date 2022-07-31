@@ -1,0 +1,1177 @@
+---
+title: |
+  ディリクレ分布
+author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
+date: "`r paste('2022/01/10',  format(Sys.time(), '%Y/%m/%d'), sep = ' - ')`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_section: true
+    toc: true
+    toc_depth: 4
+    keep_tex: false
+header-includes:
+  - \usepackage{bookmark}
+  - \usepackage{xltxtra}
+  - \usepackage{zxjatype}
+  - \usepackage[ipa]{zxjafont}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, error = FALSE, warning = FALSE, # メッセージを非表示
+  fig.align = "center", # 画像を中央揃え
+  fig.width = 5, fig.height = 4, # 画像のサイズ
+  dev = "cairo_pdf", dev.args = list(family = "ipaexg"), # {ggplot2}に日本語を組み込む場合の対処
+  class.source = "numberLines lineAnchors", # ソースを番号付けする
+  class.output = "numberLines lineAnchors chunkout" # 出力を番号付けする
+)
+```
+
+```{r}
+# レンダリング日時
+Sys.time()
+```
+
+\newpage
+
+
+# ディリクレ分布の定義式
+
+　ディリクレ分布(Dirichlet Distribution)の定義を確認します。\
+\
+
+
+## 定義式
+
+
+
+　ディリクレ分布は、カテゴリ分布・多項分布のパラメータ$\boldsymbol{\phi} = (\phi_1, \cdots, \phi_V),\ \phi_v \geq 0,\ \sum_{v=0}^V \phi_v = 1$を生成するための確率分布である。このような分布は共役事前分布とも呼ばれる。\
+\
+
+　ディリクレ分布は次の式で定義される。
+
+$$
+\mathrm{Dirichlet}(\boldsymbol{\phi} | \boldsymbol{\beta})
+  = \frac{
+        \Gamma(\sum_{v=1}^V \beta_v)
+    }{
+        \prod_{v=1}^V \Gamma(\beta_v)
+    }
+    \prod_{v=1}^V \phi_v^{\beta_v-1}
+$$
+
+　ここで$\boldsymbol{\beta}$はディリクレ分布のパラメータであり、次の条件を満たす必要がある。
+
+$$
+\boldsymbol{\beta} = (\beta_1, \beta_2, \cdots, \beta_V),\ 
+\beta_v > 0
+$$
+
+　共役事前分布のパラメータのことをハイパーパラメータとも呼ぶ。
+
+　この式に従うと、カテゴリ分布・多項分布のパラメータ$\boldsymbol{\phi}$を求めることができる。\
+\
+
+　またパラメータ$\beta$が一様であるとき、ディリクレ分布は
+
+$$
+\mathrm{Dirichlet}(\boldsymbol{\phi} | \beta \cdots \beta)
+  = \frac{
+        \Gamma(\beta V)
+    }{
+        \Gamma(\beta)^V
+    }
+    \prod_{v=1}^V \phi_v^{\beta-1}
+$$
+
+となる。\
+\
+
+　ディリクレ分布が$V = 2$のとき$\phi_2 = 1 - \phi_1$であり、また$\alpha = \beta_1,\ \beta = \beta_2$とおくと
+
+$$
+\begin{aligned}
+\mathrm{Dirichlet}(\boldsymbol{\phi} | \boldsymbol{\beta})
+   &= \frac{
+          \Gamma(\sum_{v=1}^2 \beta_v)
+      }{
+          \prod_{v=1}^2 \Gamma(\beta_v)
+      }
+      \prod_{v=1}^2 \phi_v^{\beta_v -1} \\
+   &= \frac{
+          \Gamma(\beta_1 + \beta_2)
+      }{
+          \Gamma(\beta_1) * \Gamma(\beta_2)
+      }
+      \phi_1^{\beta_1 -1} * \phi_2^{\beta_2 -1} \\
+   &= \frac{
+          \Gamma(\alpha + \beta)
+      }{
+          \Gamma(\alpha) \Gamma(\beta)
+      }
+      \phi_1^{\alpha-1} (1 - \phi_1)^{\beta-1}
+    = \mathrm{Beta}(\phi_1 | \alpha, \beta)
+\end{aligned}
+$$
+
+ベータ分布と等しくなる。\
+\
+
+　次は、この式の正規化項について確認する。\
+\
+
+
+## 統計量の計算式
+
+
+
+### 1.2.4 ディリクレ分布
+
+
+　ディリクレ分布は、カテゴリ分布・多項分布のパラメータ$\boldsymbol{\phi} = (\phi_1, \cdots, \phi_V),\ \phi_v \geq 0,\ \sum_{v=0}^V \phi_v = 1$を生成するための確率分布である。このような分布は共役事前分布とも呼ばれる。\
+\
+
+　ディリクレ分布は次の式で定義される。
+
+$$
+\mathrm{Dirichlet}(\boldsymbol{\phi} | \boldsymbol{\beta})
+  = \frac{
+        \Gamma(\sum_{v=1}^V \beta_v)
+    }{
+        \prod_{v=1}^V \Gamma(\beta_v)
+    }
+    \prod_{v=1}^V \phi_v^{\beta_v-1}
+$$
+
+　ここで$\boldsymbol{\beta}$はディリクレ分布のパラメータであり、次の条件を満たす必要がある。
+
+$$
+\boldsymbol{\beta} = (\beta_1, \beta_2, \cdots, \beta_V),\ 
+\beta_v > 0
+$$
+
+　共役事前分布のパラメータのことをハイパーパラメータとも呼ぶ。
+
+　この式に従うと、カテゴリ分布・多項分布のパラメータ$\boldsymbol{\phi}$を求めることができる。\
+\
+
+　またパラメータ$\beta$が一様であるとき、ディリクレ分布は
+
+$$
+\mathrm{Dirichlet}(\boldsymbol{\phi} | \beta \cdots \beta)
+  = \frac{
+        \Gamma(\beta V)
+    }{
+        \Gamma(\beta)^V
+    }
+    \prod_{v=1}^V \phi_v^{\beta-1}
+$$
+
+となる。\
+\
+
+　ディリクレ分布が$V = 2$のとき$\phi_2 = 1 - \phi_1$であり、また$\alpha = \beta_1,\ \beta = \beta_2$とおくと
+
+$$
+\begin{aligned}
+\mathrm{Dirichlet}(\boldsymbol{\phi} | \boldsymbol{\beta})
+   &= \frac{
+          \Gamma(\sum_{v=1}^2 \beta_v)
+      }{
+          \prod_{v=1}^2 \Gamma(\beta_v)
+      }
+      \prod_{v=1}^2 \phi_v^{\beta_v -1} \\
+   &= \frac{
+          \Gamma(\beta_1 + \beta_2)
+      }{
+          \Gamma(\beta_1) * \Gamma(\beta_2)
+      }
+      \phi_1^{\beta_1 -1} * \phi_2^{\beta_2 -1} \\
+   &= \frac{
+          \Gamma(\alpha + \beta)
+      }{
+          \Gamma(\alpha) \Gamma(\beta)
+      }
+      \phi_1^{\alpha-1} (1 - \phi_1)^{\beta-1}
+    = \mathrm{Beta}(\phi_1 | \alpha, \beta)
+\end{aligned}
+$$
+
+ベータ分布と等しくなる。\
+\
+
+　次は、この式の正規化項について確認する。\
+\
+
+
+##### ・正規化項の導出
+
+\ 
+
+　ベータ分布のときと同様に(表記を分かりやすくするため)、ベータ関数$B(\alpha, \beta) = \int_0^1 x^{\alpha-1} (1 - x)^{\beta-1} dx$を$I(\alpha, \beta) = \int_0^p x^{\alpha-1} (p - x)^{\beta-1} dx$として利用し、正規化項を導出していく。
+
+
+\begin{align*}
+I(\alpha, \beta)
+   &= \int_0^p
+          x^{\alpha-1}
+          (p - x)^{\beta-1}
+      dx
+\\
+   &= \int_0^p
+          \left\{\frac{1}{\alpha} x^{\alpha}\right\}'
+          (p - x)^{\beta-1}
+      dx
+\\
+   &= \left[
+          \frac{1}{\alpha}
+          x^{\alpha}
+          (p - x)^{\beta-1}
+      \right]_0^p
+      - \int_0^p
+          - \frac{1}{\alpha} x^\alpha
+          (\beta - 1) (p - x)^{\beta-2}
+      dx
+\\
+   &= 0 + \frac{\beta - 1}{\alpha}
+      \int_0^p
+          x^\alpha
+          (p - x)^{\beta-2}
+      dx
+\\
+   &= \frac{\beta - 1}{\alpha}
+      I(\alpha + 1, \beta - 1)
+\\
+   &= \frac{\beta - 1}{\alpha}
+      \frac{\beta - 2}{\alpha + 1}
+      I(\alpha + 2, \beta - 2)
+\\
+   &= \frac{\beta - 1}{\alpha}
+      \frac{\beta - 2}{\alpha + 1}
+      \frac{\beta - 3}{\alpha + 2}
+      \cdots
+      \frac{2}{\alpha + \beta - 3}
+      \frac{1}{\alpha + \beta - 2}
+      I(\alpha + \beta - 1, 1)
+\\
+   &= \frac{
+          \Gamma(\beta)
+      }{
+          \alpha
+          (\alpha + 1)
+          \cdots
+          (\alpha + \beta - 2)
+      }
+      \int_0^p
+          x^{\alpha+\beta-2}
+      dx
+\\
+   &= \frac{
+          \Gamma(\beta)
+      }{
+          \alpha
+          (\alpha + 1)
+          \cdots
+          (\alpha + \beta - 2)
+      } 
+      \frac{1}{\alpha + \beta - 1}
+      p^{\alpha + \beta - 1} - 0
+\\
+   &= \frac{
+          \Gamma(\alpha) \Gamma(\beta)
+      }{
+          \Gamma(\alpha + \beta)
+      }
+      p^{\alpha + \beta - 1}
+\tag{1}
+\end{align*}
+
+
+\begin{center}\underline{\hspace{10cm}}\end{center}
+
+【途中式の途中式】
+
+1. 部分積分$\int_a^b f'(x) g(x) dx = [f(x) g(x)]_a^b - \int_a^b f(x) g'(x) dx$を行うために、式を変形する。
+    - $x^{\alpha-1}$を$f'(x)$に対応付けるため、$x^{\alpha-1}$を積分した$\frac{1}{\alpha} x^{\alpha}$を$f(x)$とする。$x^{\alpha-1} = \{\frac{1}{\alpha} x^{\alpha}\}'$である。
+1. 部分積分する。
+    - $g(x)$にあたる$(p-x)^{\beta-1}$を合成関数の微分$\{g(h(x))\}' = g'(h(x)) h'(x)$して、$(\beta - 1) (p - x)^{\beta-2} * (-x^0) = -(\beta - 1) (p - x)^{\beta-2}$になる。
+1. 式を整理する。
+    - $x = 0$のとき$x^\alpha = 0$、$x = p$のとき$(p - x) = 0$なので、$[\frac{1}{\alpha} x^\alpha (p - x)^{\beta-1}]_0^p = 0 - 0 = 0$になる。
+    - $- \frac{1}{\alpha}$と$\beta - 1$は定数なので、$\int$の外に出す。
+1. $I(\alpha,\beta) = \int_0^p x^{\alpha-1} (p - x)^{\beta-1} dx$なので、$I(\alpha + 1, \beta - 1) = \int_0^p x^\alpha (p - x)^{\beta-2} dx$になる。
+1. $I(\alpha, \beta) = \frac{\beta - 1}{\alpha} I(\alpha + 1, \beta - 1)$であることから、$I(\alpha + 1, \beta - 1) = \frac{\beta - 2}{\alpha + 1} I(\alpha + 2, \beta - 2)$になる。
+1. 同様に$\frac{1}{\alpha + \beta - 1} I(\alpha + \beta - 1, 1)$となるまで($\beta - 1$回)繰り返す。
+1. それぞれ置き換える。
+    - 分子は$\beta - 1$から1までの自然数の積なので、$(\beta - 1)!$である。また$(\beta - 1)! = \Gamma(\beta)$である。
+    - ベータ関数の定義より、$I(\alpha + \beta - 1, 1) = \int_0^p x^{\alpha+\beta-2} (p - x)^0 dx$である。
+1. 後の因子を積分すると、$\int_0^p x^{\alpha+\beta-2} dx = \frac{1}{\alpha + \beta - 1} p^{\alpha+\beta-1} - \frac{1}{\alpha + \beta - 1} 0^{\alpha+\beta-1}$になる。
+1. 分母は$\alpha$から$\alpha + \beta - 1$までの自然数の積なので、ここ(と分子)に$(\alpha - 1)!$を掛けると$(\alpha + \beta - 1)! = \Gamma(\alpha + \beta)$になる。
+
+\begin{center}\underline{\hspace{10cm}}\end{center}
+
+\ 
+
+　この式を用いて、正規化項を導出する。
+
+$$
+\begin{aligned}
+&\int_0^1
+    \prod_{v=1}^V \phi_v^{\beta_v -1}
+d\boldsymbol{\phi}
+\\
+   &= \int_0^1
+          \phi_1^{\beta_1 -1}
+      d\phi_1
+      * \int_0^{1-\phi_1}
+          \phi_2^{\beta_2 -1}
+      d\phi_2
+      * \int_0^{1-\phi_1-\phi_2}
+          \phi_3^{\beta_3 -1}
+      d\phi_3 \\
+   &\qquad
+      * \cdots
+      * \int_0^{1-\phi_1-\cdots-\phi_{V-3}}
+          \phi_{V-2}^{\beta_{V-2}-1}
+      d\phi_{V-2}
+      * \int_0^{1-\phi_1-\cdots-\phi_{V-2}}
+         \phi_{V-1}^{\beta_{V-1}-1}
+         * \phi_{V}^{\beta_{V}-1}
+      d\phi_{V-1}\phi_{V}
+\\
+   &= \int_0^1
+          \phi_1^{\beta_1 -1}
+      d\phi_1
+      * \int_0^{1-\phi_1}
+          \phi_2^{\beta_2 -1}
+      d\phi_2
+      * \int_0^{1-\phi_1-\phi_2}
+          \phi_3^{\beta_3 -1}
+      d\phi_3 \\
+   &\qquad
+      * \cdots
+      * \int_0^{1-\phi_1-\cdots-\phi_{V-3}}
+          \phi_{V-2}^{\beta_{V-2}-1}
+      d\phi_{V-1}
+      * \int_0^{1-\phi_1-\cdots-\phi_{V-2}}
+          \phi_{V-1}^{\beta_{V-1}-1}
+          * (1 - \phi_1 - \cdots - \phi_{V-2} - \phi_{V-1})^{\beta_{V}-1}
+      d\phi_{V-1}
+\end{aligned}
+$$
+
+\begin{center}\underline{\hspace{10cm}}\end{center}
+
+【途中式の途中式】
+
+1. 項ごとに式を分割する。このとき積分する範囲が$\phi_v$ずつ減っていく。
+1. 最後の項を$\phi_V = 1 - \phi_1 - \cdots - \phi_{V-2} - \phi_{V-1}$で置き換える。
+
+\begin{center}\underline{\hspace{10cm}}\end{center}
+
+\ 
+
+　この式の最後の因子について$x = \phi_{V-1},\ p = 1 - \phi_1 - \phi_2 - \cdots - \phi_{V-2}$、$\alpha = \beta_{V-1},\ \beta = \beta_{V}$とすると、(1)を用いて
+
+$$
+\begin{aligned}
+&\int_0^{1-\phi_1-\cdots-\phi_V-2}
+    \phi_{V-1}^{\beta_{V-1}-1}
+    (1 - \phi_1 - \cdots - \phi_{V-2} - \phi_{V-1})^{\beta_{V}-1}
+d\phi_{V-1} \\
+   &= \frac{
+          \Gamma(\beta_V) \Gamma(\beta_{V-1})
+      }{ 
+          \Gamma(\beta_V + \beta_{V-1})
+      }
+      (1 - \phi_1 - \cdots - \phi_{V-2})^{\beta_{V}+\beta_{V-1}-1}
+\end{aligned}
+$$
+
+と変形できる。\
+
+　これを更に最後の第2項と合わせて
+
+$$
+\begin{aligned}
+&\int_0^{1-\phi_1-\cdots-\phi_V-3}
+    \phi_{V-2}^{\beta_{V-2}-1}
+    * \frac{
+        \Gamma(\beta_V)
+        \Gamma(\beta_{V-1})
+    }{
+        \Gamma(\beta_V + \beta_{V-1})
+    } (
+        1 - \phi_1 - \cdots - \phi_{V-3} - \phi_{V-2}
+    )^{\beta_{V}+\beta_{V-1}-1}
+d\phi_{V-2}
+\\
+   &= \frac{
+          \Gamma(\beta_V)
+          \Gamma(\beta_{V-1})
+      }{
+          \Gamma(\beta_V + \beta_{V-1})
+      }
+      \int_0^{1-\phi_1-\cdots-\phi_V-3}
+          \phi_{V-1}^{\beta_{V-1}-1} (
+              1 - \phi_1 - \cdots - \phi_{V-3} - \phi_{V-2}
+          )^{\beta_{V}+\beta_{V-1}-1}
+      d\phi_{V-2}
+\\
+   &= \frac{
+          \Gamma(\beta_V)
+          \Gamma(\beta_{V-1})
+      }{
+          \Gamma(\beta_V + \beta_{V-1})
+      }
+      \frac{
+          \Gamma(\beta_V + \beta_{V-1})
+          \Gamma(\beta_{V-2})
+      }{
+          \Gamma(\beta_V + \beta_{V-1} + \beta_{V-2})
+      } (
+          1 - \phi_1 - \cdots - \phi_{V-3}
+      )^{\beta_{V}+\beta_{V-1}+\beta_{V-2}-1}
+\\
+   &= \frac{
+          \Gamma(\beta_V) \Gamma(\beta_{V-1}) \Gamma(\beta_{V-2})
+      }{
+          \Gamma(\beta_V + \beta_{V-1} + \beta_{V-2})
+      } (
+          1 - \phi_1 - \cdots - \phi_{V-3}
+      )^{\beta_{V}+\beta_{V-1}+\beta_{V-2}-1}
+\end{aligned}
+$$
+
+\begin{center}\underline{\hspace{10cm}}\end{center}
+
+【途中式の途中式】
+
+1. 定数の項を$\int$の外に出す。
+1. $x = \phi_{V-2}$、$p = 1 - \phi_1 - \cdots - \phi_{V-3}$、$\alpha = \beta_{V-2}$、$\beta = \beta_{V}+\beta_{V-1}$として、(1)より変形する。
+1. 約分して式を整理する。
+
+\begin{center}\underline{\hspace{10cm}}\end{center}
+
+となる。\
+
+　これを繰り返すと
+
+
+\begin{align*}
+\int_0^1
+    \prod_{v=1}^V \phi_v^{\beta_v -1}
+d\boldsymbol{\phi}
+  &= \frac{
+         \Gamma(\beta_V)
+         \Gamma(\beta_{V-1})
+         \Gamma(\beta_{V-2})
+         \cdots
+         \Gamma(\beta_2)
+         \Gamma(\beta_1)
+     }{
+         \Gamma(\beta_V + \beta_{V-1} + \beta_{V-2} + \cdots + \beta_2 + \beta_1)
+     } \\
+  &= \frac{
+         \prod_{v=1}^V \Gamma(\beta_v)
+     }{
+         \Gamma(\sum_{v=1}^V \beta_v)
+     }
+\tag{1.13}
+\end{align*}
+
+
+が得られる。\
+
+　この逆数を正規化項として用いることで全ての事象$0 \leq \phi_v \leq 1$を考慮した際の値が1となるため、確率分布として扱えるようになる。\
+\
+
+
+#### ・ディリクレ分布
+
+\ 
+
+　ここからは、ディリクレ分布の基本的な統計量を求めていく。\
+\
+
+
+##### ・平均の導出
+
+\ 
+
+　分布が取り得る値$\phi_v$とその確率密度$p(\phi_v)$を掛けて、0から1の範囲で積分した値が平均となる。
+
+
+\begin{align*}
+\mathbb{E}[\phi_v]
+   &= \int_0^1 \phi_v p(\phi_v) d\phi_v
+\\
+   &= \int_0^1
+          \phi_v
+          \frac{
+              \Gamma(\sum_{v=1}^V \beta_v)
+          }{
+              \prod_{v=1}^V \Gamma(\beta_v)
+          }
+          \prod_{v=1}^V \phi_v^{\beta_v-1}
+      d\phi_v
+\\
+   &= \frac{
+          \Gamma(\sum_{v=1}^V \beta_v)
+      }{
+          \prod_{v=1}^V \Gamma(\beta_v)
+      }
+      \int_0^1
+          \phi_1^{\beta_1 -1} \cdots
+          \phi_v \phi_v^{\beta_v -1}
+          \cdots \phi_V^{\beta_V -1}
+      d\phi_v
+\\
+   &= \frac{\Gamma(\sum_{v=1}^V \beta_v)}{\prod_{v=1}^V \Gamma(\beta_v)}
+      \frac{
+          \Gamma(\beta_1) \cdots \Gamma(\beta_v + 1) \cdots \Gamma(\beta_V)
+      }{
+          \Gamma(
+              \beta_1 + \cdots + (\beta_v + 1) + \cdots + \beta_V
+          )
+      }
+\\
+   &= \frac{\Gamma(\sum_{v=1}^V \beta_v)}{\prod_{v=1}^V \Gamma(\beta_v)}
+      \frac{
+          \Gamma(\beta_1) \cdots \beta_v \Gamma(\beta_v) \cdots \Gamma(\beta_V)
+      }{
+          \Gamma(
+              \beta_1 + \cdots + \beta_v + \cdots + \beta_V + 1
+          )
+      }
+\\
+   &= \frac{\Gamma(\sum_{v=1}^V \beta_v)}{\prod_{v=1}^V \Gamma(\beta_v)}
+      \frac{
+          \beta_v \prod_{v=1}^V \Gamma(\beta_v)
+      }{
+          \Gamma(\sum_{v=1}^V \beta_v + 1)
+      }
+\\
+   &= \frac{\Gamma(\sum_{v=1}^V \beta_v)}{\prod_{v=1}^V \Gamma(\beta_v)}
+      \frac{
+          \beta_v
+          \prod_{v=1}^V \Gamma(\beta_v)
+      }{
+          (\sum_{v=1}^V \beta_v)
+          \Gamma(\sum_{v=1}^V \beta_v)
+      }
+\\
+   &= \frac{\beta_v}{\hat{\beta}}
+\tag{1.15}
+\end{align*}
+
+
+\begin{center}\underline{\hspace{10cm}}\end{center}
+
+【途中式の途中式】
+
+0. 平均の定義式(1.5')より、式を立てる。
+1. $p(\phi_v) = \mathrm{Dirichlet}(\phi_v | \boldsymbol{\beta})$で置き換える。
+1. 定数の項を$\int$の外に出し、また$\prod_{v=1}^V$を展開して$\phi_v$の項をまとめる。
+1. 正規化項の導出過程(1.13)より、各項を変形する。ただし$\beta_v$の項は$\phi_v^{\beta_v}$なので、$\beta_v + 1$になる。
+1. ガンマ関数の性質$\Gamma(x + 1) = (x) \Gamma(x)$より、$\Gamma(\beta_v + 1) = \beta_v \Gamma(\beta_v)$になる。
+1. 分母分子の項をそれぞれ$\prod_{v=1}^V,\ \sum_{v=1}^V$でまとめる。
+1. ガンマ関数の性質より、$\Gamma(\sum_{v=1}^V \beta_v + 1) = (\sum_{v=1}^V \beta_v) \Gamma(\sum_{v=1}^V \beta_v)$になる。
+1. $\hat{\beta} = \sum_{v=1}^V \beta_v$とおく。また約分して式を整理する。
+
+\begin{center}\underline{\hspace{10cm}}\end{center}
+
+\ 
+
+
+##### ・分散の導出
+
+\ 
+
+　「$\phi_v$の2乗の平均」と「$\phi_v$の平均の2乗」との差が分散となる。そこでまずは、$\phi_v$の2乗の平均を求める。
+
+
+\begin{align*}
+\mathbb{E}[\phi_v^2]
+   &= \int \phi_v^2 p(\phi) d\phi_v
+\\
+   &= \int_0^1 \phi_v^2
+          \frac{\Gamma(\sum_{v=1}^V \beta_v)}{\prod_{v=1}^V \Gamma(\beta_v)}
+          \prod_{v=1}^V \phi_v^{\beta_v-1}
+      d\phi_v
+\\
+   &= \frac{\Gamma(\sum_{v=1}^V \beta_v)}{\prod_{v=1}^V \Gamma(\beta_v)}
+      \int_0^1
+          \phi_1^{\beta_1 -1} \cdots
+          \phi_v^2 \phi_v^{\beta_v -1}
+          \cdots \phi_V^{\beta_V -1}
+      d\phi_v
+\\
+   &= \frac{\Gamma(\sum_{v=1}^V \beta_v)}{\prod_{v=1}^V \Gamma(\beta_v)}
+      \frac{
+          \Gamma(\beta_1) \cdots
+          \Gamma(\beta_v + 2)
+          \cdots \Gamma(\beta_V)
+      }{
+          \Gamma(
+              \beta_1 + \cdots + (\beta_v + 2) + \cdots + \beta_V
+          )
+      }
+\\
+   &= \frac{\Gamma(\sum_{v=1}^V \beta_v)}{\prod_{v=1}^V \Gamma(\beta_v)}
+      \frac{
+          \Gamma(\beta_1) \cdots
+          \beta_v (\beta_v + 1) \Gamma(\beta_v)
+          \cdots \Gamma(\beta_V)
+      }{
+          \Gamma(
+              \beta_1 + \cdots + \beta_v + \cdots + \beta_V + 2
+          )
+      }
+\\
+   &= \frac{\Gamma(\sum_{v=1}^V \beta_v)}{\prod_{v=1}^V \Gamma(\beta_v)}
+      \frac{
+          \beta_v (\beta_v + 1)
+          \prod_{v=1}^V \Gamma(\beta_v)
+      }{
+          \Gamma(\sum_{v=1}^V \beta_v + 2)
+      }
+\\
+   &= \frac{\Gamma(\sum_{v=1}^V \beta_v)}{\prod_{v=1}^V \Gamma(\beta_v)}
+      \frac{
+          \beta_v (\beta_v + 1)
+          \prod_{v=1}^V \Gamma(\beta_v)
+      }{
+          (\sum_{v=1}^V \beta_v)
+          (\sum_{v=1}^V \beta_v + 1)
+          \Gamma(\sum_{v=1}^V \beta_v)
+      }
+\\
+   &= \frac{
+          \beta_v (\beta_v + 1)
+      }{
+          \hat{\beta} (\hat{\beta} + 1)
+      }
+\end{align*}
+
+
+\begin{center}\underline{\hspace{10cm}}\end{center}
+
+【途中式の途中式】
+
+0. 平均の定義式(1.5')より、式を立てる。
+1. $p(\phi_v) = \mathrm{Dirichlet}(\phi_v | \boldsymbol{\beta})$で置き換える。
+1. 定数の項を$\int$の外に出し、$\prod_{v=1}^V$を展開して$\phi_v$の項をまとめる。
+1. 正規化項の導出過程(1.13)より、各項を変形する。ただし$\beta_v$の項は$\phi_v^{\beta_v+1}$なので、$\beta_v + 2$になる。
+1. ガンマ関数の性質より、$\Gamma(\beta_v + 2) = (\beta_v + 1) \Gamma(\beta_v + 1) = (\beta_v + 1) \beta_v \Gamma(\beta_v)$になる。
+1. 分母分子の項をそれぞれ$\prod_{v=1}^V,\ \sum_{v=1}^V$でまとめる。
+1. ガンマ関数の性質より、$\Gamma(\sum_{v=1}^V \beta_v + 2) = (\sum_{v=1}^V \beta_v + 1) (\sum_{v=1}^V \beta_v) \Gamma(\sum_{v=1}^V \beta_v)$になる。
+1. $\hat{\beta} = \sum_{v=1}^V \beta_v$とおく。また約分して式を整理する。
+
+\begin{center}\underline{\hspace{10cm}}\end{center}
+
+\ 
+
+　「$\phi_v$の2乗の平均」と「$\phi_v$の平均の2乗」との差を求める。
+
+
+\begin{align*}
+\mathrm{Var}[\phi_v]
+  &= \mathbb{E}[\phi_v^2]
+     - \mathbb{E}[\phi_v]^2 \\
+  &= \frac{
+         \beta_v (\beta_v + 1)
+     }{
+         \hat{\beta} (\hat{\beta} + 1)
+     }
+     - \left(
+           \frac{\beta_v}{\hat{\beta}}
+     \right)^2 \\
+  &= \frac{
+         \beta_v (\beta_v + 1) * \hat{\beta}
+     }{
+         \hat{\beta} (\hat{\beta} + 1) * \hat{\beta}
+     }
+     - \frac{
+           \beta_v^2 * (\hat{\beta} + 1)
+       }{
+           \hat{\beta}^2 * (\hat{\beta} + 1)
+       } \\
+  &= \frac{
+         \beta_v^2 \hat{\beta}
+         + \beta_v \hat{\beta}
+         - \beta_v^2 \hat{\beta}
+         - \beta_v^2
+     }{
+         \hat{\beta}^2 (\hat{\beta} + 1)
+     } \\
+  &= \frac{
+         \beta_v (\hat{\beta}-\beta_v)
+     }{
+         \hat{\beta}^2 (\hat{\beta} + 1)
+     }
+\tag{1.16}
+\end{align*}
+
+
+\ 
+
+　$V = 2$のとき$\alpha = \beta_1,\ \beta = \beta_2$とすると、ディリクレ分布の平均は$\frac{\beta_1}{\beta_1 + \beta_2} = \frac{\alpha}{\alpha + \beta}$、分散は$\frac{\beta_1 (\beta_1 + \beta_2 - \beta_1)}{(\beta_1 + \beta_2)^2 (\beta_1 + \beta_2 + 1)} = \frac{\alpha \beta}{(\alpha + \beta)^2 \alpha + \beta + 1}$となり、ベータ分布の平均と分散とそれぞれ等しくなることが確認できる。\
+\
+
+
+##### ・共分散の導出
+
+\ 
+
+　$v \neq v'$である$\phi_v,\ \phi_{v'}$の共分散を、分散と同様の手順で求めていく。
+
+$$
+\begin{aligned}
+\mathbb{E}[\phi_v \phi_{v'}]
+   &= \int_0^1 \phi_v \phi_v'
+          \frac{\Gamma(\sum_{v=1}^V \beta_v)}{\prod_{v=1}^V \Gamma(\beta_v)}
+          \prod_{v=1}^V \phi_v^{\beta_v-1}
+      d\phi_v \\
+   &= \frac{\Gamma(\sum_{v=1}^V \beta_v)}{\prod_{v=1}^V \Gamma(\beta_v)}
+      \int_0^1
+          \phi_1^{\beta_1 -1} \cdots
+          \phi_v \phi_v^{\beta_v -1}
+          \cdots
+          \phi_{v'} \phi_{v'}^{\beta_{v'} -1}
+          \cdots \phi_V^{\beta_V -1}
+      d\phi_v \\
+   &= \frac{\Gamma(\sum_{v=1}^V \beta_v)}{\prod_{v=1}^V \Gamma(\beta_v)}
+      \frac{
+          \Gamma(\beta_1) \cdots
+          \Gamma(\beta_v + 1)
+          \cdots
+          \Gamma(\beta_{v'} + 1)
+          \cdots \Gamma(\beta_V)
+      }{
+          \Gamma(
+              \beta_1 + \cdots
+              + (\beta_v + 1)
+              + \cdots
+              + (\beta_{v'} + 1)
+              + \cdots + \beta_V
+          )
+      } \\
+   &= \frac{\Gamma(\sum_{v=1}^V \beta_v)}{\prod_{v=1}^V \Gamma(\beta_v)}
+      \frac{
+          \Gamma(\beta_1) \cdots
+          \beta_v \Gamma(\beta_v) \cdots
+          \beta_{v'} \Gamma(\beta_{v'}) \cdots
+          \Gamma(\beta_V)
+      }{
+          \Gamma(
+               \beta_1 + \cdots
+               + \beta_v + \cdots
+               + \beta_{v'} + \cdots
+               + \beta_V + 2
+          )
+      } \\
+   &= \frac{\Gamma(\sum_{v=1}^V \beta_v)}{\prod_{v=1}^V \Gamma(\beta_v)}
+      \frac{
+          \beta_v \beta_{v'}
+          \prod_{v=1}^V \Gamma(\beta_v)
+      }{
+          \Gamma(\sum_{v=1}^V \beta_v + 2)
+      } \\
+  &= \frac{\Gamma(\sum_{v=1}^V \beta_v)}{\prod_{v=1}^V \Gamma(\beta_v)}
+     \frac{
+         \beta_v \beta_{v'}
+         \prod_{v=1}^V \Gamma(\beta_v)
+     }{
+         (\sum_{v=1}^V \beta_v)
+         (\sum_{v=1}^V \beta_v + 1)
+         \Gamma(\sum_{v=1}^V \beta_v)
+     } \\
+   &= \frac{
+          \beta_v \beta_{v'}
+      }{
+          \hat{\beta} (\hat{\beta} + 1)
+      }
+\end{aligned}
+$$
+
+　「$\phi_v,\ \phi_{v'}$の積の平均」と「$\phi_v,\ \phi_{v'}$の平均の積」の差を求める。
+
+$$
+\begin{aligned}
+\mathrm{Cov}[\phi_v, \phi_{v'}]
+   &= \mathbb{E}[\phi_v \phi_{v'}]
+      - \mathbb{E}[\phi_v] \mathbb{E}[\phi_{v'}] \\
+   &= \frac{
+          \beta_v \beta_{v'}
+      }{
+          \hat{\beta} (\hat{\beta} + 1)
+      }
+      - \frac{\beta_v}{\hat{\beta}}
+        \frac{\beta_{v'}}{\hat{\beta}} \\
+   &= \frac{
+          \beta_v \beta_{v'}
+          * \hat{\beta}
+      }{
+          \hat{\beta} (\hat{\beta} + 1)
+          * \hat{\beta}
+      }
+      - \frac{
+            \beta_v \beta_{v'}
+            * (\hat{\beta} + 1)
+        }{
+            \hat{\beta}^2
+            * (\hat{\beta} + 1)
+        } \\
+   &= \frac{
+          \hat{\beta} \beta_v \beta_{v'}
+          - \hat{\beta} \beta_v \beta_{v'}
+          - \beta_v \beta_{v'}
+      }{
+          \hat{\beta^2}
+          (\hat{\beta} + 1)
+      } \\
+   &= - \frac{
+            \beta_v \beta_{v'}
+        }{
+            \hat{\beta^2}
+            (\hat{\beta} + 1)
+        }
+\end{aligned}
+$$
+
+\ 
+
+
+##### ・最頻値の導出
+
+\ 
+
+　最頻値は曲線(グラフ)の頂点の値であることから、$\frac{\Gamma(\sum_{v=1}^V \beta_v)}{\prod_{v=1}^V \Gamma(\beta_v)} \prod_{v=1}^V \phi_v^{\beta_v-1}$を微分して、$\frac{\partial p(\phi)}{\partial \phi_v} = 0$となる点である。
+と思うんだが解けんかった…\
+\
+
+
+#### ・ディガンマ関数
+
+
+##### ・対数の期待値の導出
+
+\ 
+
+　ディガンマ関数
+
+$$
+\Psi(x) = \frac{d}{dx} \log \Gamma(x)
+$$
+
+　を用いて、対数をとった$\phi_v$の期待値を求める。\
+\
+
+　対数をとった変数$\log \phi_v$とその生成確率$p(\boldsymbol{\phi} | \boldsymbol{\beta})$を掛けて、積分すると平均になる。
+
+
+\begin{align*}
+\int
+    p(\boldsymbol{\phi} | \boldsymbol{\beta})
+    \log \phi_v
+d\boldsymbol{\phi}
+   &= \int
+          \frac{\Gamma(\hat{\beta})}{\prod_{v'=1}^V \Gamma(\beta_v)}
+          \prod_{v'=1}^V
+              \phi_{v'}^{\beta_{v'}-1}
+          \log \phi_v
+      d\boldsymbol{\phi}
+\\
+   &= \frac{\Gamma(\hat{\beta})}{\prod_{v'=1}^V \Gamma(\beta_{v'})}
+      \int
+          \frac{
+              \partial \prod_{v'=1}^V \phi_{v'}^{\beta_{v'}-1}
+          }{
+              \partial \beta_v
+          }
+      d\boldsymbol{\phi}
+\\
+   &= \frac{\Gamma(\hat{\beta})}{\prod_{v'=1}^V \Gamma(\beta_{v'})}
+      \frac{\partial}{\partial \beta_v}
+      \int
+          \prod_{v'=1}^V \phi_{v'}^{\beta_{v'}-1}
+      d\boldsymbol{\phi}
+\\
+   &= \frac{\Gamma(\hat{\beta})}{\prod_{v'=1}^V \Gamma(\beta_{v'})}
+      \frac{\partial}{\partial \beta_v}
+      \frac{\prod_{v'=1}^V \Gamma(\beta_{v'})}{\Gamma(\hat{\beta})}
+\\
+   &= \frac{\partial}{\partial \beta_v}
+      \log \frac{\prod_{v'=1}^V \Gamma(\beta_{v'})}{\Gamma(\hat{\beta})}
+\\
+   &= \frac{\partial \log \prod_{v'=1}^V \Gamma(\beta_{v'})}{\partial \beta_v}
+      - \frac{\partial \log \Gamma(\hat{\beta})}{\partial \beta_v}
+\\
+   &= \frac{\partial \log \Gamma(\beta_v)}{\partial \beta_v}
+      - \frac{\partial \log \Gamma(\hat{\beta})}{\partial \hat{\beta}}
+\\
+   &= \Psi(\beta_v) - \Psi(\hat{\beta})
+\tag{1.17}
+\end{align*}
+
+
+\begin{center}\underline{\hspace{10cm}}\end{center}
+
+【途中式の途中式】
+
+0. 期待値の定義式(1.5')より、対数の期待値$\mathbb{E}_{p(\boldsymbol{\phi} | \boldsymbol{\beta})}[\log \phi_v]$の式を立てる。
+1. $\phi_v$を$a$、$\beta_v - 1$を$x$とすると、$\prod_{v'=1}^V \phi_{v'}^{\beta_{v'}-1} \log \phi_v$が指数関数の微分$\frac{\partial a^x}{\partial x} = a^x \log a$後の形をしていることから、導関数に置き換える。
+1. 微分と積分の順序を入れ替える。
+1. ディリクレ分布の正規化項の導出過程(1.13)より、置き換える。
+1. $\frac{\prod_{v'=1}^V \Gamma(\beta_{v'})}{\Gamma(\hat{\beta})}$を$f(x)$とすると、式全体が対数関数の微分$\frac{\partial \log f(x)}{\partial x} = \frac{1}{f(x)} \frac{\partial f(x)}{\partial x}$後の形をしていることから、導関数に置き換える。
+1. $\log \frac{A}{B} = \log A - \log B$の式変形を行う。
+1. それぞれ項を微分する。
+
+　前の項のは、$\beta_v$に関して微分すると$\beta_v$以外の項は消える。
+
+$$
+\begin{aligned}
+\frac{\partial \log \prod_{v'=1}^V \Gamma(\beta_{v'})}{\partial \beta_v}
+   &= \frac{\partial \sum_{v'=1}^V \log \Gamma(\beta_{v'})}{\partial \beta_v}
+\\
+   &= \frac{\partial \log \Gamma(\beta_1)}{\partial \beta_v}
+      + \cdots
+      + \frac{\partial \log\Gamma(\beta_v)}{\partial \beta_v}
+      + \cdots
+      + \frac{\partial \log\Gamma(\beta_V)}{\partial \beta_v}
+\\
+   &= 0 + \cdots
+      + \frac{\partial \log\Gamma(\beta_v)}{\partial \beta_v}
+      + \cdots + 0
+\\
+   &= \frac{\partial \log\Gamma(\beta_v)}{\partial \beta_v}
+\end{aligned}
+$$
+
+　後の項は、合成関数の微分$\frac{\partial f}{\partial x} = \frac{\partial f}{\partial u} \frac{\partial u}{\partial x}$より
+
+$$
+\frac{\partial \log \Gamma(\hat{\beta})}{\partial \beta_v}
+  = \frac{\partial \log \Gamma(\hat{\beta})}{\partial \hat{\beta}}
+    \frac{\partial \hat{\beta}}{\partial \beta_v}
+$$
+
+となり、また
+
+$$
+\begin{aligned}
+\frac{\partial \hat{\beta}}{\partial \beta_v}
+   &= \frac{\partial \beta_1}{\partial \beta_v}
+      + \cdots
+      + \frac{\partial \beta_v}{\partial \beta_v}
+      \cdots
+      + \frac{\partial \beta_V}{\partial \beta_v}
+\\
+   &= 0 + \cdots + 1 + \cdots + 0
+\\
+   &= 1
+\end{aligned}
+$$
+
+であるため
+
+$$
+\frac{\partial \log \Gamma(\hat{\beta})}{\partial \beta_v}
+  = \frac{\partial \log \Gamma(\hat{\beta})}{\partial \hat{\beta}}
+    \frac{\partial \hat{\beta}}{\partial \beta_v}
+  = \frac{\partial \log \Gamma(\hat{\beta})}{\partial \hat{\beta}}
+$$
+
+となる。
+
+7. ディガンマ関数の定義より、置き換える。
+
+\begin{center}\underline{\hspace{10cm}}\end{center}
+
+\ 
+
+
+#### ・可視化
+
+\ 
+
+　パラメータが$\beta_1 = 4,\ \beta_2 = 2,\ \beta_3 = 3$のときの分布を確認する。
+
+```{r ch_124_DirichletDistribution}
+# 利用パッケージ
+library(tidyverse)
+
+# パラメーターを指定(V=3)
+beta_v <- c(4, 2, 3)
+
+# 値をランダムに生成
+phi <- seq(0.001, 1, 0.001) %>% 
+  sample(120000, replace = TRUE) %>% 
+  matrix(ncol = 3)
+
+# 値を満遍なく生成
+phi <- tibble(
+  V1 = rep(rep(seq(0.02, 1, by = 0.02), times = 50), times = 50), 
+  V2 = rep(rep(seq(0.02, 1, by = 0.02), each = 50), times = 50), 
+  V3 = rep(seq(0.02, 1, by = 0.02), each = 50^2)
+) %>% 
+  as.matrix()
+
+# 正規化
+phi <- phi / rowSums(phi)
+
+# 正規化項を計算(対数)
+tmp_beta <- lgamma(sum(beta_v)) - sum(lgamma(beta_v))
+
+# 分布を計算(対数)
+tmp_phi  <- colSums((beta_v - 1) * log(t(phi)))
+
+# 計算結果のデータフレームを作成
+res_df <- tibble(
+  x = phi[, 2] + (phi[, 3] / 2), # 三角座標への変換
+  y = sqrt(3) * (phi[, 3] / 2), # 三角座標への変換
+  density = exp(tmp_beta + tmp_phi) # 確率密度
+)
+
+# 描画
+ggplot(data = res_df, mapping = aes(x = x, y = y, color = density)) + # データ
+  geom_point() + # 散布図
+  scale_color_gradientn(colors = c("blue", "green", "yellow", "red")) + # プロットの色
+  scale_x_continuous(breaks = c(0, 1), 
+                     labels = c("(1, 0, 0)", "(0, 1, 0)")) + # x軸の範囲
+  scale_y_continuous(breaks = c(0, 0.87), 
+                     labels = c("(1, 0, 0)", "(0, 1, 0)")) + # y軸の範囲
+  coord_fixed(ratio = 1) + # グラフの縦横比
+  labs(title = "Dirichlet Distribution", 
+       subtitle = paste0("beta=(", beta_v[1], ", ", beta_v[2], ", ", beta_v[3], ")"), 
+       x = expression(paste(phi[1], ", ", phi[2], sep = "")), 
+       y = expression(paste(phi[1], ", ", phi[3], sep = ""))) # ラベル
+```
+
+\ 
+
+・パラメータの違いによる分布の変化
+
+```{r ch_124_DirichletDistribution_multi}
+# パラメーターを指定
+beta <- tibble(
+  beta1 = c(1, 1, 1), 
+  beta2 = c(0.9, 0.9, 0.9), 
+  beta3 = c(3, 3, 3), 
+  beta4 = c(10, 10, 10), 
+  beta5 = c(4, 2, 3), 
+  beta6 = c(3, 0.9, 2)
+) %>% 
+  t()
+
+# 値をランダムに生成
+phi <- seq(0.001, 1, 0.001) %>% 
+  sample(45000, replace = TRUE) %>% 
+  matrix(ncol = 3)
+
+# 正規化
+phi <- phi / rowSums(phi)
+
+# 作図用のデータフレームを作成
+res_df <- tibble()
+for(i in 1:nrow(beta)){
+  
+  # 正規化項を計算(対数)
+  tmp_beta <- lgamma(sum(beta[i, ])) - sum(lgamma(beta[i, ]))
+  
+  # 分布を計算(対数)
+  tmp_phi <- colSums((beta[i, ] - 1) * log(t(phi)))
+  
+  # 分布を計算
+  tmp_df <- tibble(
+    x = phi[, 2] + (phi[, 3] / 2), # 三角座標への変換
+    y = sqrt(3) * (phi[, 3] / 2), # 三角座標への変換
+    density = exp(tmp_beta + tmp_phi), # 確率密度
+    parameter = paste0(
+      "beta=(", beta[i, 1], ", ", beta[i, 2], ", ", beta[i, 3], ")"
+    ) # 作図用のラベル
+  )
+  
+  # 計算結果を結合
+  res_df <- rbind(res_df, tmp_df)
+}
+
+# 描画
+ggplot(data = res_df, mapping = aes(x = x, y = y, color = density)) + # データ
+  geom_point() + # 散布図
+  scale_color_gradientn(colors = c("blue", "green", "yellow", "red")) + # プロットの色
+  scale_x_continuous(breaks = 1, labels = "(0, 1, 0)") + # x軸の範囲
+  scale_y_continuous(breaks = c(0, 0.87), 
+                     labels = c("(1, 0, 0)", "(0, 1, 0)")) + # y軸の範囲
+  coord_fixed(ratio = 1) + # グラフの縦横比
+  facet_wrap(~ parameter, ncol = 3) + # グラフの分割
+  labs(title = "Dirichlet distribution", 
+       x = expression(paste(phi[1], ", ", phi[2], sep = "")), 
+       y = expression(paste(phi[1], ", ", phi[3], sep = ""))) # ラベル
+```
+
+
+\newpage
+
+
+
+
+# ディリクレ分布の作図
+
+
+## 定義式の確認
+
+\ 
+
+　まずは、ベータ分布の定義式を確認します。\
+\
+
+　ベータ分布は、次の式で定義されます。
+
+$$
+\mathrm{Dir}(\boldsymbol{\phi} | \boldsymbol{\beta})
+  = \frac{
+        \Gamma(\sum_{v=1}^V \beta_v)
+    }{
+        \prod_{v=1}^V \Gamma(\beta_v)
+    }
+    \prod_{v=1}^V \phi_v^{\beta_v-1}
+$$
+
+　この式の対数をとると、次の式になります。
+
+$$
+\log \mathrm{Dir}(\boldsymbol{\phi} | \boldsymbol{\beta})
+  = \log \Gamma \Bigl(
+        \sum_{v=1}^V \beta_v
+    \Bigr)
+    + \sum_{v=1}^V \left\{
+        \log \phi_v^{\beta_v-1}
+        - \log \Gamma(\beta_v)
+    \right\}
+$$
+
+　平均と分散は、次の式で計算できます。
+
+$$
+\begin{aligned}
+\mathbb{E}[\phi_v]
+   &= \frac{\beta_v}{\hat{\beta}}
+\\
+\mathbb{V}[\phi_v]
+   &= \frac{
+         \beta_v (\hat{\beta}-\beta_v)
+     }{
+         \hat{\beta}^2 (\hat{\beta} + 1)
+     }
+\end{aligned}
+$$
+
+\ 
+
+　これらの計算を行いグラフを作成します。\
+\
+
+

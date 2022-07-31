@@ -1,0 +1,69 @@
+---
+title: "ガンマ分布"
+author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M:%S')`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_section: true
+    toc: true
+    toc_depth: 4
+    keep_tex: false
+header-includes:
+  - \usepackage{bookmark}
+  - \usepackage{xltxtra}
+  - \usepackage{zxjatype}
+  - \usepackage[ipa]{zxjafont}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, error = FALSE, warning = FALSE, # メッセージを非表示
+  fig.align = "center", # 画像を中央揃え
+  fig.width = 5, fig.height = 4, # 画像のサイズ
+  dev = "cairo_pdf", dev.args = list(family = "ipaexg"), # {ggplot2}に日本語を組み込む場合の対処
+  class.source = "numberLines lineAnchors", # ソースを番号付けする
+  class.output = "numberLines lineAnchors chunkout" # 出力を番号付けする
+)
+```
+
+----
+
+【編集履歴】
+
+- 
+
+----
+
+\newpage
+
+
+# ガンマ分布の定義式
+
+
+　ガンマ分布は、パラメータ$a, b$を用いて次の式で定義されます。
+
+$$
+\mathrm{Gam}(\lambda | a, b)
+    = \frac{b^a}{\Gamma(a)}
+      \lambda^{a-1}
+      e^{-b\lambda}
+$$
+
+　また、$\beta = \frac{1}{b}$で置き換えた次の式とする場合もあります。
+
+$$
+\mathrm{Gam}(\lambda | a, \beta)
+    = \frac{1}{\Gamma(a) \beta^a}
+      \lambda^{a-1}
+      e^{-\frac{\lambda}{\beta}}
+$$
+
+\ 
+
+
+# ガンマ分布の統計量の導出
+
+
+
