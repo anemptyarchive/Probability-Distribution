@@ -1,0 +1,497 @@
+---
+title: "1次元ガウス分布"
+author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M:%S')`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_section: true
+    toc: true
+    toc_depth: 4
+    keep_tex: false
+header-includes:
+  - \usepackage{bookmark}
+  - \usepackage{xltxtra}
+  - \usepackage{zxjatype}
+  - \usepackage[ipa]{zxjafont}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, error = FALSE, warning = FALSE, # メッセージを非表示
+  fig.align = "center", # 画像を中央揃え
+  fig.width = 5, fig.height = 4, # 画像のサイズ
+  dev = "cairo_pdf", dev.args = list(family = "ipaexg"), # {ggplot2}に日本語を組み込む場合の対処
+  class.source = "numberLines lineAnchors", # ソースを番号付けする
+  class.output = "numberLines lineAnchors chunkout" # 出力を番号付けする
+)
+```
+
+----
+
+【編集履歴】
+
+- 2022/01/28：執筆開始
+- 2022/01/30：Rコードの解説：を追加
+- 2022/07/28：「定義式の確認」を追加
+
+----
+
+\newpage
+
+
+# 1次元ガウス分布の定義式の確認
+
+　1次元ガウス分布(Gaussian Distribution)の定義を確認します。\
+\
+
+
+## 定義式
+
+　ガウス分布の2種類パラメータによる定義式と標準化された定義式を確認します。\
+\
+
+　ガウス分布は、パラメータ$\mu, \sigma$を用いて、次の式で定義されます。
+
+$$
+\mathcal{N}(x | \mu, \sigma^2)
+    = \frac{1}{\sqrt{2 \pi \sigma^2}}
+      \exp \left\{
+          - \frac{(x - \mu)^2}{2 \sigma^2}
+      \right\}
+\tag{1}
+$$
+
+　または、$\lambda$を用いて、次の式でも定義されます。
+
+$$
+\mathcal{N}(x | \mu, \lambda^{-1})
+    = \Bigl(
+          \frac{\lambda}{2 \pi}
+      \Bigr)^{\frac{1}{2}}
+      \exp \left\{
+          - \frac{\lambda (x - \mu)^2}{2}
+      \right\}
+\tag{2}
+$$
+
+　ここで、$\mu$は平均パラメータ、$\sigma$は標準偏差パラメータ、$\lambda$は精度パラメータ、$\pi$は円周率です。$\sigma$の2乗を分散パラメータと呼びます。\
+　$x$は実数をとり、$\mu$は実数、$\sigma$は正の実数、$\lambda$は正の実数を満たす必要があります。また、$\sigma = \frac{1}{\sqrt{\lambda}}$、$\lambda = \frac{1}{\sigma^2}$の関係が成り立ちます。\
+
+　$\mu = 0$、$\sigma = \lambda = 1$のとき、標準正規分布と呼ばれます。
+
+$$
+\mathcal{N}(x | \mu = 0, \sigma^2 = 1)
+    = \frac{1}{\sqrt{2 \pi}}
+      \exp \left(
+          - \frac{x^2}{2}
+      \right)
+$$
+
+\ 
+
+　ガウス分布の対数をとると、それぞれ
+
+$$
+\begin{aligned}
+\log \mathcal{N}(x | \mu, \sigma^2)
+   &= - \frac{1}{2} \left\{
+          \frac{(x - \mu)^2}{\sigma^2}
+          + 2 \log \sigma
+          + \log (2 \pi)
+      \right\}
+\\
+\log \mathcal{N}(x | \mu, \lambda^{-1})
+   &= \frac{1}{2} \Bigl\{
+          \lambda (x - \mu)^2
+          - \log \lambda
+          + \log (2 \pi)
+      \Bigr\}
+\end{aligned}
+$$
+
+となります。対数の性質より$\log x^a = a \log x$、$\log (x y) = \log x + \log y$です。また、平方根は2分の1乗$\sqrt{x} = x^{\frac{1}{2}}$です。\
+\
+
+
+## 定義式の関係
+
+　3つの定義式の対応関係を導出します。\
+\
+
+
+### 標準偏差パラメータと精度パラメータの変換
+
+　まずは、$\sigma$と$\lambda$の関係を考えます。\
+\
+
+　分散$\sigma^2$($\sigma$の2乗)の逆数で精度$\lambda$が定義されます。
+
+$$
+\frac{1}{\sigma^2}
+    = \lambda
+$$
+
+　両辺の逆数をとり
+
+$$
+\sigma^2
+    = \frac{1}{\lambda}
+$$
+
+さらに平方根をとると
+
+$$
+\sigma
+    = \sqrt{\frac{1}{\lambda}}
+    = \frac{1}{\sqrt{\lambda}}
+$$
+
+$\sigma$と$\lambda$の関係が得られます。\
+\
+
+
+### 標準偏差パラメータによる式と精度パラメータによる式の変換
+
+　続いて、$\sigma$を用いた定義式と$\lambda$を用いた定義式の関係を考えます。\
+\
+
+　$\sigma$を用いた定義式(1)について、$\sqrt{a} = a^{\frac{1}{2}}$より、変形します。
+
+
+\begin{align*}
+\mathcal{N}(x | \mu, \sigma^2)
+   &= \frac{1}{\sqrt{2 \pi \sigma^2}}
+      \exp \left\{
+          - \frac{(x - \mu)^2}{2 \sigma^2}
+      \right\}
+\tag{1}\\
+   &= \Bigl(
+          \frac{1}{2 \pi \sigma^2}
+      \Bigr)^{\frac{1}{2}}
+      \exp \left\{
+          - \frac{(x - \mu)^2}{2 \sigma^2}
+      \right\}
+\end{align*}
+
+
+　$\sigma^2 = \frac{1}{\lambda}$を代入します。
+
+$$
+\mathcal{N}(x | \mu, \lambda^{-1})
+    = \Bigl(
+          \frac{\lambda}{2 \pi}
+      \Bigr)^{\frac{1}{2}}
+      \exp \left\{
+          - \frac{\lambda (x - \mu)^2}{2}
+      \right\}
+\tag{2}
+$$
+
+　$\lambda$を用いた定義式(2)が得られました。\
+\
+
+
+### 標準化の計算
+
+　ガウス分布の計算を標準正規分布の計算で代用することを考えます。確率密度を計算する(プログラム上の)関数が、標準正規分布の場合を想定しています。\
+\
+
+　$\sigma$を用いた定義式(1)を変形します。
+
+
+\begin{align*}
+\mathcal{N}(x | \mu, \sigma^2)
+   &= \frac{1}{\sqrt{2 \pi \sigma^2}}
+      \exp \left\{
+          - \frac{(x - \mu)^2}{2 \sigma^2}
+      \right\}
+\tag{1}\\
+   &= \frac{1}{\sqrt{2 \pi}}
+      \frac{1}{\sigma}
+      \exp \left\{
+          - \frac{1}{2} \Bigl(
+              \frac{x - \mu}{\sigma}
+          \Bigr)^2
+      \right\}
+\end{align*}
+
+
+　$x$に関する項について
+
+$$
+y   = \frac{x - \mu}{\sigma}
+$$
+
+とおきます。
+
+$$
+\mathcal{N}(x | \mu, \sigma^2)
+    = \frac{1}{\sigma}
+      \frac{1}{\sqrt{2 \pi}}
+      \exp \left\{
+          - \frac{y^2}{2}
+      \right\}
+$$
+
+　$\frac{1}{\sigma}$以外の項に注目すると、$y$についての標準正規分布の式になっています。
+
+$$
+\mathcal{N}(x | \mu, \sigma)
+    = \frac{1}{\sigma}
+      \mathcal{N}(y | \mu = 0, \sigma^2 = 1)
+$$
+
+　$\mu = 0$・$\sigma = 1$の$y$の確率密度に$\sigma$の逆数を掛けて計算できます。\
+\
+
+　続いて、$\lambda$を用いた定義式(2)を考えます。
+
+
+\begin{align*}
+\mathcal{N}(x | \mu, \lambda^{-1})
+   &= \Bigl(
+          \frac{\lambda}{2 \pi}
+      \Bigr)^{\frac{1}{2}}
+      \exp \left\{
+          - \frac{\lambda (x - \mu)^2}{2}
+      \right\}
+\tag{2}\\
+   &= \frac{\sqrt{\lambda}}{\sqrt{2 \pi}}
+      \exp \left[
+          - \frac{\{\sqrt{\lambda} (x - \mu)\}^2}{2}
+      \right]
+\end{align*}
+
+
+　$x$に関する項について
+
+$$
+y   = \sqrt{\lambda} (x - \mu)
+$$
+
+とおきます。
+
+$$
+\mathcal{N}(x | \mu, \lambda^{-1})
+    = \frac{\sqrt{\lambda}}{\sqrt{2 \pi}}
+      \exp \left(
+          - \frac{y^2}{2}
+      \right)
+$$
+
+　$\sqrt{\lambda}$以外の項に注目すると、$y$についての標準正規分布の式になっています。
+
+$$
+\mathcal{N}(x | \mu, \lambda^{-1})
+    = \sqrt{\lambda}
+      \mathcal{N}(y | \mu = 0, \sigma^2 = 1)
+$$
+
+　$\mu = 0$・$\sigma = 1$の$y$の確率密度に$\lambda$の平方根を掛けて計算できます。\
+\
+
+
+## 統計量の計算式
+
+　ガウス分布の期待値・分散・最頻値は、次の式で計算できます。詳しくはいつか書きます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \mu
+\\
+\mathbb{V}[x]
+   &= \sigma^2
+    = \frac{1}{\lambda}
+\\
+\mathrm{mode}[x]
+   &= \mu
+\end{aligned}
+$$
+
+　期待値と最頻値は一致します。\
+\
+
+
+# 1次元ガウス分布のモーメント母関数の導出
+
+　1次元ガウス分布のモーメント母関数を導出します。\
+\
+
+　モーメント母関数は、$e^{tx}$の期待値として定義されます。$e$はネイピア数です。
+
+$$
+\begin{aligned}
+M(t)
+   &= \int
+          e^{tx}
+          \mathcal{N}(x | \mu, \sigma^2)
+      dx
+\\
+   &= \int
+          \exp(t x)
+          \frac{1}{\sqrt{2 \pi \sigma^2}}
+          \exp \left(
+              - \frac{(x - \mu)^2}{2 \sigma^2}
+          \right)
+      dx
+\end{aligned}
+$$
+
+　ここで、$\mathcal{N}(x | \mu, \sigma^2)$は1次元ガウス分布を表し、$\mu$は平均、$\sigma$は標準偏差、$\sigma^2$は分散です。\
+
+　2乗の括弧を展開して、$\exp(\cdot)$の項をまとめます。
+
+$$
+\begin{aligned}
+M(t)
+   &= \int
+          \exp \left(
+              \frac{2 \sigma^2 t x}{2 \sigma^2}
+          \right)
+          \frac{1}{\sqrt{2 \pi \sigma^2}}
+          \exp \left(
+              - \frac{
+                  x^2 - 2 \mu x + \mu^2
+                }{
+                  2 \sigma^2
+                }
+          \right)
+      dx
+\\
+   &= \int
+          \frac{1}{\sqrt{2 \pi \sigma^2}}
+          \exp \left(
+              \frac{
+                  2 \sigma^2 t x
+                  - x^2 + 2 \mu x - \mu^2
+              }{
+                  2 \sigma^2
+              }
+          \right)
+      dx
+\\
+   &= \int
+          \frac{1}{\sqrt{2 \pi \sigma^2}}
+          \exp \left(
+              \frac{
+                  - x^2
+                  + 2 (\mu + \sigma^2 t) x
+                  - \mu^2
+              }{
+                  2 \sigma^2
+              }
+          \right)
+      dx
+\end{aligned}
+$$
+
+　$x$に影響する項を取り出して平方完成
+
+$$
+\begin{aligned}
+- x^2
++ 2 (\mu + \sigma^2 t) x
+   &= - x^2
+      + 2 (\mu + \sigma^2 t) x
+      - (\mu + \sigma^2 t)^2
+      + (\mu + \sigma^2 t)^2
+\\
+   &= - \Bigl\{
+          x^2
+          - 2 (\mu + \sigma^2 t) x
+          + (\mu + \sigma^2 t)^2
+        \Bigr\}
+      + \mu^2 + 2 \mu \sigma^2 t + \sigma^4 t^2
+\\
+   &= - \Bigl\{
+          x - (\mu + \sigma^2 t)
+        \Bigr\}^2
+      + \mu^2 + 2 \mu \sigma^2 t + \sigma^4 t^2
+\end{aligned}
+$$
+
+をします。
+
+$$
+\begin{aligned}
+M(t)
+   &= \int
+          \frac{1}{\sqrt{2 \pi \sigma^2}}
+          \exp \left(
+              - \frac{
+                  \{x - (\mu + \sigma^2 t)\}^2
+                }{
+                  2 \sigma^2
+                }
+              + \frac{
+                  \mu^2 + 2 \mu \sigma^2 t + \sigma^4 t^2
+                  - \mu^2
+                }{
+                  2 \sigma^2
+                }
+          \right)
+      dx
+\\
+   &= \int
+          \frac{1}{\sqrt{2 \pi \sigma^2}}
+          \exp \left(
+              - \frac{
+                  \{x - (\mu + \sigma^2 t)\}^2
+                }{
+                  2 \sigma^2
+                }
+              + \mu t
+              + \frac{\sigma^2 t^2}{2}
+          \right)
+      dx
+\\
+   &= \int
+          \frac{1}{\sqrt{2 \pi \sigma^2}}
+          \exp \left(
+              - \frac{
+                  \{x - (\mu + \sigma^2 t)\}^2
+                }{
+                  2 \sigma^2
+                }
+          \right)
+          \exp \left(
+              \mu t
+              + \frac{\sigma^2 t^2}{2}
+          \right)
+      dx
+\\
+   &= \exp \left(
+          \mu t
+          + \frac{\sigma^2 t^2}{2}
+      \right)
+      \int
+          \frac{1}{\sqrt{2 \pi \sigma^2}}
+          \exp \left(
+              - \frac{
+                  \{x - (\mu + \sigma^2 t)\}^2
+                }{
+                  2 \sigma^2
+                }
+          \right)
+      dx
+\end{aligned}
+$$
+
+　？
+
+$$
+\begin{aligned}
+M(t)
+   &= \exp \left(
+          \mu t
+          + \frac{\sigma^2 t^2}{2}
+      \right)
+\end{aligned}
+$$
+
+
+# 1次元ガウス分布の統計量の導出
+
