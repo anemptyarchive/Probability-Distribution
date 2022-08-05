@@ -52,71 +52,71 @@ log_dens = t.logpdf(x=x, df=nu)
 dens = np.exp(log_dens)
 print(dens)
 
-# 確率密度を計算
+# t分布の関数により確率密度を計算
 dens = t.pdf(x=x, df=nu, loc=0.0, scale=1.0)
 print(dens)
 
 #%% 
 
-### 非標準化t分布：スケールパラメータを使用
+### 一般化t分布：スケールパラメータを使用
 
-# sigmaを使った定義式により確率密度を計算
+# 定義式により確率密度を計算
 C = gamma(0.5 * (nu + 1)) / gamma(0.5 * nu)
 C /= np.sqrt(np.pi * nu) * sigma
 term = np.sqrt(1.0 + ((x - mu) / sigma)**2 / nu)**(nu + 1)
 dens = C / term
 print(dens)
 
-# sigmaを使った定義式(対数)により確率密度を計算
+# 対数をとった定義式により確率密度を計算
 log_C = loggamma(0.5 * (nu + 1)) - loggamma(0.5 * nu)
-log_C -= np.log(sigma) + 0.5 * np.log(np.pi * nu)
+log_C -= 0.5 * np.log(np.pi * nu) + np.log(sigma)
 log_term = 0.5 * (nu + 1) * np.log(1 + ((x - mu) / sigma)**2 / nu)
 dens = np.exp(log_C - log_term)
 print(dens)
 
-# sigmaを使ってt分布の関数により確率密度を計算
+# t分布の関数により確率密度を計算
 dens = t.pdf(x=x, df=nu, loc=mu, scale=sigma)
 print(dens)
 
-# sigmaを使ってt分布の対数をとった関数により確率密度を計算
+# t分布の対数をとった関数により確率密度を計算
 log_dens = t.logpdf(x=x, df=nu, loc=mu, scale=sigma)
 dens = np.exp(log_dens)
 print(dens)
 
-# sigmaを使って標準化して確率密度を計算
-y = (x - mu) / sigma # 値を変換
+# 標準化t分布の関数により確率密度を計算
+y = (x - mu) / sigma # 標準化
 dens = t.pdf(x=y, df=nu) / sigma
 print(dens)
 
 #%%
 
-### 非標準化t分布：逆スケールパラメータを使用
+### 一般化t分布：逆スケールパラメータを使用
 
-# lambdaを使った定義式により確率密度を計算
+# 定義式により確率密度を計算
 C = gamma(0.5 * (nu + 1)) / gamma(0.5 * nu)
 C *= np.sqrt(lmd / np.pi / nu)
 term = np.sqrt(1.0 + lmd / nu * (x - mu)**2)**(nu + 1)
 dens = C / term
 print(dens)
 
-# lambdaを使った定義式(対数)により確率密度を計算
+# 対数をとった定義式により確率密度を計算
 log_C = loggamma(0.5 * (nu + 1)) - loggamma(0.5 * nu)
-log_C += 0.5 * (np.log(lmd) - np.log(np.pi * nu))
+log_C -= 0.5 * (np.log(np.pi * nu) - np.log(lmd))
 log_term = 0.5 * (nu + 1) * np.log(1.0 + lmd / nu * (x - mu)**2)
 dens = np.exp(log_C - log_term)
 print(dens)
 
-# lambdaを使ってt分布の関数により確率密度を計算
+# t分布の関数により確率密度を計算
 dens = t.pdf(x=x, df=nu, loc=mu, scale=1.0/np.sqrt(lmd))
 print(dens)
 
-# lambdaを使ってt分布の対数をとった関数により確率密度を計算
+# t分布の対数をとった関数により確率密度を計算
 log_dens = t.logpdf(x=x, df=nu, loc=mu, scale=1.0/np.sqrt(lmd))
 dens = np.exp(log_dens)
 print(dens)
 
-# lambdaを使って標準化して確率密度を計算
-y = (x - mu) * np.sqrt(lmd) # 値を変換
+# 標準化t分布の関数により確率密度を計算
+y = (x - mu) * np.sqrt(lmd) # 標準化
 dens = t.pdf(x=y, df=nu) * np.sqrt(lmd)
 print(dens)
 
@@ -140,11 +140,11 @@ lmd = 4.0
 E_x = mu
 print(E_x)
 
-# sigmaを使って計算式により分散を計算:(nu > 2)
+# 計算式により分散を計算:(nu > 2)
 V_x = sigma**2 * nu / (nu - 2.0)
 print(V_x)
 
-# lambdaを使って計算式により分散を計算:(nu > 2)
+# 計算式により分散を計算:(nu > 2)
 V_x = nu / (nu - 2.0) / lmd
 print(V_x)
 
@@ -153,11 +153,11 @@ mode_x = mu
 print(mode_x)
 
 
-# メソッドにより期待値を計算:(nu > 1)
+# t分布の関数により期待値を計算:(nu > 1)
 E_x = t.mean(df=nu, loc=mu, scale=sigma)
 print(E_x)
 
-# メソッドにより分散を計算:(nu > 2)
+# t分布の関数により分散を計算:(nu > 2)
 V_x = t.var(df=nu, loc=mu, scale=sigma)
 print(V_x)
 

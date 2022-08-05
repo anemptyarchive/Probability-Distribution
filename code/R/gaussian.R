@@ -8,6 +8,7 @@ library(patchwork)
 
 # チェック用
 library(ggplot2)
+library(patchwork)
 
 
 # 確率密度の計算 -----------------------------------------------------------------
@@ -197,7 +198,7 @@ res_dens_df <- tidyr::expand_grid(
   dplyr::mutate(
     density = dnorm(x = x, mean = mu, sd = sigma), 
     parameter = paste0("mu=", mu, ", sigma=", sigma) |> 
-      factor(levels = paste0("mu=", sort(mu_vals), ", sigma=", sigma)) # フレーム切替用ラベル
+      factor(levels = paste0("mu=", sort(mu_vals), ", sigma=", sigma)) # 色分け用ラベル
   ) # 確率密度を計算
 
 
@@ -222,7 +223,7 @@ res_dens_df <- tidyr::expand_grid(
   dplyr::mutate(
     density = dnorm(x = x, mean = mu, sd = sigma), 
     parameter = paste0("mu=", mu, ", sigma=", sigma) |> 
-      factor(levels = paste0("mu=", mu, ", sigma=", sort(sigma_vals))) # フレーム切替用ラベル
+      factor(levels = paste0("mu=", mu, ", sigma=", sort(sigma_vals))) # 色分け用ラベル
   ) # 確率密度を計算
 
 
@@ -248,7 +249,7 @@ res_dens_df <- tidyr::expand_grid(
   dplyr::mutate(
     density = dnorm(x = x, mean = mu, sd = 1/sqrt(lambda)), 
     parameter = paste0("mu=", mu, ", lambda=", lambda) |> 
-      factor(levels = paste0("mu=", mu, ", lambda=", sort(lambda_vals))) # フレーム切替用ラベル
+      factor(levels = paste0("mu=", mu, ", lambda=", sort(lambda_vals))) # 色分け用ラベル
   ) # 確率密度を計算
 
 
@@ -263,7 +264,7 @@ label_vec <- res_dens_df[["parameter"]] |>
 names(label_vec) <- unique(res_dens_df[["parameter"]]) # ggplotに指定する文字列に対応する名前付きベクトルに変換
 
 
-# ガウス分布のアニメーションを作図
+# パラメータごとにガウス分布を作図
 ggplot(data = res_dens_df, mapping = aes(x = x, y = density, color = parameter)) + # データ
   geom_line(size = 1) + # 折れ線グラフ
   scale_color_hue(labels = label_vec) + # 線の色:(数式表示用)
@@ -363,12 +364,13 @@ anime_dens_graph <- ggplot(data = anime_dens_df, mapping = aes(x = x, y = densit
   geom_line(color = "#00A968", size = 1) + # 折れ線グラフ
   gganimate::transition_manual(parameter) + # フレーム
   labs(title = "Gaussian Distribution", 
-       subtitle = "{current_frame}") # ラベル
+       subtitle = "{current_frame}", 
+       x = "x", y = "density") # ラベル
 
 # gif画像を作成
-gganimate::animate(anime_dens_graph, nframes = length(mu_vals), fps = 100, width = 800, height = 600) # (平均の影響の場合)
-gganimate::animate(anime_dens_graph, nframes = length(sigma_vals), fps = 100, width = 800, height = 600) # (標準偏差の影響の場合)
-gganimate::animate(anime_dens_graph, nframes = length(lambda_vals), fps = 100, width = 800, height = 600) # (精度の影響の場合)
+gganimate::animate(anime_dens_graph, nframes = length(mu_vals), fps = 10, width = 800, height = 600) # (平均の影響の場合)
+gganimate::animate(anime_dens_graph, nframes = length(sigma_vals), fps = 10, width = 800, height = 600) # (標準偏差の影響の場合)
+gganimate::animate(anime_dens_graph, nframes = length(lambda_vals), fps = 10, width = 800, height = 600) # (精度の影響の場合)
 
 
 ### ・作図：線の軌跡 -----
@@ -582,9 +584,9 @@ anime_dens_graph <- ggplot() +
        subtitle = "{current_frame}") # ラベル
 
 # gif画像を作成
-gganimate::animate(anime_dens_graph, nframes = length(mu_vals), fps = 100, width = 800, height = 600) # (平均の影響の場合)
-gganimate::animate(anime_dens_graph, nframes = length(sigma_vals), fps = 100, width = 800, height = 600) # (標準偏差の影響の場合)
-gganimate::animate(anime_dens_graph, nframes = length(lambda_vals), fps = 100, width = 800, height = 600) # (精度の影響の場合)
+gganimate::animate(anime_dens_graph, nframes = length(mu_vals), fps = 10, width = 800, height = 600) # (平均の影響の場合)
+gganimate::animate(anime_dens_graph, nframes = length(sigma_vals), fps = 10, width = 800, height = 600) # (標準偏差の影響の場合)
+gganimate::animate(anime_dens_graph, nframes = length(lambda_vals), fps = 10, width = 800, height = 600) # (精度の影響の場合)
 
 
 # 乱数の生成 -------------------------------------------------------------------

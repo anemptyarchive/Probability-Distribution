@@ -145,7 +145,8 @@ $$
       - \log \Gamma \Bigl(\frac{\nu}{2}\Bigr) \\
    &\quad
       - \frac{1}{2} \left[
-          \log (\pi \nu \sigma^2)
+          \log (\pi \nu)
+          + 2 \log \sigma
           + (\nu + 1)
             \log \left\{
               1
