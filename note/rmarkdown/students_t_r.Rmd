@@ -1,0 +1,1834 @@
+---
+title: "1次元スチューデントのt分布"
+author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M:%S')`"
+output:
+  html_document:
+    toc: TRUE       # 目次
+    toc_depth: 3    # 目次の見出しレベル
+    toc_float: TRUE # 目次のスクロール追跡
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, error = FALSE, warning = FALSE # メッセージを非表示
+)
+```
+
+----
+
+【編集履歴】
+
+- 2022/08/04：Rコードを追加
+
+----
+
+
+# 1次元スチューデントのt分布の計算
+
+　1次元スチューデントのt分布(Student's t-Distribution)の確率密度と統計量を計算します。t分布については「定義式の確認」を参照してください。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r}
+# 利用パッケージ
+library(LaplacesDemon)
+```
+
+　この記事では、`パッケージ名::関数名()`の記法を使うので、パッケージを読み込む必要はありません。\
+　一般化したt分布の計算に`LaplacesDemon`パッケージを利用します。\
+\
+
+
+## 確率密度の計算
+
+　スチューデントのt分布に従う確率密度を計算する方法をいくつか確認します。\
+\
+
+
+### 標準化t分布
+
+　まずは、標準化されたt分布の計算を行います。\
+\
+
+
+#### パラメータの設定
+
+　t分布の自由度$\nu$と確率変数の実現値$x$を設定します。
+
+```{r}
+# 自由度を指定
+nu <- 5
+
+# 確率変数を指定
+x <- 1.5
+```
+
+　正の整数$\nu$、実数$x$を指定します。設定した値に従う確率密度を計算します。\
+\
+
+
+#### スクラッチで計算
+
+　定義式から計算します。
+
+```{r}
+# 定義式により確率密度を計算
+C    <- gamma(0.5 * (nu + 1)) / gamma(0.5 * nu) / sqrt(pi * nu)
+term <- sqrt(1 + x^2 / nu)^(nu + 1)
+dens <- C / term
+dens
+```
+
+　t分布は、次の式で定義されます。
+
+$$
+\begin{aligned}
+C_{\mathrm{St}}
+   &= \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \sqrt{\pi \nu}
+          \Gamma(\frac{\nu}{2})
+      }
+\\
+\mathrm{St}(x | \nu)
+   &= C_{\mathrm{St}}
+      \Bigl(
+          1 + \frac{x^2}{\nu}
+      \Bigr)^{-\frac{(\nu+1)}{2}}
+\end{aligned}
+$$
+
+　ここで、$C_{\mathrm{St}}$はt分布の正規化係数、$\pi$は円周率、$\Gamma(x)$はガンマ関数です。\
+　円周率は`pi`、ガンマ関数は`gamma()`で計算できます。\
+
+　対数をとった定義式から計算します。
+
+```{r}
+# 対数をとった定義式により確率密度を計算
+log_C    <- lgamma(0.5 * (nu + 1)) - lgamma(0.5 * nu) - 0.5 * log(pi * nu)
+log_term <- 0.5 * (nu + 1) * log(1 + x^2 / nu)
+log_dens <- log_C - log_term
+dens     <- exp(log_dens)
+dens; log_dens
+```
+
+　対数をとった定義式を計算します。
+
+$$
+\begin{aligned}
+\log C_{\mathrm{St}}
+   &= \log \Gamma \Bigl(\frac{\nu + 1}{2}\Bigr)
+      - \log \Gamma \Bigl(\frac{\nu}{2}\Bigr)
+      - \frac{\log (\pi \nu)}{2}
+\\
+\log \mathrm{St}(x | \nu)
+   &= \log C_{\mathrm{St}}
+      - \frac{(\nu + 1)}{2}
+        \log \left(
+          1 + \frac{x^2}{\nu}
+      \right)
+\end{aligned}
+$$
+
+　対数をとったガンマ関数は、`lgamma()`で計算できます。引数の値が大きいと`gamma()`の計算結果が発散してしまいます。その場合でも、`lgamma()`で計算できます。\
+　計算結果の指数をとると確率密度が得られます。
+
+$$
+\mathrm{St}(x | \nu)
+    = \exp \Bigl(
+          \log \mathrm{St}(x | \nu)
+      \Bigr)
+$$
+
+　指数と対数の性質より$\exp(\log x) = x$です。\
+
+　次は、関数を使って確率密度を計算します。\
+\
+
+
+#### t分布の関数による計算
+
+　t分布の確率密度関数`dt()`で計算します。
+
+```{r}
+# 標準化t分布の関数により確率密度を計算
+dens <- dt(x = x, df = nu)
+dens
+```
+
+　確率変数の引数`x`に`x`、自由度の引数`df`に`nu`を指定します。\
+
+　`log = TRUE`を指定すると対数をとった確率密度を返します。
+
+```{r}
+# 標準化t分布の対数をとった関数により確率密度を計算
+log_dens <- dt(x = x, df = nu, log = TRUE)
+dens     <- exp(log_dens)
+dens; log_dens
+```
+
+　計算結果の指数をとると確率密度が得られます。\
+\
+
+
+### 一般化t分布：スケールパラメータを使用
+
+　次は、スケールパラメータを用いた一般化されたt分布の計算を行います。\
+\
+
+
+#### パラメータの設定
+
+　t分布のパラメータ$\nu, \mu, \sigma$と確率変数の実現値$x$を設定します。
+
+```{r}
+# 形状パラメータ(自由度)を指定
+nu <- 5
+
+# 位置パラメータを指定
+mu <- 2
+
+# スケールパラメータを指定
+sigma <- 0.5
+
+# 確率変数を指定
+x <- 1.5
+```
+
+　形状パラメータ(自由度)(正の整数)$\nu$、位置パラメータ(実数)$\mu$、スケールパラメータ(正の実数)$\sigma$、実数$x$を指定します。\
+\
+
+
+#### スクラッチで計算
+
+　定義式から計算します。
+
+```{r}
+# 対数をとった定義式により確率密度を計算
+C    <- gamma(0.5 * (nu + 1)) / gamma(0.5 * nu) / sqrt(pi * nu) / sigma
+term <- sqrt(1 + ((x - mu) / sigma)^2 / nu)^(nu + 1)
+dens <- C / term
+dens
+```
+
+　$\sigma$を用いたt分布は、次の式で定義されます。
+
+$$
+\begin{aligned}
+C_{\mathrm{St}}
+   &= \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{1}{\sqrt{\pi \nu} \sigma}
+\\
+\mathrm{St}(x | \nu, \mu, \sigma)
+   &= C_{\mathrm{St}}
+      \left\{
+          1
+          + \frac{1}{\nu} \bigl(
+              \frac{x - \mu}{\sigma}
+          \Bigr)^2
+      \right\}^{-\frac{(\nu+1)}{2}}
+\end{aligned}
+$$
+
+　対数をとった定義式から計算します。
+
+```{r}
+# 対数をとった定義式により確率密度を計算
+log_C    <- lgamma(0.5 * (nu + 1)) - lgamma(0.5 * nu) - 0.5 * log(pi * nu) - log(sigma)
+log_term <- 0.5 * (nu + 1) * log(1 + ((x - mu) / sigma)^2 / nu)
+log_dens <- log_C - log_term
+dens     <- exp(log_dens)
+dens; log_dens
+```
+
+　対数をとった定義式を計算します。
+
+$$
+\begin{aligned}
+\log C_{\mathrm{St}}
+   &= \log \Gamma \Bigl(\frac{\nu + 1}{2}\Bigr)
+      - \log \Gamma \Bigl(\frac{\nu}{2}\Bigr)
+      - \frac{\log (\pi \nu)}{2}
+      - \log \sigma
+\\
+\log \mathrm{St}(x | \nu, \mu, \sigma)
+   &= \log C_{\mathrm{St}}
+      - \frac{(\nu + 1)}{2}
+        \log \left\{
+          1
+          + \frac{1}{\nu} \Bigl(
+              \frac{x - \mu}{\sigma}
+          \Bigr)^2
+      \right\}
+\end{aligned}
+$$
+
+　計算結果の指数をとると確率密度が得られます。\
+\
+
+
+#### t分布のクラスによる計算
+
+　`LaplacesDemon`パッケージの一般化t分布の確率密度関数`dst()`で計算します。
+
+```{r}
+# 一般化t分布の関数により確率密度を計算
+dens <- LaplacesDemon::dst(x = x, mu = mu, sigma = sigma, nu = nu)
+dens
+```
+
+　確率変数の引数`x`に`x`、位置パラメータの引数`mu`に`mu`、スケールパラメータの引数`sigma`に`sigma`、形状パラメータ(自由度)の引数`nu`に`nu`を指定します。\
+
+　`log = TRUE`を指定すると対数をとった確率密度を計算します。
+
+```{r}
+# 一般化t分布の対数をとった関数により確率密度を計算
+log_dens <- LaplacesDemon::dst(x = x, mu = mu, sigma = sigma, nu = nu, log = TRUE)
+dens     <- exp(log_dens)
+dens; log_dens
+```
+
+　計算結果の指数をとると確率密度が得られます。\
+
+　標準化t分布の関数`dt()`でも計算できます。
+
+```{r}
+# 標準化t分布の関数により確率密度を計算
+y    <- (x - mu) / sigma # 標準化
+dens <- dt(x = y, df = nu) / sigma
+dens
+```
+
+　次の式で計算できます。
+
+$$
+\begin{aligned}
+y  &= \frac{x - \mu}{\sigma}
+\\
+\mathrm{St}(x | \nu, \mu, \sigma)
+   &= \frac{1}{\sigma}
+      \mathrm{St}(y | \nu)
+\end{aligned}
+$$
+
+　$x$を$\mu, \sigma$で標準化して$y$とします。自由度$\nu$のときの$y$の確率密度(分布)$\mathrm{St}(y | \nu)$を$\sigma$で割ると、$\nu, \mu, \sigma$のときの$x$の確率密度(分布)$\mathrm{St}(x | \nu, \mu, \sigma)$が得られます。\
+\
+
+
+### 一般化t分布：逆スケールパラメータを使用
+
+　続いて、逆スケールパラメータを用いた一般化されたt分布の計算を行います。\
+\
+
+
+#### パラメータの設定
+
+　t分布のパラメータ$\nu, \mu, \lambda$と確率変数の実現値$x$を設定します。
+
+```{r}
+# 形状パラメータ(自由度)を指定
+nu <- 5
+
+# 位置パラメータを指定
+mu <- 2
+
+# 逆スケールパラメータを指定
+lambda <- 4
+
+# 確率変数を指定
+x <- 1.5
+```
+
+　スケールパラメータ$\sigma$の代わりに、逆スケールパラメータ(正の実数)$\lambda$を指定します。\
+
+　あるいは、$\sigma$を指定して$\lambda$を計算します。
+
+```{r}
+# 逆スケールパラメータを計算
+lambda <- 1 / sigma^2
+lambda
+```
+
+　スケールパラメータ$\sigma$と逆スケールパラメータ$\lambda$は、$\lambda = \frac{1}{\sigma^2}$、$\sigma = \frac{1}{\sqrt{\lambda}}$の関係です。\
+\
+
+
+#### スクラッチで計算
+
+　定義式から計算します。
+
+```{r}
+# 定義式により確率密度を計算
+C    <- gamma(0.5 * (nu + 1)) / gamma(0.5 * nu) * sqrt(lambda / pi / nu)
+term <- sqrt(1 + lambda * (x - mu)^2 / nu)^(nu + 1)
+dens <- C / term
+dens
+```
+
+　$\lambda$を用いたt分布は、次の式で定義されます。
+
+$$
+\begin{aligned}
+C_{\mathrm{St}}
+   &= \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \Bigl(
+          \frac{\lambda}{\pi \nu}
+      \Bigr)^{\frac{1}{2}}
+\\
+\mathrm{St}(x | \nu, \mu, \lambda)
+   &= C_{\mathrm{St}}
+      \left\{
+          1 + \frac{\lambda (x - \mu)^2}{\nu}
+      \right\}^{-\frac{(\nu+1)}{2}}
+\end{aligned}
+$$
+
+　対数をとった定義式から計算します。
+
+```{r}
+# 対数をとった定義式により確率密度を計算
+log_C    <- lgamma(0.5 * (nu + 1)) - lgamma(0.5 * nu) - 0.5 * (log(pi * nu) - log(lambda))
+log_term <- 0.5 * (nu + 1) * log(1 + lambda / nu * (x - mu)^2)
+log_dens <- log_C - log_term
+dens     <- exp(log_dens)
+dens; log_dens
+```
+
+　対数をとった定義式を計算します。
+
+$$
+\begin{aligned}
+\log C_{\mathrm{St}}
+   &= \log \Gamma \Bigl(\frac{\nu + 1}{2}\Bigr)
+      - \log \Gamma \Bigl(\frac{\nu}{2}\Bigr)
+      - \frac{1}{2} \Bigl\{
+          \log (\pi \nu)
+          - \log \lambda
+      \Bigr\}
+\\
+\log \mathrm{St}(x | \nu, \mu, \lambda)
+   &= \log C_{\mathrm{St}}
+      - \frac{(\nu + 1)}{2}
+        \log \left\{
+          1 + \frac{\lambda (x - \mu)^2}{\nu}
+      \right\}
+\end{aligned}
+$$
+
+　計算結果の指数をとると確率密度が得られます。\
+\
+
+
+#### t分布のクラスによる計算
+
+　`LaplacesDemon`パッケージの`dts()`で計算します。
+
+```{r}
+# 一般化t分布の関数により確率密度を計算
+dens <- LaplacesDemon::dst(x = x, mu = mu, sigma = 1/sqrt(lambda), nu = nu)
+dens
+```
+
+```{r}
+# 一般化t分布の対数をとった関数により確率密度を計算
+log_dens <- LaplacesDemon::dst(x = x, mu = mu, sigma = 1/sqrt(lambda), nu = nu, log = TRUE)
+dens     <- exp(log_dens)
+dens; log_dens
+```
+
+　スケールパラメータの引数`sigma`に`lambda`の平方根の逆数を指定します。\
+
+　$\mu, \sigma$の引数を使わずに計算することもできます。
+
+```{r}
+# 標準化t分布の関数により確率密度を計算
+y    <- (x - mu) * sqrt(lambda) # 標準化
+dens <- dt(x = y, df = nu) * sqrt(lambda)
+dens
+```
+
+　次の式で計算できます。
+
+$$
+\begin{aligned}
+y  &= (x - \mu) \sqrt{\lambda}
+\\
+\mathrm{St}(x | \nu, \mu, \lambda)
+   &= \sqrt{\lambda}
+      \mathrm{St}(y | \nu)
+\end{aligned}
+$$
+
+　$x$を$\mu, \lambda$で標準化して$y$とします。自由度$\nu$のときの$y$の確率密度(分布)$\mathrm{St}(y | \nu)$に$\lambda$の平方根を掛けると、$\nu, \mu, \lambda$のときの$x$の確率密度(分布)$\mathrm{St}(x | \nu, \mu, \lambda)$が得られます。\
+　「スケールパラメータを使用」のときの計算式について、$\frac{1}{\sigma} = \sqrt{\lambda}$で置き換えた式です。\
+\
+
+
+## 統計量の計算
+
+　次は、スチューデントのt分布の期待値・分散・最頻値を計算します。詳しくは「統計量の導出」を参照してください。\
+\
+
+　期待値を計算します。
+
+```{r}
+# 期待値を計算:(nu > 1)
+E_x <- mu
+E_x
+```
+
+　t分布の期待値は$\mu$です。ただし、$\nu > 1$の場合に定義されます。\
+
+　分散を計算します。
+
+```{r}
+# sigmaを使って分散を計算:(nu > 2)
+V_x <- sigma^2 * nu / (nu - 2)
+V_x
+```
+
+```{r}
+# lambdaを使って分散を計算:(nu > 2)
+V_x <- nu / (nu - 2) / lambda
+V_x
+```
+
+　t分布の分散は、$\sigma$または$\lambda$を使って、次の式で計算できます。ただし、$\nu > 2$の場合に定義されます。
+
+$$
+\mathbb{V}[x]
+    = \sigma^2
+       \frac{\nu}{\nu - 2}
+    = \frac{1}{\lambda}
+       \frac{\nu}{\nu - 2}
+$$
+
+　$\sigma^2 = \frac{1}{\lambda}$が成り立つのが分かります。\
+
+　最頻値を計算します。
+
+```{r}
+# 最頻値を計算
+mode_x <- mu
+mode_x
+```
+
+　t分布の最頻値は$\mu$です。こちらは、$\nu$に関わらず計算できます。\
+\
+
+　この記事では、1次元スチューデントのt分布の計算を確認しました。次は、グラフを作成します。\
+\
+
+
+# 1次元スチューデントのt分布の作図
+
+　1次元スチューデントのt分布(Student's t-Distribution)のグラフを作成します。t分布については「定義式の確認」を参照してください。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r, eval=FALSE}
+# 利用パッケージ
+library(tidyverse)
+library(gganimate)
+library(LaplacesDemon)
+```
+
+```{r, echo=FALSE}
+### 資料作成用
+
+# チェック用
+library(ggplot2)
+```
+
+　この記事では、基本的に`パッケージ名::関数名()`の記法を使うので、パッケージを読み込む必要はありません。ただし、作図コードがごちゃごちゃしないようにパッケージ名を省略しているため、`ggplot2`は読み込む必要があります。\
+　`magrittr`パッケージのパイプ演算子`%>%`ではなく、ベースパイプ(ネイティブパイプ)演算子`|>`を使っています。`%>%`に置き換えても処理できます。\
+　分布の変化をアニメーション(gif画像)で確認するのに`gganimate`パッケージを利用します。不要であれば省略してください。\
+　一般化したt分布の計算に`LaplacesDemon`パッケージを利用します。\
+\
+
+
+## 定義式の確認
+
+　まずは、標準化されたスチューデントのt分布と一般化された(標準化されていない)スチューデントのt分布の定義式を確認します。(標準化・一般化という表現は雰囲気です。正しい言い方があれば教えてください。)  
+\
+
+　標準化t分布は、次の式で定義されます。
+
+$$
+\mathrm{St}(x | \nu)
+    = \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \sqrt{\pi \nu}
+          \Gamma(\frac{\nu}{2})
+      }
+      \left(
+          1 + \frac{x^2}{\nu}
+      \right)^{-\frac{(\nu+1)}{2}}
+$$
+
+　ここで、$\nu$は自由度、$\pi$は円周率、$\Gamma(x)$はガンマ関数です。自由度は形状パラメータとも呼ばれます。\
+　確率変数の実現値$x$は、実数となります。$\nu$は、正の整数を満たす必要があります。\
+
+　また、一般化t分布は、次の2つの式で定義されます。
+
+$$
+\begin{aligned}
+\mathrm{St}(x | \nu, \mu, \sigma)
+   &= \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{1}{\sqrt{\pi \nu} \sigma}
+      \left\{
+          1 + \frac{1}{\nu} \left(
+              \frac{x - \mu}{\sigma}
+          \right)^2
+      \right\}^{-\frac{(\nu+1)}{2}}
+\\
+\mathrm{St}(x | \nu, \mu, \lambda)
+   &= \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \left(
+          \frac{\lambda}{\pi \nu}
+      \right)^{\frac{1}{2}}
+      \left\{
+          1
+          + \frac{\lambda (x - \mu)^2}{\nu}
+      \right\}^{-\frac{(\nu+1)}{2}}
+\end{aligned}
+$$
+
+　ここで、$\mu$は位置パラメータ、$\sigma$はスケールパラメータ、$\lambda$は逆スケールパラメータです。\
+　$\mu$は実数、$\sigma$は正の実数、$\lambda$は正の実数を満たす必要があります。また、$\sigma = \frac{1}{\sqrt{\lambda}}$、$\lambda = \frac{1}{\sigma^2}$の関係が成り立ちます。\
+
+　$\mu = 0$、$\sigma = \lambda = 1$のとき、標準化t分布と一般化t分布は一致します。
+
+$$
+\mathrm{St}(x | \nu)
+    = \mathrm{St}(x | \nu, \mu = 0, \sigma = 1)
+    = \mathrm{St}(x | \nu, \mu = 0, \lambda = 1)
+$$
+
+\ 
+
+　t分布の期待値・分散・最頻値は、次の式で計算できます。詳しくはいつか書きます。
+
+$$
+\begin{aligned}
+\mathbb{E}[x]
+   &= \mu
+    \quad (\nu > 1)
+\\
+\mathbb{V}[x]
+   &= \sigma^2
+       \frac{\nu}{\nu - 2}
+    \quad (\nu > 2)
+\\
+   &= \frac{1}{\lambda}
+       \frac{\nu}{\nu - 2}
+    \quad (\nu > 2)
+\\
+\mathrm{mode}[x]
+   &= \mu
+\end{aligned}
+$$
+
+　これらの計算を行いグラフを作成します。\
+\
+
+
+## グラフの作成
+
+　`ggplot2`パッケージを利用して、t分布のグラフを作成します。t分布の確率や統計量の計算については「t分布の計算」を参照してください。\
+\
+
+　t分布のパラメータ$\nu, \mu, \sigma$を設定します。
+
+```{r}
+# 形状パラメータ(自由度)を指定
+nu <- 5
+
+# 位置パラメータを指定
+mu <- 2
+
+# スケールパラメータを指定
+sigma <- 0.5
+```
+
+　形状パラメータ(自由度)(正の整数)$\nu$、位置パラメータ(実数)$\mu$、スケールパラメータ(正の実数)$\sigma$を指定します。\
+
+　t分布の確率変数がとり得る値$x$を作成します。
+
+```{r}
+# xの値を作成
+x_vals <- seq(from = mu - sigma*5, to = mu + sigma*5, length.out = 251)
+```
+
+　$x$の値を作成して`x_vals`とします。この例では、`mu`を中心にスケールパラメータの`5`倍を範囲とします。\
+
+　$x$の値ごとに確率密度を計算します。
+
+```{r}
+# スチューデントのt分布を計算
+dens_df <- tibble::tibble(
+  x = x_vals, # 確率変数
+  density = LaplacesDemon::dst(x = x_vals, mu = mu, sigma = sigma, nu = nu) # 確率密度
+)
+dens_df
+```
+
+　t分布の確率密度は、`LaplacesDemon`パッケージの`dst()`で計算できます。確率変数の引数`x`
+に`x_vals`、位置パラメータの引数`mu`に`mu`、スケールパラメータの引数`sigma`に`sigma`、形状パラメータ(自由度)の引数`nu`に`nu`を指定します。逆スケールパラメータ$\lambda$を使う場合は、`sigma`引数に$\lambda$の逆数の平方根$\frac{1}{\sqrt{\lambda}}$を指定します。\
+
+　t分布のグラフを作成します。
+
+```{r}
+# スチューデントのt分布のグラフを作成
+ggplot(data = dens_df, mapping = aes(x = x, y = density)) + # データ
+  geom_line(color = "#00A968", size = 1) + # 折れ線グラフ
+  labs(
+    title = "Student's t Distribution", 
+    subtitle = paste0("nu=", nu, ", mu=", mu, ", sigma=", sigma), # (文字列表記用)
+    #subtitle = parse(text = paste0("list(nu==", nu, ", mu==", mu, ", sigma==", sigma, ")")), # (数式表記用)
+    x = "x", y = "density"
+  ) # ラベル
+```
+
+　ギリシャ文字などの記号を使った数式を表示する場合は、`expression()`の記法を使います。等号は`"=="`、複数の(数式上の)変数を並べるには`"list(変数1, 変数2)"`とします。(プログラム上の)変数の値を使う場合は、`parse()`の`text`引数に指定します。\
+\
+
+　この分布に統計量の情報を重ねて表示します。
+
+```{r}
+# 補助線用の統計量を計算
+E_x <- mu # (nu > 1)
+s_x <- sqrt(sigma^2 * nu / (nu - 2.0)) # (nu > 2)
+
+# 統計量を重ねたt分布のグラフを作成:線のみ
+ggplot(data = dens_df, mapping = aes(x = x, y = density)) + # データ
+  geom_line(color = "#00A968", size = 1) + # 分布
+  geom_vline(xintercept = E_x, color = "blue", size = 1, linetype = "dashed") + # 期待値
+  geom_vline(xintercept = E_x-s_x, color = "orange", size = 1, linetype = "dotted") + # 期待値 - 標準偏差
+  geom_vline(xintercept = E_x+s_x, color = "orange", size = 1, linetype = "dotted") + # 期待値 + 標準偏差
+  labs(
+    title = "Student's t Distribution", 
+    subtitle = parse(text = paste0("list(nu==", nu, ", mu==", mu, ", sigma==", sigma, ")")), 
+    x = "x", y = "density"
+  ) # ラベル
+```
+
+　期待値・標準偏差(分散の平方根)を計算して、それぞれ`geom_vline()`で垂直線を引きます。標準偏差については期待値から足し引きした値を使います。\
+\
+
+　凡例を表示する場合は、垂直線を引く値をデータフレームにまとめます。
+
+```{r}
+# 統計量を格納
+stat_df <- tibble::tibble(
+  statistic = c(mu, mu-sigma, mu+sigma), # 統計量
+  type = c("mean", "sd", "sd") # 色分け用ラベル
+)
+stat_df
+```
+
+　各統計量を区別するための文字列も格納します。期待値と標準偏差の差・和は同じラベルとします。\
+
+　線の色や種類、凡例テキストを指定する場合は、設定用の名前付きベクトルを作成します。
+
+```{r}
+# 凡例用の設定を作成:(数式表示用)
+color_vec    <- c(mean = "blue", sd = "orange")
+linetype_vec <- c(mean = "dashed", sd = "dotted")
+label_vec    <- c(mean = expression(E(x)), sd = expression(E(x) %+-% sqrt(V(x))))
+color_vec; linetype_vec; label_vec
+```
+
+　各要素(設定)の名前を`type`列の文字列と対応させて、設定(線の色・種類と数式用のテキスト)を指定します。\
+
+　凡例付きのグラフを作成します。
+
+```{r}
+# 統計量を重ねたt分布のグラフを作成:凡例付き
+ggplot() + 
+  geom_line(data = dens_df, mapping = aes(x = x, y = density), 
+            color = "#00A968", size = 1) + # 分布
+  geom_vline(data = stat_df, mapping = aes(xintercept = statistic, color = type, linetype = type), 
+             size = 1) + # 期待値
+  scale_color_manual(values = color_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
+  scale_linetype_manual(values = linetype_vec, labels = label_vec, name = "statistic") + # 線の種類:(線指定と数式表示用)
+  guides(color = guide_legend(override.aes = list(size = 0.5))) + # 凡例の体裁
+  theme(legend.text.align = 0) + # 図の体裁:凡例
+  labs(title = "Student's t Distribution", 
+       subtitle = parse(text = paste0("list(nu==", nu, ", mu==", mu, ", sigma==", sigma, ")")), 
+       x = "x", y = "density") # ラベル
+```
+
+　`scale_color_manual()`の`values`引数に線の色、`scale_linetype_manual()`の`values`引数に線の種類を指定します。凡例テキストを指定する場合は、それぞれの`labels`引数に指定します。`names`引数は凡例ラベルです。\
+　凡例テキストは、`theme()`の`legend.text.align`引数に`0`を指定すると左寄せ、デフォルト(`1`)だと右寄せになります。\
+
+　$\nu > 1$のとき期待値と最頻値が一致します。$\nu \leq 0$のときは期待値を計算できません。\
+\
+
+　t分布のグラフを描画できました。以降は、ここまでの作図処理を用いて、パラメータの影響を確認していきます。\
+\
+
+
+## パラメータと分布の関係を並べて比較
+
+　複数のパラメータのグラフを比較することで、パラメータの値と分布の形状の関係を確認します。\
+\
+
+
+### 自由度の影響
+
+　複数の$\nu$を指定し、$\mu, \sigma$を固定して、それぞれ分布を作図します。
+
+```{r}
+# 自由度として利用する値を指定
+nu_vals <- c(1, 2, 3, 4, 5, 10, 100)
+
+# 固定するパラメータを指定
+mu <- 2
+sigma <- 0.5
+
+# xの値を作成
+x_vals <- seq(from = mu - sigma*5, to = mu + sigma*5, length.out = 251)
+
+# パラメータごとにt分布を計算
+res_dens_df <- tidyr::expand_grid(
+  x = x_vals, 
+  nu = nu_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(nu, x) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    density = LaplacesDemon::dst(x = x_vals, mu = mu, sigma = sigma, nu = nu), 
+    parameter = paste0("nu=", nu, ", mu=", mu, ", sigma=", sigma) |> 
+      factor(levels = paste0("nu=", sort(nu_vals), ", mu=", mu, ", sigma=", sigma)) # 色分け用ラベル
+  ) # 確率密度を計算
+res_dens_df
+```
+
+　確率変数`x_vals`とパラメータ`nu_vals`それぞれの要素の全ての組み合わせを`expand_grid()`で作成します。\
+　組み合わせごとに確率密度を計算して、パラメータごとにラベルを作成します。ラベルは、グラフの設定や凡例テキストとして使います。文字列型だと文字列の基準で順序が決まるので、因子型にしてパラメータに応じたレベル(順序)を設定します。\
+
+　凡例を数式で表示する場合は、`expression()`に対応した記法に変換します。
+
+```{r}
+# 凡例用のラベルを作成:(数式表示用)
+label_vec <- res_dens_df[["parameter"]] |> 
+  stringr::str_replace_all(pattern = "=", replacement = "==") |> # 等号表示用の記法に変換
+  (\(.){paste0("list(", ., ")")})() |> # カンマ表示用の記法に変換
+  unique() |> # 重複を除去
+  parse(text = _) # expression関数化
+names(label_vec) <- unique(res_dens_df[["parameter"]]) # ggplotに指定する文字列に対応する名前付きベクトルに変換
+label_vec[1]
+```
+
+　変換後の文字列のベクトルに対して`names()`を使って、元の文字列を各要素の名前として設定します。\
+　3行目の処理では、無名関数`function()`の省略記法`\()`を使って、`(\(引数){引数を使った具体的な処理})()`としています。直前のパイプ演算子を`%>%`にすると、行全体`(\(引数){処理})()`を`{}`の中の`処理`(この例だと`paste0("list(", ., ")")`)に置き換えられます(置き換えられるように引数名を`.`にしています)。\
+
+　`res_prob_df`の`parameter`列の要素`nu=1, mu=2, sigma=0.5`と、変換後の文字列`list(nu == 1, mu == 2, sigma == 0.5)`が対応しています。\
+
+　パラメータごとにグラフを作成します。
+
+```{r, fig.width=8, fig.height=6}
+# パラメータごとにt分布を作図
+ggplot(data = res_dens_df, mapping = aes(x = x, y = density, color = parameter)) + # データ
+  geom_line(size = 1) + # 折れ線グラフ
+  scale_color_hue(labels = label_vec) + # 線の色:(数式表示用)
+  theme(legend.text.align = 0) + # 図の体裁:凡例
+  labs(title = "Student's t Distribution", 
+       x = "x", y = "density") # ラベル
+```
+
+　$\nu$が小さいほど裾が厚くなり、$\nu$が大きいほどガウス分布に近付きます。\
+\
+
+
+### 位置パラメータの影響
+
+　複数の$\mu$を指定し、$\nu, \sigma$を固定して、それぞれ分布を作図します。
+
+```{r}
+# 位置パラメータとして利用する値を指定
+mu_vals <- c(-3.5, -2, -0.5, 1, 2.5)
+
+# 固定するパラメータを指定
+nu <- 1
+sigma <- 0.5
+
+# xの値を作成
+x_vals <- seq(from = min(mu_vals)-sigma, to = max(mu_vals)+sigma, length.out = 251)
+
+# パラメータごとにt分布を計算
+res_dens_df <- tidyr::expand_grid(
+  x = x_vals, 
+  mu = mu_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(mu, x) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    density = LaplacesDemon::dst(x = x_vals, mu = mu, sigma = sigma, nu = nu), 
+    parameter = paste0("nu=", nu, ", mu=", mu, ", sigma=", sigma) |> 
+      factor(levels = paste0("nu=", nu, ", mu=", sort(mu_vals), ", sigma=", sigma)) # 色分け用ラベル
+  ) # 確率密度を計算
+res_dens_df
+```
+
+　`x_vals`と`mu_vals`の全ての組み合わせを作成して、同様に処理します。\
+
+　作図については同じコードで処理できます。
+
+```{r, echo=FALSE, fig.width=8, fig.height=6}
+### 資料作成用:(再掲)
+
+# 凡例用のラベルを作成:(数式表示用)
+label_vec <- res_dens_df[["parameter"]] |> 
+  stringr::str_replace_all(pattern = "=", replacement = "==") |> # 等号表示用の記法に変換
+  (\(.){paste0("list(", ., ")")})() |> # カンマ表示用の記法に変換
+  unique() |> # 重複を除去
+  parse(text = _) # expression関数化
+names(label_vec) <- unique(res_dens_df[["parameter"]]) # ggplotに指定する文字列に対応する名前付きベクトルに変換
+
+# パラメータごとにt分布を作図
+ggplot(data = res_dens_df, mapping = aes(x = x, y = density, color = parameter)) + # データ
+  geom_line(size = 1) + # 折れ線グラフ
+  scale_color_hue(labels = label_vec) + # 線の色:(数式表示用)
+  theme(legend.text.align = 0) + # 図の体裁:凡例
+  labs(title = "Student's t Distribution", 
+       x = "x", y = "density") # ラベル
+```
+
+　$\mu$が大きいほど、山が右に移動します。\
+\
+
+
+### スケールパラメータの影響
+
+　複数の$\sigma$を指定し、$\nu, \mu$を固定して、それぞれ分布を作図します。
+
+```{r}
+# スケールパラメータとして利用する値を指定
+sigma_vals <- c(0.5, 1, 2, 4, 8)
+
+# 固定するパラメータを指定
+nu <- 1
+mu <- 2
+
+# xの値を作成
+x_vals <- seq(from = mu - max(sigma_vals), to = mu + max(sigma_vals), length.out = 251)
+
+# パラメータごとにt分布を計算
+res_dens_df <- tidyr::expand_grid(
+  x = x_vals, 
+  sigma = sigma_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(sigma, x) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    density = LaplacesDemon::dst(x = x_vals, mu = mu, sigma = sigma, nu = nu), 
+    parameter = paste0("nu=", nu, ", mu=", mu, ", sigma=", sigma) |> 
+      factor(levels = paste0("nu=", nu, ", mu=", mu, ", sigma=", sort(sigma_vals))) # 色分け用ラベル
+  ) # 確率密度を計算
+res_dens_df
+```
+
+　`x_vals`と`sigma_vals`の全ての組み合わせを作成して、同様に処理します。\
+
+　作図については同じコードで処理できます。
+
+```{r, echo=FALSE, fig.width=8, fig.height=6}
+### 資料作成用:(再掲)
+
+# 凡例用のラベルを作成:(数式表示用)
+label_vec <- res_dens_df[["parameter"]] |> 
+  stringr::str_replace_all(pattern = "=", replacement = "==") |> # 等号表示用の記法に変換
+  (\(.){paste0("list(", ., ")")})() |> # カンマ表示用の記法に変換
+  unique() |> # 重複を除去
+  parse(text = _) # expression関数化
+names(label_vec) <- unique(res_dens_df[["parameter"]]) # ggplotに指定する文字列に対応する名前付きベクトルに変換
+
+# パラメータごとにt分布を作図
+ggplot(data = res_dens_df, mapping = aes(x = x, y = density, color = parameter)) + # データ
+  geom_line(size = 1) + # 折れ線グラフ
+  scale_color_hue(labels = label_vec) + # 線の色:(数式表示用)
+  theme(legend.text.align = 0) + # 図の体裁:凡例
+  labs(title = "Student's t Distribution", 
+       x = "x", y = "density") # ラベル
+```
+
+　$\sigma$が小さいほど、山が細く高くなります。\
+\
+
+
+### 逆スケールパラメータの影響
+
+　$\sigma$の代わりに複数の$\lambda$を指定し、$\nu, \mu$を固定して、それぞれ分布を作図します。
+
+```{r}
+# 逆スケールパラメータとして利用する値を指定
+lambda_vals <- c(0.25, 0.5, 1, 2, 4)
+
+# 固定するパラメータを指定
+nu <- 1
+mu <- 2
+
+# xの値を作成
+sigma <- 1 / sqrt(min(lambda_vals))
+x_vals <- seq(from = mu - sigma*4, to = mu + sigma*4, length.out = 251)
+
+# パラメータごとにt分布を計算
+res_dens_df <- tidyr::expand_grid(
+  x = x_vals, 
+  lambda = lambda_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(lambda, x) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    density = LaplacesDemon::dst(x = x_vals, mu = mu, sigma = 1/sqrt(lambda), nu = nu), 
+    parameter = paste0("nu=", nu, ", mu=", mu, ", lambda=", lambda) |> 
+      factor(levels = paste0("nu=", nu, ", mu=", mu, ", lambda=", sort(lambda_vals))) # 色分け用ラベル
+  ) # 確率密度を計算
+res_dens_df
+```
+
+　`x_vals`と`lambda_vals`の全ての組み合わせを作成して、同様に処理します。\
+　`dst()`の`sigma`引数に`lambda_vals`の値の逆数の平方根を指定します。\
+
+　作図については同じコードで処理できます。
+
+```{r, echo=FALSE, fig.width=8, fig.height=6}
+### 資料作成用:(再掲)
+
+# 凡例用のラベルを作成:(数式表示用)
+label_vec <- res_dens_df[["parameter"]] |> 
+  stringr::str_replace_all(pattern = "=", replacement = "==") |> # 等号表示用の記法に変換
+  (\(.){paste0("list(", ., ")")})() |> # カンマ表示用の記法に変換
+  unique() |> # 重複を除去
+  parse(text = _) # expression関数化
+names(label_vec) <- unique(res_dens_df[["parameter"]]) # ggplotに指定する文字列に対応する名前付きベクトルに変換
+
+# パラメータごとにt分布を作図
+ggplot(data = res_dens_df, mapping = aes(x = x, y = density, color = parameter)) + # データ
+  geom_line(size = 1) + # 折れ線グラフ
+  scale_color_hue(labels = label_vec) + # 線の色:(数式表示用)
+  theme(legend.text.align = 0) + # 図の体裁:凡例
+  labs(title = "Student's t Distribution", 
+       x = "x", y = "density") # ラベル
+```
+
+　$\lambda$が大きいほど、山が細く高くなります。\
+\
+
+
+## パラメータと分布の関係をアニメーションで可視化
+
+　前節では、複数のパラメータのグラフを並べて比較しました。次は、パラメータの値を少しずつ変化させて、分布の形状の変化をアニメーションで確認します。\
+\
+
+
+### 自由度の影響
+
+　$\nu$の値を変化させ、$\mu, \sigma$を固定して、それぞれ分布を作図します。
+
+```{r}
+# 自由度として利用する値を指定
+nu_vals <- 1:50 # (線の変化用)
+#nu_vals <- seq(from = 1, to = 25, by = 1) # (線の軌跡用)
+length(nu_vals) # フレーム数
+
+# 固定するパラメータを指定
+mu <- 2
+sigma <- 0.5
+
+# xの値を作成
+x_vals <- seq(from = mu - sigma*5, to = mu + sigma*5, length.out = 251)
+
+# パラメータごとにt分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  x = x_vals, 
+  nu = nu_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(nu, x) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    density = LaplacesDemon::dst(x = x_vals, mu = mu, sigma = sigma, nu = nu), 
+    parameter = paste0("nu=", round(nu, 2), ", mu=", mu, ", sigma=", sigma) |> 
+      factor(levels = paste0("nu=", round(nu_vals, 2), ", mu=", mu, ", sigma=", sigma)) # 色分け用ラベル
+  ) # 確率密度を計算
+anime_dens_df
+```
+
+　値の間隔が一定になるように`nu_vals`を作成します。パラメータごとにフレームを切り替えるので、`mu_vals`の要素数がアニメーションのフレーム数になります。\
+　データフレームの変数名以外は「並べて比較」のときと同じ処理です。\
+
+　スチューデントのt分布のアニメーション(gif画像)を作成します。
+
+```{r}
+# t分布のアニメーションを作図
+anime_dens_graph <- ggplot(data = anime_dens_df, mapping = aes(x = x, y = density)) + # データ
+  geom_line(color = "#00A968", size = 1) + # 折れ線グラフ
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Student's t Distribution", 
+       subtitle = "{current_frame}", 
+       x = "x", y = "density") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(nu_vals), fps = 10, width = 800, height = 600)
+```
+
+　`transition_manual()`にフレームの順序を表す列を指定します。この例では、因子型のラベルのレベルの順に描画されます。\
+　`animate()`のフレーム数の引数`nframes`にパラメータ数、フレームレートの引数`fps`に1秒当たりのフレーム数を指定します。`fps`引数の値が大きいほどフレームが早く切り替わります。ただし、値が大きいと意図通りに動作しません。\
+
+　続いて、分布の変化の軌跡を描画するアニメーションを作成します。`mu_vals`の値の間隔を粗くしておきます。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 自由度として利用する値を指定
+nu_vals <- seq(from = 1, to = 25, by = 1) # (線の軌跡用)
+
+# 固定するパラメータを指定
+mu <- 2
+sigma <- 0.5
+
+# xの値を作成
+x_vals <- seq(from = mu - sigma*5, to = mu + sigma*5, length.out = 251)
+
+# パラメータごとにt分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  x = x_vals, 
+  nu = nu_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(nu, x) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    density = LaplacesDemon::dst(x = x_vals, mu = mu, sigma = sigma, nu = nu), 
+    parameter = paste0("nu=", round(nu, 2), ", mu=", mu, ", sigma=", sigma) |> 
+      factor(levels = paste0("nu=", round(nu_vals, 2), ", mu=", mu, ", sigma=", sigma)) # 色分け用ラベル
+  ) # 確率密度を計算
+```
+
+```{r}
+# t分布のアニメーションを作図
+anime_dens_graph <- ggplot(data = anime_dens_df, mapping = aes(x = x, y = density, color = factor(nu), group = nu)) + # データ
+  geom_line() + # 折れ線グラフ
+  gganimate::transition_reveal(nu) + # フレーム
+  labs(title = "Student's t Distribution", 
+       subtitle = paste0("nu={frame_along}, mu=", mu, ", sigma=", sigma), 
+       color = expression(nu), 
+       x = "x", y = "density") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(nu_vals)+10, end_pause = 10, fps = 10, width = 800, height = 600)
+```
+
+　`transition_reveal()`を使ってフレームを切り替えると、過去フレームのグラフが表示され続けます。\
+　`animate()`の`end_pause`引数を指定すると、最後のフレームでグラフが一時停止(最後のグラフを指定したフレーム数表示)します。\
+\
+
+
+### 位置パラメータの影響
+
+　続いて、$\mu$の値を変化させ、$\nu, \sigma$を固定して、それぞれ分布を計算します。
+
+```{r}
+# 位置パラメータとして利用する値を指定
+mu_vals <- seq(from = -3, to = 3, by = 0.1) # (線の変化用)
+#mu_vals <- seq(from = -3, to = 3, by = 0.5) # (線の軌跡用)
+length(mu_vals) # フレーム数
+
+# 固定するパラメータを指定
+nu <- 1
+sigma <- 0.5
+
+# xの値を作成
+x_vals <- seq(from = min(mu_vals)-sigma, to = max(mu_vals)+sigma, length.out = 251)
+
+# パラメータごとにt分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  x = x_vals, 
+  mu = mu_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(mu, x) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    density = LaplacesDemon::dst(x = x_vals, mu = mu, sigma = sigma, nu = nu), 
+    parameter = paste0("nu=", nu, ", mu=", round(mu, 2), ", sigma=", sigma) |> 
+      factor(levels = paste0("nu=", nu, ", mu=", round(mu_vals, 2), ", sigma=", sigma)) # 色分け用ラベル
+  ) # 確率密度を計算
+anime_dens_df
+```
+
+　「並べて比較」や「自由度の影響」と同様に処理します。\
+
+　「自由度の影響」のコードで作図できます。フレーム数は`mu_vals`の要素数です。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# t分布のアニメーションを作図
+anime_dens_graph <- ggplot(data = anime_dens_df, mapping = aes(x = x, y = density)) + # データ
+  geom_line(color = "#00A968", size = 1) + # 折れ線グラフ
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Student's t Distribution", 
+       subtitle = "{current_frame}", 
+       x = "x", y = "density") # ラベル
+```
+
+```{r}
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(mu_vals), fps = 10, width = 800, height = 600)
+```
+
+\ 
+
+　続いて、分布の変化の軌跡を描画するアニメーションを作成します。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 位置パラメータとして利用する値を指定
+mu_vals <- seq(from = -3, to = 3, by = 0.5) # (線の軌跡用)
+
+# 固定するパラメータを指定
+nu <- 1
+sigma <- 0.5
+
+# xの値を作成
+x_vals <- seq(from = min(mu_vals)-sigma, to = max(mu_vals)+sigma, length.out = 251)
+
+# パラメータごとにt分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  x = x_vals, 
+  mu = mu_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(mu, x) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    density = LaplacesDemon::dst(x = x_vals, mu = mu, sigma = sigma, nu = nu), 
+    parameter = paste0("nu=", nu, ", mu=", round(mu, 2), ", sigma=", sigma) |> 
+      factor(levels = paste0("nu=", nu, ", mu=", round(mu_vals, 2), ", sigma=", sigma)) # 色分け用ラベル
+  ) # 確率密度を計算
+```
+
+```{r}
+# t分布のアニメーションを作図
+anime_dens_graph <- ggplot(data = anime_dens_df, mapping = aes(x = x, y = density, color = factor(mu), group = mu)) + # データ
+  geom_line() + # 折れ線グラフ
+  gganimate::transition_reveal(mu) + # フレーム
+  labs(title = "Student's t Distribution", 
+       subtitle = paste0("nu=", nu, ", mu={frame_along}, sigma=", sigma), 
+       color = expression(mu), 
+       x = "x", y = "density") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(mu_vals)+10, end_pause = 10, fps = 10, width = 800, height = 600)
+```
+
+　「自由度の影響」の`nu`を`mu`に置き換えて処理します。\
+\
+
+
+### スケールパラメータの影響
+
+　$\sigma$の値を変化させ、$\nu, \mu$を固定して、それぞれ分布を計算します。
+
+```{r}
+# スケールパラメータとして利用する値を指定
+sigma_vals <- seq(from = 0.5, to = 5, by = 0.1) # (線の変化用)
+#sigma_vals <- seq(from = 0.5, to = 10, by = 0.5) # (線の軌跡用)
+length(sigma_vals) # フレーム数
+
+# 固定するパラメータを指定
+nu <- 1
+mu <- 2
+
+# xの値を作成
+x_vals <- seq(from = mu - max(sigma_vals), to = mu + max(sigma_vals), length.out = 251)
+
+# パラメータごとにt分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  x = x_vals, 
+  sigma = sigma_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(sigma, x) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    density = LaplacesDemon::dst(x = x_vals, mu = mu, sigma = sigma, nu = nu), 
+    parameter = paste0("nu=", nu, ", mu=", mu, ", sigma=", round(sigma, 2)) |> 
+      factor(levels = paste0("nu=", nu, ", mu=", mu, ", sigma=", round(sigma_vals, 2))) # 色分け用ラベル
+  ) # 確率密度を計算
+anime_dens_df
+```
+
+　「並べて比較」や「自由度の影響」と同様に処理します。\
+
+　「自由度の影響」のコードで作図できます。フレーム数は`sigma_vals`の要素数です。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# t分布のアニメーションを作図
+anime_dens_graph <- ggplot(data = anime_dens_df, mapping = aes(x = x, y = density)) + # データ
+  geom_line(color = "#00A968", size = 1) + # 折れ線グラフ
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Student's t Distribution", 
+       subtitle = "{current_frame}", 
+       x = "x", y = "density") # ラベル
+```
+
+```{r}
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(sigma_vals), fps = 10, width = 800, height = 600)
+```
+
+\ 
+
+　続いて、分布の変化の軌跡を描画するアニメーションを作成します。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# スケールパラメータとして利用する値を指定
+sigma_vals <- seq(from = 0.5, to = 10, by = 0.5) # (線の軌跡用)
+
+# 固定するパラメータを指定
+nu <- 1
+mu <- 2
+
+# xの値を作成
+#x_vals <- seq(from = mu - max(sigma_vals), to = mu + max(sigma_vals), length.out = 251)
+
+# パラメータごとにt分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  x = x_vals, 
+  sigma = sigma_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(sigma, x) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    density = LaplacesDemon::dst(x = x_vals, mu = mu, sigma = sigma, nu = nu), 
+    parameter = paste0("nu=", nu, ", mu=", mu, ", sigma=", round(sigma, 2)) |> 
+      factor(levels = paste0("nu=", nu, ", mu=", mu, ", sigma=", round(sigma_vals, 2))) # 色分け用ラベル
+  ) # 確率密度を計算
+```
+
+```{r}
+# t分布のアニメーションを作図
+anime_dens_graph <- ggplot(data = anime_dens_df, mapping = aes(x = x, y = density, color = factor(sigma), group = sigma)) + # データ
+  geom_line() + # 折れ線グラフ
+  gganimate::transition_reveal(sigma) + # フレーム
+  labs(title = "Student's t Distribution", 
+       subtitle = paste0("nu=", nu, ", mu=", mu, ", sigma={frame_along}"), 
+       color = expression(sigma), 
+       x = "x", y = "density") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(sigma_vals)+10, end_pause=10, fps = 10, width = 800, height = 600)
+```
+
+　「自由度の影響」の`nu`を`sigma`に置き換えて処理します。\
+\
+
+
+### 逆スケールパラメータの影響
+
+　$\sigma$の代わりに$\lambda$の値を変化させ、$\nu, \mu$を固定して、それぞれ分布を計算します。
+
+```{r}
+# 逆スケールパラメータとして利用する値を指定
+lambda_vals <- seq(from = 0.1, to = 10, by = 0.1) # (線の変化用)
+#lambda_vals <- seq(from = 0.5, to = 10, by = 0.5) # (線の軌跡用)
+length(lambda_vals) # フレーム数
+
+# 固定するパラメータを指定
+nu <- 1
+mu <- 2
+
+# xの値を作成
+sigma <- 1 / sqrt(min(lambda_vals))
+x_vals <- seq(from = mu - sigma*2, to = mu + sigma*2, length.out = 251)
+
+# パラメータごとにt分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  x = x_vals, 
+  lambda = lambda_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(lambda, x) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    density = LaplacesDemon::dst(x = x_vals, mu = mu, sigma = 1/sqrt(lambda), nu = nu), 
+    parameter = paste0("nu=", nu, ", mu=", mu, ", lambda=", round(lambda, 2)) |> 
+      factor(levels = paste0("nu=", nu, ", mu=", mu, ", lambda=", round(lambda_vals, 2))) # 色分け用ラベル
+  ) # 確率密度を計算
+anime_dens_df
+```
+
+　「並べて比較」や「自由度の影響」と同様に処理します。\
+
+　「自由度の影響」のコードで作図できます。フレーム数は`lambda_vals`の要素数です。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# t分布のアニメーションを作図
+anime_dens_graph <- ggplot(data = anime_dens_df, mapping = aes(x = x, y = density)) + # データ
+  geom_line(color = "#00A968", size = 1) + # 折れ線グラフ
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Student's t Distribution", 
+       subtitle = "{current_frame}", 
+       x = "x", y = "density") # ラベル
+```
+
+```{r}
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(lambda_vals), fps = 10, width = 800, height = 600)
+```
+
+\ 
+
+　続いて、分布の変化の軌跡を描画するアニメーションを作成します。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 逆スケールパラメータとして利用する値を指定
+lambda_vals <- seq(from = 0.5, to = 10, by = 0.5) # (線の軌跡用)
+
+# 固定するパラメータを指定
+nu <- 1
+mu <- 2
+
+# xの値を作成
+#sigma <- 1 / sqrt(min(lambda_vals))
+#x_vals <- seq(from = mu - sigma*2, to = mu + sigma*2, length.out = 251)
+
+# パラメータごとにt分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  x = x_vals, 
+  lambda = lambda_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(lambda, x) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    density = LaplacesDemon::dst(x = x_vals, mu = mu, sigma = 1/sqrt(lambda), nu = nu), 
+    parameter = paste0("nu=", nu, ", mu=", mu, ", lambda=", round(lambda, 2)) |> 
+      factor(levels = paste0("nu=", nu, ", mu=", mu, ", lambda=", round(lambda_vals, 2))) # 色分け用ラベル
+  ) # 確率密度を計算
+```
+
+```{r}
+# t分布のアニメーションを作図
+anime_dens_graph <- ggplot(data = anime_dens_df, mapping = aes(x = x, y = density, color = factor(lambda), group = lambda)) + # データ
+  geom_line() + # 折れ線グラフ
+  gganimate::transition_reveal(lambda) + # フレーム
+  labs(title = "Student's t Distribution", 
+       subtitle = paste0("nu=", nu, ", mu=", mu, ", lambda={frame_along}"), 
+       color = expression(lambda), 
+       x = "x", y = "density") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(lambda_vals)+10, end_pause=10, fps = 10, width = 800, height = 600)
+```
+
+　「自由度の影響」の`nu`を`lambda`に置き換えて処理します。\
+\
+
+
+## パラメータと統計量の関係をアニメーションで可視化
+
+　ここまでは、パラメータと分布の関係を確認しました。次は、パラメータと統計量の関係をアニメーションで確認します。\
+\
+
+
+### 自由度の影響
+
+　「パラメータと分布の形状の関係」と同様に、$\nu$の値を変化させ、$\mu, \sigma$を固定して、`anime_dens_df`を作成します。\
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 自由度として利用する値を指定
+nu_vals <- 1:50
+
+# 固定するパラメータを指定
+mu <- 2
+sigma <- 0.5
+
+# xの値を作成
+x_vals <- seq(from = mu - sigma*5, to = mu + sigma*5, length.out = 251)
+
+# パラメータごとにt分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  x = x_vals, 
+  nu = nu_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(nu, x) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    density = LaplacesDemon::dst(x = x_vals, mu = mu, sigma = sigma, nu = nu), 
+    parameter = paste0("nu=", round(nu, 2), ", mu=", mu, ", sigma=", sigma) |> 
+      factor(levels = paste0("nu=", round(nu_vals, 2), ", mu=", mu, ", sigma=", sigma)) # 色分け用ラベル
+  ) # 確率密度を計算
+```
+
+　パラメータごとに統計量を計算します。
+
+```{r}
+# パラメータごとに統計量を計算
+anime_stat_df <- tibble::tibble(
+  nu = nu_vals, 
+  mean = dplyr::if_else(
+    nu > 1, true = mu, false = as.numeric(NA)
+  ), # 期待値
+  sd = dplyr::if_else(
+    nu > 2, true = sqrt(sigma^2 * nu / (nu - 2)), false = as.numeric(NA)
+  ), # 標準偏差
+  parameter = paste0("nu=", round(nu_vals, 2), ", mu=", mu, ", sigma=", sigma) |> 
+    factor(levels = paste0("nu=", round(nu_vals, 2), ", mu=", mu, ", sigma=", sigma)) # フレーム切替用のラベル
+) |> # 統計量を計算
+  dplyr::mutate(
+    sd_minus = mean - sd, 
+    sd_plus = mean + sd
+  ) |> # 期待値±標準偏差を計算
+  dplyr::select(!c(nu, sd)) |> # 不要な列を削除
+  tidyr::pivot_longer(
+    cols = !parameter, 
+    names_to = "type", 
+    values_to = "statistic"
+  ) |> # 統計量の列をまとめる
+  dplyr::mutate(
+    type = stringr::str_replace(type, pattern = "sd_.*", replacement = "sd")) # 期待値±標準偏差のカテゴリを統一
+anime_stat_df
+```
+
+　期待値・標準偏差・最頻値を計算して、さらに期待値から標準偏差を引いた値と足した値を求めます。\
+　期待値・標準偏差の和と差・最頻値の4つの列を`pivot_longer()`でまとめます。列名がラベルになるので、標準偏差の和と差のラベルを統一します。\
+
+　線と凡例の設定用の名前付きベクトルを作成します。
+
+```{r}
+# 凡例用の設定を作成:(数式表示用)
+color_vec    <- c(mean = "blue", sd = "orange")
+linetype_vec <- c(mean = "dashed", sd = "dotted")
+label_vec    <- c(mean = expression(E(x)), sd = expression(E(x) %+-% sqrt(V(x))))
+```
+
+　「グラフの作成」のときと同じ処理です。\
+
+　統計量の情報を重ねたガンマ分布のアニメーション(gif画像)を作成します。
+
+```{r}
+# 統計量を重ねたt分布のアニメーションを作図
+anime_dens_graph <- ggplot() + 
+  geom_line(data = anime_dens_df, mapping = aes(x = x, y = density), 
+            color = "#00A968", size = 1) + # 分布
+  geom_vline(data = anime_stat_df, mapping = aes(xintercept = statistic, color = type, linetype = type), 
+             size = 1) + # 統計量
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_color_manual(values = color_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
+  scale_linetype_manual(values = linetype_vec, labels = label_vec, name = "statistic") + # 線の種類:(線指定と数式表示用)
+  guides(color = guide_legend(override.aes = list(size = 0.5))) + # 凡例の体裁
+  theme(legend.text.align = 0) + # 図の体裁:凡例
+  #coord_cartesian(xlim = c(min(x_vals), max(x_vals))) + # 軸の表示範囲
+  labs(title = "Student's t Distribution", 
+       subtitle = "{current_frame}", 
+       x = "x", y = "density") # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(nu_vals), fps = 10, width = 800, height = 600)
+```
+
+\ 
+
+
+### 位置パラメータの影響
+
+　$\mu$の値を変化させ、$\nu, \sigma$を固定して、`anime_dens_df`を作成します。\
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 位置パラメータとして利用する値を指定
+mu_vals <- seq(from = -3, to = 3, by = 0.1)
+
+# 固定するパラメータを指定
+nu <- 5
+sigma <- 0.5
+
+# xの値を作成
+x_vals <- seq(from = min(mu_vals)-sigma, to = max(mu_vals)+sigma, length.out = 251)
+
+# パラメータごとにt分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  x = x_vals, 
+  mu = mu_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(mu, x) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    density = LaplacesDemon::dst(x = x_vals, mu = mu, sigma = sigma, nu = nu), 
+    parameter = paste0("nu=", nu, ", mu=", round(mu, 2), ", sigma=", sigma) |> 
+      factor(levels = paste0("nu=", nu, ", mu=", round(mu_vals, 2), ", sigma=", sigma)) # 色分け用ラベル
+  ) # 確率密度を計算
+```
+
+　パラメータごとに統計量を計算します。
+
+```{r}
+# パラメータごとに統計量を計算
+anime_stat_df <- tibble::tibble(
+  nu = nu, 
+  mu = mu_vals, 
+  mean = dplyr::if_else(
+    nu > 1, true = mu, false = as.numeric(NA)
+  ), # 期待値
+  sd = dplyr::if_else(
+    nu > 2, true = sqrt(sigma^2 * nu / (nu - 2)), false = as.numeric(NA)
+  ), # 標準偏差
+  parameter = paste0("nu=", nu, ", mu=", round(mu_vals, 2), ", sigma=", sigma) |> 
+    factor(levels = paste0("nu=", nu, ", mu=", round(mu_vals, 2), ", sigma=", sigma)) # フレーム切替用のラベル
+) |> # 統計量を計算
+  dplyr::mutate(
+    sd_minus = mean - sd, 
+    sd_plus = mean + sd
+  ) |> # 期待値±標準偏差を計算
+  dplyr::select(!c(nu, mu, sd)) |> # 不要な列を削除
+  tidyr::pivot_longer(
+    cols = !parameter, 
+    names_to = "type", 
+    values_to = "statistic"
+  ) |> # 統計量の列をまとめる
+  dplyr::mutate(
+    type = stringr::str_replace(type, pattern = "sd_.*", replacement = "sd")) # 期待値±標準偏差のカテゴリを統一
+anime_stat_df
+```
+
+　「自由度の影響」の`nu_vals`を`nu`置き換え、`mu_vals`を追加するように処理します。\
+
+　「自由度の影響」のコードで作図できます。フレーム数は`mu_vals`の要素数です。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 統計量を重ねたt分布のアニメーションを作図
+anime_dens_graph <- ggplot() + 
+  geom_line(data = anime_dens_df, mapping = aes(x = x, y = density), 
+            color = "#00A968", size = 1) + # 分布
+  geom_vline(data = anime_stat_df, mapping = aes(xintercept = statistic, color = type, linetype = type), 
+             size = 1) + # 統計量
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_color_manual(values = color_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
+  scale_linetype_manual(values = linetype_vec, labels = label_vec, name = "statistic") + # 線の種類:(線指定と数式表示用)
+  guides(color = guide_legend(override.aes = list(size = 0.5))) + # 凡例の体裁
+  theme(legend.text.align = 0) + # 図の体裁:凡例
+  #coord_cartesian(xlim = c(min(x_vals), max(x_vals))) + # 軸の表示範囲
+  labs(title = "Student's t Distribution", 
+       subtitle = "{current_frame}", 
+       x = "x", y = "density") # ラベル
+```
+
+```{r}
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(mu_vals), fps = 10, width = 800, height = 600)
+```
+
+\ 
+
+
+### スケールパラメータの影響
+
+　$\sigma$の値を変化させ、$\nu, \mu$を固定して、`anime_dens_df`を作成します。\
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# スケールパラメータとして利用する値を指定
+sigma_vals <- seq(from = 0.5, to = 5, by = 0.1)
+
+# 固定するパラメータを指定
+nu <- 5
+mu <- 2
+
+# xの値を作成
+x_vals <- seq(from = mu - max(sigma_vals), to = mu + max(sigma_vals), length.out = 251)
+
+# パラメータごとにt分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  x = x_vals, 
+  sigma = sigma_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(sigma, x) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    density = LaplacesDemon::dst(x = x_vals, mu = mu, sigma = sigma, nu = nu), 
+    parameter = paste0("nu=", nu, ", mu=", mu, ", sigma=", round(sigma, 2)) |> 
+      factor(levels = paste0("nu=", nu, ", mu=", mu, ", sigma=", round(sigma_vals, 2))) # 色分け用ラベル
+  ) # 確率密度を計算
+```
+
+　パラメータごとに統計量を計算します。
+
+```{r}
+# パラメータごとに統計量を計算
+anime_stat_df <- tibble::tibble(
+  nu = nu, 
+  sigma = sigma_vals, 
+  mean = dplyr::if_else(
+    nu > 1, true = mu, false = as.numeric(NA)
+  ), # 期待値
+  sd = dplyr::if_else(
+    nu > 2, true = sqrt(sigma^2 * nu / (nu - 2)), false = as.numeric(NA)
+  ), # 標準偏差
+  parameter = paste0("nu=", nu, ", mu=", mu, ", sigma=", round(sigma_vals, 2)) |> 
+    factor(levels = paste0("nu=", nu, ", mu=", mu, ", sigma=", round(sigma_vals, 2))) # フレーム切替用のラベル
+) |> # 統計量を計算
+  dplyr::mutate(
+    sd_minus = mean - sd, 
+    sd_plus = mean + sd
+  ) |> # 期待値±標準偏差を計算
+  dplyr::select(!c(nu, sigma, sd)) |> # 不要な列を削除
+  tidyr::pivot_longer(
+    cols = !parameter, 
+    names_to = "type", 
+    values_to = "statistic"
+  ) |> # 統計量の列をまとめる
+  dplyr::mutate(
+    type = stringr::str_replace(type, pattern = "sd_.*", replacement = "sd")) # 期待値±標準偏差のカテゴリを統一
+anime_stat_df
+```
+
+　「位置パラメータの影響」の`mu_vals`と`sigma_vals`を置き換えるように処理します。\
+
+　「自由度の影響」のコードで作図できます。フレーム数は`sigma_vals`の要素数です。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 統計量を重ねたt分布のアニメーションを作図
+anime_dens_graph <- ggplot() + 
+  geom_line(data = anime_dens_df, mapping = aes(x = x, y = density), 
+            color = "#00A968", size = 1) + # 分布
+  geom_vline(data = anime_stat_df, mapping = aes(xintercept = statistic, color = type, linetype = type), 
+             size = 1) + # 統計量
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_color_manual(values = color_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
+  scale_linetype_manual(values = linetype_vec, labels = label_vec, name = "statistic") + # 線の種類:(線指定と数式表示用)
+  guides(color = guide_legend(override.aes = list(size = 0.5))) + # 凡例の体裁
+  theme(legend.text.align = 0) + # 図の体裁:凡例
+  coord_cartesian(xlim = c(min(x_vals), max(x_vals))) + # 軸の表示範囲
+  labs(title = "Student's t Distribution", 
+       subtitle = "{current_frame}", 
+       x = "x", y = "density") # ラベル
+```
+
+```{r}
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(sigma_vals), fps = 10, width = 800, height = 600)
+```
+
+\ 
+
+
+### 逆スケールパラメータの影響
+
+　$\sigma$の代わりに$\lambda$の値を変化させ、$\nu, \mu$を固定して、`anime_dens_df`を作成します。\
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 逆スケールパラメータとして利用する値を指定
+lambda_vals <- seq(from = 0.1, to = 10, by = 0.1)
+
+# 固定するパラメータを指定
+nu <- 5
+mu <- 2
+
+# xの値を作成
+sigma <- 1 / sqrt(min(lambda_vals))
+x_vals <- seq(from = mu - sigma*2, to = mu + sigma*2, length.out = 251)
+
+# パラメータごとにt分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  x = x_vals, 
+  lambda = lambda_vals
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(lambda, x) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    density = LaplacesDemon::dst(x = x_vals, mu = mu, sigma = 1/sqrt(lambda), nu = nu), 
+    parameter = paste0("nu=", nu, ", mu=", mu, ", lambda=", round(lambda, 2)) |> 
+      factor(levels = paste0("nu=", nu, ", mu=", mu, ", lambda=", round(lambda_vals, 2))) # 色分け用ラベル
+  ) # 確率密度を計算
+```
+
+　パラメータごとに統計量を計算します。
+
+```{r}
+# パラメータごとに統計量を計算
+anime_stat_df <- tibble::tibble(
+  nu = nu, 
+  lambda = lambda_vals, 
+  mean = dplyr::if_else(
+    nu > 1, true = mu, false = as.numeric(NA)
+  ), # 期待値
+  sd = dplyr::if_else(
+    nu > 2, true = nu / (nu - 2) / lambda, false = as.numeric(NA)
+  ), # 標準偏差
+  parameter = paste0("nu=", nu, ", mu=", mu, ", lambda=", round(lambda_vals, 2)) |> 
+    factor(levels = paste0("nu=", nu, ", mu=", mu, ", lambda=", round(lambda_vals, 2))) # フレーム切替用のラベル
+) |> # 統計量を計算
+  dplyr::mutate(
+    sd_minus = mean - sd, 
+    sd_plus = mean + sd
+  ) |> # 期待値±標準偏差を計算
+  dplyr::select(!c(nu, lambda, sd)) |> # 不要な列を削除
+  tidyr::pivot_longer(
+    cols = !parameter, 
+    names_to = "type", 
+    values_to = "statistic"
+  ) |> # 統計量の列をまとめる
+  dplyr::mutate(
+    type = stringr::str_replace(type, pattern = "sd_.*", replacement = "sd")) # 期待値±標準偏差のカテゴリを統一
+anime_stat_df
+```
+
+　「スケールパラメータの影響」の`sigma_vals`と`lambda_vals`を置き換えるように処理します。分散の計算も$\lambda$を使った式に変更します。\
+
+　「自由度の影響」のコードで作図できます。フレーム数は`lambda_vals`の要素数です。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 統計量を重ねたt分布のアニメーションを作図
+anime_dens_graph <- ggplot() + 
+  geom_line(data = anime_dens_df, mapping = aes(x = x, y = density), 
+            color = "#00A968", size = 1) + # 分布
+  geom_vline(data = anime_stat_df, mapping = aes(xintercept = statistic, color = type, linetype = type), 
+             size = 1) + # 統計量
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_color_manual(values = color_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
+  scale_linetype_manual(values = linetype_vec, labels = label_vec, name = "statistic") + # 線の種類:(線指定と数式表示用)
+  guides(color = guide_legend(override.aes = list(size = 0.5))) + # 凡例の体裁
+  theme(legend.text.align = 0) + # 図の体裁:凡例
+  coord_cartesian(xlim = c(min(x_vals), max(x_vals))) + # 軸の表示範囲
+  labs(title = "Student's t Distribution", 
+       subtitle = "{current_frame}", 
+       x = "x", y = "density") # ラベル
+```
+
+```{r}
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(lambda_vals), fps = 10, width = 800, height = 600)
+```
+
+\ 
+
+　この記事では、1次元スチューデントのt分布の作図を確認しました。\
+\
+
+
