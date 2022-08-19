@@ -1,158 +1,50 @@
 ---
-title: |
-  ガウス-ガンマ分布
+title: "ガウス-ガンマ分布"
 author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
-date: "`r paste('2022/01/31', '2022/02/03', sep = ' - ')`"
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M:%S')`"
 output:
-  pdf_document:
-    latex_engine: xelatex
-    number_section: true
-    toc: true
-    toc_depth: 4
-    keep_tex: false
-header-includes:
-  - \usepackage{bookmark}
-  - \usepackage{xltxtra}
-  - \usepackage{zxjatype}
-  - \usepackage[ipa]{zxjafont}
+  html_document:
+    toc: TRUE       # 目次
+    toc_depth: 3    # 目次の見出しレベル
+    toc_float: TRUE # 目次のスクロール追跡
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   echo = TRUE, 
-  message = FALSE, error = FALSE, warning = FALSE, # メッセージを非表示
-  fig.align = "center", # 画像を中央揃え
-  fig.width = 5, fig.height = 4, # 画像のサイズ
-  dev = "cairo_pdf", dev.args = list(family = "ipaexg"), # {ggplot2}に日本語を組み込む場合の対処
-  class.source = "numberLines lineAnchors", # ソースを番号付けする
-  class.output = "numberLines lineAnchors chunkout" # 出力を番号付けする
+  message = FALSE, error = FALSE, warning = FALSE # メッセージを非表示
 )
 ```
 
-```{r}
-# レンダリング日時
-Sys.time()
-```
+----
 
-\newpage
+【編集履歴】
 
+- 2022/01/31：執筆開始
+- 2022/02/03：初稿
+- 2022/08/19：Rコードを改修
 
-# ガウス-ガンマ分布の定義式
-
-
-
-# ガウス-ガンマ分布の統計量の導出
+----
 
 
+# ガウス-ガンマ分布の計算
 
-# ガウス-ガンマ分布の作図
-
-　ガウス-ガンマ分布(Gaussian-Gamma Distribution)の計算と作図を行います。\
-\
-
-　利用するパッケージを読み込みます。
-
-```{r}
-# 利用するパッケージ
-library(tidyverse)
-library(gganimate)
-```
-
-　分布の変化をアニメーション(gif画像)で確認するのに`gganimate`パッケージを利用します。不要であれば省略してください。\
-\
-
-
-## 定義式の確認
-
-　まずは、ガウス-ガンマ分布の定義式を確認します。「1次元ガウス分布の作図」と「ガンマ分布の作図」も参照してください。\
-\
-
-　ガウス-ガンマ分布は、1次元ガウス分布とガンマ分布の積で定義される$\mu, \lambda$の同時分布です。
-
-$$
-\begin{aligned}
-\mathrm{NG}(\mu, \lambda | m, \beta, a, b)
-   &= \mathcal{N}(\mu | m, (\beta \lambda)^{-1})
-      \mathrm{Gam}(\lambda | a, b)
-\\
-   &= \frac{1}{\sqrt{2 \pi (\beta \lambda)^{-1}}}
-      \exp \left(
-          - \frac{\beta \lambda}{2}
-            (\mu - m)^2
-      \right)
-      \frac{b^a}{\Gamma(a)}
-      \lambda^{a-1} \exp(- b \lambda)
-\end{aligned}
-$$
-
-　ここで、$\mathcal{N}(\cdot)$はガウス分布、$\mathrm{Gam}(\cdot)$はガンマ分布を表します。$m$は1次元ガウス分布の平均パラメータ、$\beta \lambda$は精度パラメータです。精度の逆数$\frac{1}{\beta \lambda}$が分散パラメータで、その平方根$\sqrt{\frac{1}{\beta \lambda}}$が標準偏差になります。また、$\lambda$はガンマ分布の変数でもあり、$a, b$はガンマ分布のパラメータです。\
-　確率変数の値$\mu$は実数、$\lambda$は0より大きい値$\lambda > 0$となります。パラメータ$\lambda, \beta, a, b$は、0より大きい値$\lambda > 0, \beta > 0, a > 0, b > 0$を満たす必要があります。\
-
-　この式の対数をとると、次の式になります。
-
-$$
-\begin{aligned}
-\log \mathrm{NG}(\mu, \lambda | m, \beta, a, b)
-   &= \log \mathcal{N}(\mu | m, (\beta \lambda)^{-1})
-      + \log \mathrm{Gam}(\lambda | a, b)
-\\
-   &= - \frac{1}{2} \Bigl\{
-          \beta \lambda
-          (x - m)^2
-          - \log(\beta \lambda)
-          + \log(2 \pi)
-      \Bigr\} \\
-   &\quad
-      + (a - 1) \log \lambda
-      - b \lambda
-      + a \log b
-      - \log \Gamma(a)
-\end{aligned}
-$$
-
-　ガウス-ガンマ分布の$\mu$の平均と分散は、定義より次となります。
-
-$$
-\begin{aligned}
-\mathbb{E}[\mu]
-   &= m
-\\
-\mathbb{V}[\mu]
-   &= (\beta \lambda)^{-1}
-    = \frac{1}{\beta \lambda}
-\end{aligned}
-$$
-
-　また、$\lambda$の平均・分散・最頻値は、次の式で計算できます。
-
-$$
-\begin{aligned}
-\mathbb{E}[\lambda]
-   &= \frac{a}{b}
-\\
-\mathbb{V}[\lambda]
-   &= \frac{a}{b^2}
-\\
-\mathrm{mode}[\lambda]
-   &= \frac{a - 1}{b}
-\end{aligned}
-$$
-
-\ 
-
-　ガウス-ガンマ分布は、1次元ガウス分布の事前分布として利用されます。\
+　ガウス-ガンマ分布(Gaussian-Gamma Distribution)または正規-ガンマ分布(Normal-Gamma Distribution)の確率密度と統計量を計算します。ガウス-ガンマ分布については「分布の定義式」を参照してください。\
 \
 
 
 ## 確率密度の計算
 
-　ガウス-ガンマ分布に従う確率密度を計算する方法をいくつか確認します。\
+　ガウス-ガンマ分布に従う確率密度を計算する方法をいくつか確認します。1次元ガウス分布とガンマ分布の計算についてはそれぞれ「分布の計算」を参照してください。\
 \
 
-　パラメータを設定します。
+
+### パラメータの設定
+
+　まずは、ガウス分布のパラメータ$m, \beta$と確率変数の実現値$\mu$、ガンマ分布のパラメータ$a, b$と確率変数の実現値$\lambda$を設定します。
 
 ```{r}
-# 1次元ガウス分布のパラメータを指定
+# 1次元ガウス分布の平均パラメータを指定
 m <- 0
 
 # 1次元ガウス分布の精度パラメータの係数を指定
@@ -167,18 +59,22 @@ mu     <- 1.5
 lambda <- 2.5
 ```
 
-　1次元ガウス分布の平均パラメータ$m$、精度パラメータの係数$\beta > 0$、ガンマ分布のパラメータ$a > 0, b > 0$、確率変数がとり得る値$\mu$、$\lambda > 0$を指定します。設定した値に対する確率密度を計算します。\
+　ガウス分布の平均パラメータ$m$と精度パラメータの係数$\beta > 0$、ガンマ分布の形状パラメータ$a > 0$と尺度パラメータ$b > 0$、確率変数がとり得る値$\mu, \lambda > 0$を指定します。設定した値に従う確率密度を計算します。\
+\
 
-　まずは、定義式から確率密度を計算します。
+
+### スクラッチで計算
+
+　定義式から計算します。
 
 ```{r}
 # 定義式により確率密度を計算
-C_N      <- 1 / sqrt(2 * pi / beta / lambda)
+C_N      <- sqrt(beta * lambda / 2 / pi)
 dens_N   <- C_N * exp(-0.5 * beta * lambda * (mu - m)^2)
 C_Gam    <- b^a / gamma(a)
 dens_Gam <- C_Gam * lambda^(a - 1) * exp(-b * lambda)
 dens     <- dens_N * dens_Gam
-dens
+dens; dens_N; dens_Gam
 ```
 
 　1次元ガウス分布
@@ -186,7 +82,9 @@ dens
 $$
 \begin{aligned}
 C_{\mathcal{N}}
-   &= \frac{1}{\sqrt{2 \pi (\beta \lambda)^{-1}}}
+   &= \Bigl(
+          \frac{\beta \lambda}{2 \pi}
+      \Bigr)^{\frac{1}{2}}
 \\
 \mathcal{N}(\mu | m, (\beta \lambda)^{-1})
    &= C_{\mathcal{N}}
@@ -210,24 +108,22 @@ C_{\mathrm{Gam}}
 \end{aligned}
 $$
 
-をそれぞれ計算して、2つの積
+の積により、ガウス-ガンマ分布が定義されます。
 
 $$
-\begin{aligned}
 \mathrm{NG}(\mu, \lambda | m, \beta, a, b)
-   &= \mathcal{N}(\mu | m, (\beta \lambda)^{-1})
+    = \mathcal{N}(\mu | m, (\beta \lambda)^{-1})
       \mathrm{Gam}(\lambda | a, b)
-\end{aligned}
 $$
 
-を求めます。$C_{\mathcal{N}}$は1次元ガウス分布の正規化係数、$C_{\mathrm{Gam}}$は、ガンマ分布の正規化係数です。また、$\pi$は円周率です。\
-　$\Gamma(x)$はガンマ関数で、`gamma()`で計算できます。\
+　ここで、$C_{\mathcal{N}}$はガウス分布の正規化係数、$C_{\mathrm{Gam}}$はガンマ分布の正規化係数、$\pi$は円周率、$\Gamma(x)$はガンマ関数です。\
+　円周率は`pi`、ガンマ関数は`gamma()`で計算できます。\
 
 　対数をとった定義式から計算します。
 
 ```{r}
 # 対数をとった定義式により確率密度を計算
-log_C_N      <- -0.5 * (log(2 * pi) - log(beta * lambda))
+log_C_N      <- 0.5 * (log(beta * lambda) - log(2 * pi))
 log_dens_N   <- log_C_N - 0.5 * beta * lambda * (mu - m)^2
 log_C_Gam    <- a * log(b) - lgamma(a)
 log_dens_Gam <- log_C_Gam + (a - 1) * log(lambda) - b * lambda
@@ -241,10 +137,11 @@ dens; log_dens
 $$
 \begin{aligned}
 \log C_{\mathcal{N}}
-   &= - \frac{1}{2} \Bigl\{
-          \log (2 \pi)
-          - \log (\beta \lambda)
-      \Bigr\}
+   &= \frac{1}{2}
+      \Bigl(
+          \log (\beta \lambda)
+          - \log (2 \pi)
+      \Bigr)
 \\
 \log \mathcal{N}(\mu | m, (\beta \lambda)^{-1})
    &= \log C_{\mathcal{N}}
@@ -258,7 +155,8 @@ $$
 $$
 \begin{aligned}
 \log C_{\mathrm{Gam}}
-   &= a \log b - \log \Gamma(a)
+   &= a \log b
+      - \log \Gamma(a)
 \\
 \log \mathrm{Gam}(\lambda | a, b)
    &= \log C_{\mathrm{Gam}}
@@ -267,7 +165,7 @@ $$
 \end{aligned}
 $$
 
-の和
+の和を計算します。
 
 $$
 \log \mathrm{NG}(\mu, \lambda | m, \beta, a, b)
@@ -275,7 +173,8 @@ $$
       + \log \mathrm{Gam}(\lambda | a, b)
 $$
 
-を計算します。計算結果の指数をとると確率が得られます。
+　対数をとったガンマ関数は、`lgamma()`で計算できます。引数の値が大きいと`gamma()`の計算結果が発散してしまいます。その場合でも、`lgamma()`で計算できます。\
+　計算結果の指数をとると確率密度が得られます。
 
 $$
 \mathrm{NG}(\mu, \lambda | m, \beta, a, b)
@@ -287,24 +186,30 @@ $$
 　指数と対数の性質より$\exp(\log x) = x$です。\
 
 　次は、関数を使って確率密度を計算します。\
-　1次元ガウス分布の確率密度関数`dnorm()`とガンマ分布の確率密度関数`dgamma()`を使って計算します。
+\
+
+
+### 関数による計算
+
+　ガウス分布の確率密度関数`dnorm()`とガンマ関数の確率密度関数`gamma()`で計算します。
 
 ```{r}
 # 関数により確率密度を計算
-dens_N   <- dnorm(x = mu, mean = m, sd = sqrt(1 / beta / lambda))
+dens_N   <- dnorm(x = mu, mean = m, sd = 1/sqrt(beta*lambda))
 dens_Gam <- dgamma(x = lambda, shape = a, rate = b)
 dens     <- dens_N * dens_Gam
 dens
 ```
 
-　`dnorm()`の変数の引数`x`に`mu`、平均の引数`mean`に`m`、標準偏差の引数`sd`に精度`beta * lambda`の逆数(分散)`1 / beta / lambda`の平方根(標準偏差)を指定します。平方根は`sqrt()`で計算できます。\
-　`dgamma()`の変数の引数`x`に`lambda`、形状の引数`shape`に`a`、尺度の引数`rate`に`b`を指定します。\
+　`dnorm()`の確率変数の引数`x`に`mu`、平均の引数`mean`に`m`、標準偏差の引数`sd`に`beta`と`lambda`の積の平方根の逆数を指定して、ガウス分布の確率密度を計算します。平方根は`sqrt()`で計算できます。\
+　`dgamma()`の確率変数の引数`x`に`lambda`、形状の引数`shape`に`a`、尺度の引数`rate`に`b`を指定して、ガンマ分布の確率密度を計算します。\
+　2つの確率密度の積を計算します。\
 
 　`log = TRUE`を指定すると対数をとった確率密度を返します。
 
 ```{r}
 # 対数をとった関数により確率密度を計算
-log_dens_N   <- dnorm(x = mu, mean = m, sd = sqrt(1 / beta / lambda), log = TRUE)
+log_dens_N   <- dnorm(x = mu, mean = m, sd = 1/sqrt(beta*lambda), log = TRUE)
 log_dens_Gam <- dgamma(x = lambda, shape = a, rate = b, log = TRUE)
 log_dens     <- log_dens_N + log_dens_Gam
 dens         <- exp(log_dens)
@@ -317,19 +222,19 @@ dens; log_dens
 
 ## 統計量の計算
 
-　ガウス-ガンマ分布の平均と分散を計算します。\
+　次は、ガウス-ガンマ分布の期待値・分散・最頻値を計算します。詳しくはいつか書きます。\
 \
 
-　平均を計算します。
+　$\mu, \lambda$それぞれの期待値を計算します。
 
 ```{r}
-# 平均を計算
-E_mu <- m
+# 期待値を計算
+E_mu 　　<- m
 E_lambda <- a / b
 E_mu; E_lambda
 ```
 
-　1次元ガウス分布($\mu$)とガンマ分布($\lambda$)の平均は、次の式で計算できます。
+　$\mu$の期待値は$m$で、$\lambda$の期待値は次の式で計算できます。
 
 $$
 \begin{aligned}
@@ -345,12 +250,12 @@ $$
 
 ```{r}
 # 分散を計算
-V_mu <- 1 / beta / E_lambda
+V_mu 　　<- 1 / beta / E_lambda
 V_lambda <- a / b^2
 V_mu; V_lambda
 ```
 
-　1次元ガウス分布($\mu$)とガンマ分布($\lambda$)の分散は、次の式で計算できます。
+　$\mu$の分散と$\lambda$の分散は、それぞれ次の式で計算できます。
 
 $$
 \begin{aligned}
@@ -362,30 +267,127 @@ $$
 \end{aligned}
 $$
 
-　最頻値を計算します。
+　最頻値(モード)を計算します。
 
 ```{r}
-# 最頻値を計算
+# 最頻値を計算:(a >= 1)
+mode_mu     <- m
 mode_lambda <- (a - 1) / b
-mode_lambda
+mode_mu; mode_lambda
 ```
 
-　ガンマ分布($\lambda$)の最頻値は、次の式で計算できます。
+　$\mu$の最頻値は$m$で、$\lambda$の最頻値は次の式で計算できます。
 
 $$
+\begin{aligned}
+\mathrm{mode}[\mu]
+   &= m
+\\
 \mathrm{mode}[\lambda]
-    = \frac{a - 1}{b}
+   &= \frac{a - 1}{b}
+    \quad (a \geq 1)
+\end{aligned}
 $$
 
-\ 
-
-
-## 分布の可視化
-
-　`ggplot2`パッケージを利用してガウス-ガンマ分布のグラフを作成します。\
+　ガンマ分布の確率変数は$\lambda > 0$の値をとるので、$a \geq 1$のとき最頻値が定義されます($a < 1$だと計算結果が負の値になってしまいます)。\
 \
 
-　作図に利用する$\mu, \lambda$の値を設定します。
+　この記事では、ガウス-ガンマ分布の計算を確認しました。次は、グラフを作成します。\
+\
+
+
+# ガウス-ガンマ分布の作図
+
+　ガウス-ガンマ分布(Gaussian-Gamma Distribution)または正規-ガンマ分布(Normal-Gamma Distribution)のグラフを作成します。ガウス-ガンマ分布については「分布の定義式」を参照してください。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r, eval=FALSE}
+# 利用パッケージ
+library(tidyverse)
+library(gganimate)
+```
+
+```{r, echo=FALSE}
+### 資料作成用:(パッケージ読込)
+
+# チェック用
+library(ggplot2)
+```
+
+　この記事では、基本的に`パッケージ名::関数名()`の記法を使うので、パッケージを読み込む必要はありません。ただし、作図コードがごちゃごちゃしないようにパッケージ名を省略しているため、`ggplot2`は読み込む必要があります。\
+　`magrittr`パッケージのパイプ演算子`%>%`ではなく、ベースパイプ(ネイティブパイプ)演算子`|>`を使っています。`%>%`に置き換えても処理できます。\
+　分布の変化をアニメーション(gif画像)で確認するのに`gganimate`パッケージを利用します。不要であれば省略してください。\
+\
+
+
+## 定義式の確認
+
+　まずは、ガウス-ガンマ分布の定義式を確認します。\
+\
+
+　ガウス-ガンマ分布は、1次元ガウス分布とガンマ分布の積で定義される$\mu, \lambda$の同時分布です。
+
+$$
+\begin{aligned}
+\mathrm{NG}(\mu, \lambda | m, \beta, a, b)
+   &= \mathcal{N}(\mu | m, (\beta \lambda)^{-1})
+      \mathrm{Gam}(\lambda | a, b)
+\\
+   &= \Bigl(
+          \frac{\beta \lambda}{2 \pi}
+      \Bigr)^{\frac{1}{2}}
+      \exp \left(
+          - \frac{\beta \lambda}{2}
+            (\mu - m)^2
+      \right)
+      \frac{b^a}{\Gamma(a)}
+      \lambda^{a-1} \exp(- b \lambda)
+\end{aligned}
+$$
+
+　ここで、$\mu$はガウス分布の確率変数で、$m$は平均パラメータ、$\beta$は精度パラメータの係数です。$\lambda$は精度に比例する値で、$\beta \lambda$が精度、精度の逆数$(\beta \lambda)^{-1} = \frac{1}{\beta \lambda}$が分散、分散の平方根$(\beta \lambda)^{-\frac{1}{2}} = \frac{1}{\sqrt{\beta \lambda}}$が標準偏差です。また、$\lambda$はガンマ分布の確率変数でもあり、$a$は形状パラメータ、$b$は尺度パラメータです。$\pi$は円周率、$\Gamma(x)$はガンマ関数です。\
+　確率変数の値$\mu$は実数、$\lambda$は正の実数をとります。パラメータ$\lambda, \beta, a, b$はそれぞれ正の実数を満たす必要があります。\
+
+　ガウス-ガンマ分布の$\mu$の平均と分散は、定義より次となります。
+
+$$
+\begin{aligned}
+\mathbb{E}[\mu]
+   &= m
+\\
+\mathbb{V}[\mu]
+   &= \frac{1}{\beta \lambda}
+\end{aligned}
+$$
+
+　また、$\lambda$の平均・分散・最頻値は、次の式で計算できます。
+
+$$
+\begin{aligned}
+\mathbb{E}[\lambda]
+   &= \frac{a}{b}
+\\
+\mathbb{V}[\lambda]
+   &= \frac{a}{b^2}
+\\
+\mathrm{mode}[\lambda]
+   &= \frac{a - 1}{b}
+    \quad (a \geq 1)
+\end{aligned}
+$$
+
+　これらの計算を行いグラフを作成します。\
+\
+
+
+## グラフの作成
+
+　`ggplot2`パッケージを利用して、ガウス-ガンマ分布のグラフを作成します。ガウス-ガンマ分布の確率密度や統計量の計算については「ガウス-ガンマ分布の計算」を参照してください。\
+\
+
+　ガウス-ガンマ分布のパラメータ$m, \beta, a, b$を設定します。
 
 ```{r}
 # 1次元ガウス分布の平均パラメータを指定
@@ -397,539 +399,1058 @@ beta <- 2
 # ガンマ分布のパラメータを指定
 a <- 5
 b <- 6
-
-# 作図用のmuの値を作成
-mu_vals <- seq(from = -3, to = 3, length.out = 201)
-
-# 作図用のlambdaの値を作成
-lambda_vals <- seq(from = 0.01, to = 2, length.out = 200)
-mu_vals[1:5]; lambda_vals[1:5]
 ```
 
-　$\mu$がとり得る値を作成して`mu_vals`とします。この例では、`-3`から`3`を範囲とします。\
-　$\lambda$がとり得る値を作成して`lambda_vals`とします。この例では、`0.01`から`2`を範囲とします。\
+　ガウス分布の平均パラメータ$m$と精度パラメータの係数$\beta > 0$、ガンマ分布の形状パラメータ$a > 0$と尺度パラメータ$b > 0$を指定します。\
 
-　作図用の点$(\mu, \lambda)$を作成します。
+　ガウス分布の確率変数がとり得る値$\mu$とガンマ分布の確率変数がとり得る値$\lambda$を作成します。
 
 ```{r}
-# 作図用のmuとlambdaの点を作成
-mu_lambda_points <- expand.grid(mu = mu_vals, lambda = lambda_vals) %>% 
-  as.matrix()
-mu_lambda_points <- tidyr::tibble(
-  mu = rep(mu_vals, times = length(lambda_vals)), # muの値
-  lambda = rep(lambda_vals, each = length(mu_vals)) # lambdaの値
-) %>% 
-  as.matrix()
-mu_lambda_points[1:5, ]
+# μの値を作成
+mu_vals <- seq(from = -3, to = 3, length.out = 201)
+
+# λの値を作成
+lambda_vals <- seq(from = 0, to = 2, length.out = 201)
+head(mu_vals); head(lambda_vals)
 ```
 
-　`expand.grid()`または`rep()`を使って、`mu_vals, lambda_vals`それぞれの値に対して、全ての組み合わせを持つ(格子状の点となる)ように値を複製します。\
-　各行が1つの点$(\mu, \lambda)$に対応します。\
+　実数$\mu$の値を作成して`mu_vals`とします。この例では、`-3`から`3`を範囲とします。\
+　正の実数$\lambda$の値を作成して`lambda_vals`とします。この例では、`0`から`2`を範囲とします。\
 
-　ガウス-ガンマ分布の確率変数がとり得る値$\mu, \lambda$ごとの確率密度を計算します。
+　ガウス-ガンマ分布の確率変数がとり得る値$(\mu, \lambda)$ごとの確率密度を計算します。
 
 ```{r}
 # ガウス-ガンマ分布を計算
-dens_df <- tidyr::tibble(
-  mu = mu_lambda_points[, 1], # 確率変数mu
-  lambda = mu_lambda_points[, 2], # 確率変数lambda
-  N_dens = dnorm(x = mu, mean = m, sd = sqrt(1 / beta / lambda)), # muの確率密度
-  Gam_dens = dgamma(x = lambda, shape = a, rate = b), # lambdaの確率密度
-  density = N_dens * Gam_dens # 確率密度
-)
-head(dens_df)
+dens_df <- tidyr::expand_grid(
+  mu = mu_vals, # 確率変数μ
+  lambda = lambda_vals # 確率変数λ
+) |> # 確率変数(μとλの格子点)を作成
+  dplyr::mutate(
+    N_dens = dnorm(x = mu, mean = m, sd = 1/sqrt(beta*lambda)), # μの確率密度
+    Gam_dens = dgamma(x = lambda, shape = a, rate = b), # λの確率密度
+    density = N_dens * Gam_dens # 確率密度
+  )
+dens_df
 ```
 
-　`mu_lambda_points`の各行に対応する確率密度を求めてデータフレームに格納します。\
+　$\mu$の値`mu_vals`と$\lambda$の値`lambda_vals`の要素の全ての組み合わせ($\mu$と$\lambda$の格子点)を`expand.grid()`で作成します。組み合わせ(点$(\mu, \lambda)$)ごとに確率密度を計算します。\
+　`dnorm()`の確率変数の引数`x`に`mu_vals`の値、平均の引数`mean`に`m`、標準偏差の引数`sd`に`beta`と`lambda_vals`の値の積の平方根の逆数を指定して、ガウス分布の確率密度を計算します。\
+　`dgamma()`の確率変数の引数`x`に`lambda_vals`の値、形状の引数`shape`に`a`、尺度の引数`rate`に`b`を指定して、ガンマ分布の確率密度を計算します。\
+　2つの確率密度の積を計算します。\
 
 　ガウス-ガンマ分布のグラフを作成します。
 
-```{r}
+```{r, fig.width=8, fig.height=6}
 # ガウス-ガンマ分布を作図
 ggplot() + 
-  geom_contour(data = dens_df, aes(x = mu, y = lambda, z = density, color = ..level..)) + # 等高線図
-  labs(title = "Gaussian-Gamma Distribution", 
-       subtitle = paste0("m=", m, ", beta=", beta, ", a=", a, ", b=", b), 
-       x = expression(mu), y = expression(lambda), 
-       color = "density") # ラベル
+  geom_contour(data = dens_df, aes(x = mu, y = lambda, z = density, color = ..level..)) + # 等高線
+  #geom_contour_filled(data = dens_df, aes(x = mu, y = lambda, z = density, fill = ..level..), 
+  #                    alpha = 0.8) + # 塗りつぶし等高線
+  labs(
+    title = "Gaussian-Gamma Distribution", 
+    #subtitle = paste0("m=", m, ", beta=", beta, ", a=", a, ", b=", b), # (文字列表記用)
+    subtitle = parse(text = paste0("list(m==", m, ", beta==", beta, ", a==", a, ", b==", b, ")")), # (数式表記用)
+    color = "density", fill = "density", 
+    x = expression(mu), y = expression(lambda)
+  ) # ラベル
 ```
 
-\ 
+```{r, echo=FALSE, fig.width=8, fig.height=6}
+# ガウス-ガンマ分布を作図
+ggplot() + 
+  #geom_contour(data = dens_df, aes(x = mu, y = lambda, z = density, color = ..level..)) + # 等高線
+  geom_contour_filled(data = dens_df, aes(x = mu, y = lambda, z = density, fill = ..level..), 
+                      alpha = 0.8) + # 塗りつぶし等高線
+  labs(
+    title = "Gaussian-Gamma Distribution", 
+    #subtitle = paste0("m=", m, ", beta=", beta, ", a=", a, ", b=", b), # (文字列表記用)
+    subtitle = parse(text = paste0("list(m==", m, ", beta==", beta, ", a==", a, ", b==", b, ")")), # (数式表記用)
+    color = "density", fill = "density", 
+    x = expression(mu), y = expression(lambda)
+  ) # ラベル
+```
 
-　この分布に平均と最頻値、標準偏差の情報を重ねて表示します。
+　`geom_contour()`で等高線図、`geom_contour_filled()`で塗りつぶし等高線図を描画できます。\
+　ギリシャ文字などの記号を使った数式を表示する場合は、`expression()`の記法を使います。等号は`"=="`、複数の(数式上の)変数を並べるには`"list(変数1, 変数2)"`とします。(プログラム上の)変数の値を使う場合は、`parse()`の`text`引数に指定します。\
+\
+
+　この分布に統計量の情報を重ねて表示します。\
+
+　$\mu$の期待値と標準偏差を計算します。
 
 ```{r}
-# 統計量を計算
-E_lambda    <- a / b
-s_lambda    <- sqrt(a / b^2)
-mode_lambda <- (a - 1) / b
-E_mu    <- m
-E_s_mu  <- sqrt(1 / beta / E_lambda)
-s_mu_df <- tidyr::tibble(
-  lambda = lambda_vals, 
-  s_minus = E_mu - sqrt(1 / beta / lambda_vals), # 平均 - 標準偏差
-  s_plus = E_mu + sqrt(1 / beta / lambda_vals)   # 平均 + 標準偏差
-)
+# μに関する統計量を格納
+stat_mu_df <- tibble::tibble(
+  lambda = lambda_vals, # 確率変数λ
+  mean = m, # 期待値
+  sd = 1 / sqrt(beta * lambda_vals) # 標準偏差
+) |> # 統計量を計算
+  dplyr::mutate(
+    sd_minus = mean - sd, 
+    sd_plus = mean + sd
+  ) |> # 期待値±標準偏差を計算
+  dplyr::select(!sd) |> # 不要な列を削除
+  tidyr::pivot_longer(
+    cols = !lambda, 
+    names_to = "group", 
+    values_to = "statistic"
+  ) |> # 統計量の列をまとめる
+  dplyr::mutate(
+    type = stringr::str_replace(group, pattern = "sd_.*", replacement = "sd")
+  ) # 期待値±標準偏差のカテゴリを統一
+stat_mu_df
+```
 
+　期待値・標準偏差を計算して、さらに期待値から標準偏差を引いた値と足した値を求めます。ガウス分布の期待値と最頻値は一致するので、最頻値を省略します。\
+　期待値・標準偏差の和と差の3つの列を`pivot_longer()`でまとめます。列名がラベルになるので、そのままのラベル列`group`と、標準偏差の和と差のラベルを統一したラベル列`type`を用意します。\
+
+　同様に、$\lambda$の期待値・標準偏差・最頻値を計算します。
+
+```{r}
+# λに関する統計量を格納
+stat_lambda_df <- tibble::tibble(
+  mean = a / b, # 期待値
+  sd = sqrt(a / b^2), # 標準偏差
+  mode = (a - 1) / b # 最頻値
+) |> # 統計量を計算
+  dplyr::mutate(
+    sd_minus = mean - sd, 
+    sd_plus = mean + sd
+  ) |> # 期待値±標準偏差を計算
+  dplyr::select(!sd) |> # 不要な列を削除
+  tidyr::pivot_longer(
+    cols = dplyr::everything(), 
+    names_to = "type", 
+    values_to = "statistic"
+  ) |> # 統計量の列をまとめる
+  dplyr::mutate(
+    type = stringr::str_replace(type, pattern = "sd_.*", replacement = "sd")
+  ) # 期待値±標準偏差のカテゴリを統一
+stat_lambda_df
+```
+
+　こちらは、期待値・標準偏差の和と差・最頻値を計算して、4つの列を`pivot_longer()`でまとめます。\
+
+　線の色や種類、凡例テキストを指定する場合は、設定用の名前付きベクトルを作成します。
+
+```{r}
+# 凡例用の設定を作成:(数式表示用)
+color_vec    <- c(mean = "blue", sd = "orange", mode = "chocolate")
+linetype_vec <- c(mean = "dashed", sd = "dotted", mode = "dashed")
+label_vec    <- c(mean = expression(E(x)), sd = expression(E(x) %+-% sqrt(V(x))), mode = expression(mode(x)))
+color_vec; linetype_vec; color_vec
+```
+
+　各要素(設定)の名前を`type`列の文字列と対応させて、設定(線の色・種類と数式用のテキスト)を指定します。\
+
+　凡例付きのグラフを作成します。
+
+```{r, fig.width=8, fig.height=6}
 # 統計量を重ねたガウス-ガンマ分布を作図
 ggplot() + 
-  geom_contour(data = dens_df, aes(x = mu, y = lambda, z = density, color = ..level..)) + # 分布
-  geom_vline(xintercept = m, color = "#00A968", size = 1.5, linetype = "dashed") + # 平均
-  geom_line(data = s_mu_df, mapping = aes(x = s_minus, y = lambda), color = "#00A968", size = 1.5, linetype = "dotted") + # 平均 - 標準偏差
-  geom_line(data = s_mu_df, mapping = aes(x = s_plus, y = lambda), color = "#00A968", size = 1.5, linetype = "dotted") + # 平均 + 標準偏差
-  geom_hline(yintercept = E_lambda, color = "orange", size = 1.5, linetype = "dashed") + # 平均
-  geom_hline(yintercept = E_lambda - s_lambda, color = "orange", size = 1.5, linetype = "dotted") + # 平均 - 標準偏差
-  geom_hline(yintercept = E_lambda + s_lambda, color = "orange", size = 1.5, linetype = "dotted") + # 平均 + 標準偏差
-  geom_hline(yintercept = mode_lambda, color = "chocolate", size = 1.5, linetype = "dashed") + # 最頻値
-  xlim(c(min(mu_vals), max(mu_vals))) + # x軸の表示範囲
+  geom_contour_filled(data = dens_df, aes(x = mu, y = lambda, z = density, fill = ..level..), 
+                      alpha = 0.8) + # 分布
+  geom_line(data = stat_mu_df, mapping = aes(x = statistic, y = lambda, color = type, linetype = type, group = group), 
+            size = 1) + # μの統計量
+  geom_hline(data = stat_lambda_df, mapping = aes(yintercept = statistic, color = type, linetype = type), 
+             size = 1) + # λの統計量
+  scale_linetype_manual(values = linetype_vec, labels = label_vec, name = "statistic") + # 線の種類:(線指定と数式表示用)
+  scale_color_manual(values = color_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
+  guides(color = guide_legend(override.aes = list(size = 0.5))) + # 凡例の体裁
+  theme(legend.text.align = 0) + # 図の体裁:凡例
+  coord_cartesian(xlim = c(min(mu_vals), max(mu_vals))) + # x軸の表示範囲
   labs(title = "Gaussian-Gamma Distribution", 
-       subtitle = paste0("m=", m, ", beta=", beta, ", a=", a, ", b=", b), 
-       x = expression(mu), y = expression(lambda), 
-       color = "density")
+       subtitle = parse(text = paste0("list(m==", m, ", beta==", beta, ", a==", a, ", b==", b, ")")), 
+       color = "statistic", fill = "density", 
+       x = expression(mu), y = expression(lambda)) # ラベル
 ```
 
-　ガンマ分布は、$\mu$の影響を受けない(定義式に$\mu$を含まない)ので、平均・標準偏差・最頻値は一定(水平線)になります。また、ガンマ分布は対称な形ではないので、平均(オレンジ色の破線)と最頻値(茶色の破線)が一致しません。オレンジ色の点線は、平均から標準偏差を足し引きした値です。\
-　1次元ガウス分布の標準偏差は、$\lambda$の影響を受けます(計算式に$\lambda$を含みます)。よって、平均から標準偏差を足し引きした値(青緑色の点線)は$\lambda$(y軸)の値によって変化します。この曲線の影響を受けて、ガウス-ガンマ分布がおにぎり型になるのを確認できます。\
+　$\mu$に関する統計量は`geom_line()`で折れ線として、$\lambda$に関する統計量は`geom_hline()`で水平線として描画します。\
 
-　ガウス-ガンマ分布のグラフを描画できました。続いて、1つの変数(各軸)$\mu, \lambda$に注目します。\
+　ガウス分布の標準偏差は、$\lambda$の影響を受ける(計算式に$\lambda$を含む)ので、平均から標準偏差を足し引きした値(オレンジ色の点線)は$\lambda$(y軸)の値によって変化します。この曲線と、ガウス-ガンマ分布のおにぎり型の形状が対応しているのが分かります。\
+　ガンマ分布($\lambda$に関する統計量)は、$\mu$の影響を受けない(定義式に$\mu$を含まない)ので、期待値・標準偏差・最頻値は一定(水平線)になります。また、ガンマ分布は非対称な形状なので、期待値(青色の破線)と最頻値(茶色の破線)が一致しません。\
 \
 
-　$\lambda = \mathbb{E}[\lambda]$における1次元ガウス分布のグラフを作成します。
+　ガウス-ガンマ分布のグラフを描画できました。以降は、ここまでの作図処理を用いて、パラメータの影響を確認していきます。\
+\
+
+
+## 1変数の形状をアニメーションで可視化
+
+　ガウス-ガンマ分布は2つの確率変数$\mu, \lambda$を持ちます。ここでは、それぞれの変数に注目して分布の形状を確認します。(上の図と合わせて3Dプロット感を出したかったのですが、思ったよりうまくいかなかったので飛ばしてください。)\
+\
+
+
+### μ軸側から見たグラフ
+
+　ガウス-ガンマ分布の$\mu$についての断面図(x軸から見たグラフ)と、$\mu$についての分布$\mathcal{N}(\mu | m, (\beta \lambda)^{-1})$のグラフを並べて比較します。ガウス分布については「1次元ガウス分布の作図」を参照してください。\
+\
+
+　ガウス-ガンマ分布を計算します。
 
 ```{r}
-# 精度の期待値による1次元ガウス分布を計算
-dens_N_df <- tidyr::tibble(
-  mu = mu_vals, # 確率変数
-  density = dnorm(x = mu_vals, mean = m, sd = sqrt(1 / beta / E_lambda)) # 確率密度
-)
-
-# 統計量を重ねた精度の期待値による1次元ガウス分布を作図
-ggplot() + 
-  geom_line(data = dens_N_df, mapping = aes(x = mu, y = density), color = "#00A968") + # 分布
-  geom_vline(xintercept = E_mu, color = "#00A968", size = 1.5, linetype = "dashed") + # 平均
-  geom_vline(xintercept = E_mu - E_s_mu, color = "#00A968", size = 1.5, linetype = "dotted") + # 平均 - 標準偏差
-  geom_vline(xintercept = E_mu + E_s_mu, color = "#00A968", size = 1.5, linetype = "dotted") + # 平均 + 標準偏差
-  labs(title = "Gaussian Distribution", 
-       subtitle = paste0("m=", m, ", beta=", beta, ", E[lambda]=", round(E_lambda, 2)), 
-       x = expression(mu), y = expression(p(mu)))
+# ガウス-ガンマ分布を計算
+dens_df <- tidyr::expand_grid(
+  mu = mu_vals, # 確率変数μ
+  lambda = lambda_vals # 確率変数λ
+) |> # 確率変数(μとλの格子点)を作成
+  dplyr::mutate(
+    N_dens = dnorm(x = mu, mean = m, sd = 1/sqrt(beta*lambda)), # μの確率密度
+    Gam_dens = dgamma(x = lambda, shape = a, rate = b), # λの確率密度
+    density = N_dens * Gam_dens, # 確率密度
+    parameter = paste0("lambda=", round(lambda, 2), ", m=", m, ", beta=", beta, ", a=", a, ", b=", b) |> 
+      factor(levels = paste0("lambda=", round(lambda_vals, 2), ", m=", m, ", beta=", beta, ", a=", a, ", b=", b)) # フレーム切替用ラベル
+  )
+dens_df
 ```
 
-　この図は、ガウス-ガンマ分布を$\lambda$軸(y軸)が$\mathbb{E}[\lambda]$の点で切断した、断面図に対応します。\
+　`lambda_vals`の値ごとにフレーム切替用のラベルを作成します。\
 
-　同様に、全ての$\lambda$における分布をアニメーションで確認します。
+　$\mu$についての統計量を計算します。
 
 ```{r}
-# lambdaの値ごとに分布を計算
-anime_dens_N_df <- tidyr::tibble()
-anime_s_mu_df    <- tidyr::tibble()
-for(lambda in lambda_vals) {
-  # ラベル用のテキストを作成
-  label_text <- paste0("m=", m, ", beta=", beta, ", lambda=", round(lambda, 2))
-  
-  # 1次元ガウス分布を計算
-  tmp_dens_N_df <- tidyr::tibble(
-    mu = mu_vals, # 確率変数
-    density = dnorm(x = mu_vals, mean = m, sd = sqrt(1 / beta / lambda)), # 確率密度
-    parameter = as.factor(label_text) # フレーム切替用のラベル
+# μに関する統計量を格納
+stat_mu_df <- tibble::tibble(
+  lambda = lambda_vals, # 精度パラメータ
+  mean = m, # 期待値
+  sd = 1 / sqrt(beta * lambda_vals) # 標準偏差
+) |> # 統計量を計算
+  dplyr::mutate(
+    sd_minus = mean - sd, 
+    sd_plus = mean + sd
+  ) |> # 期待値±標準偏差を計算
+  dplyr::select(!sd) |> # 不要な列を削除
+  tidyr::pivot_longer(
+    cols = !lambda, 
+    names_to = "group", 
+    values_to = "statistic"
+  ) |> # 統計量の列をまとめる
+  dplyr::mutate(
+    type = stringr::str_replace(group, pattern = "sd_.*", replacement = "sd"), # 期待値±標準偏差のカテゴリを統一
+    parameter = paste0("lambda=", round(lambda, 2), ", m=", m, ", beta=", beta, ", a=", a, ", b=", b) |> 
+      factor(levels = paste0("lambda=", round(lambda_vals, 2), ", m=", m, ", beta=", beta, ", a=", a, ", b=", b)) # フレーム切替用ラベル
   )
-  
-  # 標準偏差を格納
-  tmp_s_mu_df <- tidyr::tibble(
-    s_minus = m - sqrt(1 / beta / lambda), # 平均 - 標準偏差
-    s_plus = m + sqrt(1 / beta / lambda),  # 平均 + 標準偏差
-    parameter = as.factor(label_text)      # フレーム切替用のラベル
-  )
-  
-  # 結果を結合
-  anime_dens_N_df <- rbind(anime_dens_N_df, tmp_dens_N_df)
-  anime_s_mu_df   <- rbind(anime_s_mu_df, tmp_s_mu_df)
-}
-head(anime_dens_N_df); head(anime_s_mu_df)
+stat_mu_df
 ```
 
-　`for()`ループを使って`lambda_vals`の値ごとに確率密度を計算して、`anime_dens_df`に追加していきます。\
+　`dens_df`と対応するようにフレーム切替用のラベルを作成します。\
+　作図処理については次の「パラメータと分布の形状の関係」を参照してください。\
 
-　gif画像を作成します。
+　$\mu$軸側から見たガウス-ガンマ分布の断面図とガウス分布のグラフのアニメーション(gif画像)を作成します。
 
-```{r, eval=FALSE}
-# アニメーション用の統計量を重ねた1次元ガウス分布を作図
-anime_dens_N_graph <- ggplot() + 
-  geom_line(data = anime_dens_N_df, mapping = aes(x = mu, y = density), color = "#00A968") + # 分布
-  geom_vline(xintercept = E_mu, color = "#00A968", size = 1.5, linetype = "dashed") + # 平均
-  geom_vline(data = anime_s_mu_df, mapping = aes(xintercept = s_minus), color = "#00A968", size = 1.5, linetype = "dotted") + # 平均 - 標準偏差
-  geom_vline(data = anime_s_mu_df, mapping = aes(xintercept = s_plus), color = "#00A968", size = 1.5, linetype = "dotted") + # 平均 + 標準偏差
+```{r}
+# μ軸側から見たガウス-ガンマ分布を作図
+dens_mu_graph <- ggplot() + 
+  geom_vline(data = stat_mu_df, mapping = aes(xintercept = statistic, color = type, linetype = type), 
+             size = 1, show.legend = FALSE) + # 統計量
+  geom_line(data = dens_df, mapping = aes(x = mu, y = density, color = "NG"), 
+            size = 1) + # ガウス-ガンマ分布
+  geom_line(data = dens_df, mapping = aes(x = mu, y = N_dens, color = "N"), 
+            size = 1) + # ガウス分布
   gganimate::transition_manual(parameter) + # フレーム
-  xlim(c(min(mu_vals), max(mu_vals))) + # x軸の表示範囲
-  labs(title = "Gaussian Distribution", 
+  scale_color_manual(breaks = c("NG", "N", "mean", "sd"), 
+                     values = c("#00A968", "purple", "blue", "orange"), 
+                     labels = c("gaussian-gamma", "gaussian", expression(E(mu)), expression(E(mu) %+-% sqrt(V(mu)))), 
+                     name = "distribution") + # 線の色
+  scale_linetype_manual(breaks = c("mean", "sd"), values = c("dashed", "dotted")) + # 線の種類
+  theme(legend.text.align = 0) + # 図の体裁:凡例
+  coord_cartesian(xlim = c(min(mu_vals), max(mu_vals))) + # 軸の表示範囲
+  labs(title = "Gaussian-Gamma Distribution", 
        subtitle = "{current_frame}", 
-       x = expression(mu), y = expression(p(mu)))
+       x = expression(mu), y = "density")
 
 # gif画像を作成
-gganimate::animate(anime_dens_N_graph, nframes = length(lambda_vals), fps = 100)
+gganimate::animate(dens_mu_graph, nframes = length(lambda_vals), fps = 10, width = 800, height = 600)
 ```
 
-　$\lambda$が大きくなるに従って、1次元ガウス分布の裾が狭くなり(山が細く高くなり)ます。これが、ガウス-ガンマ分布がおにぎり型になるのに対応します。\
-　$\mu \pm \sigma$の点線が移動するのが、ガウス-ガンマ分布の$\mu \pm \sigma$の点線が曲線になるのに対応しています。\
+　精度(に比例する値)$\lambda$が大きくなるほど、分散が小さくなり、ガウス分布(紫色の曲線)の山が細く高くなります。しかし、ガンマ分布の影響により、ガウス-ガンマ分布(青緑色の曲線)の山は徐々に小さくなります。\
+　期待値から標準偏差を足し引きした値(オレンジ色の点線)が変化するのが、「グラフの作成」において曲線になるのに対応しています。\
+\
 
-　ガンマ分布のグラフを作成します。
+
+### λ軸側から見たグラフ
+
+　続いて、$\lambda$についての断面図(y軸から見たグラフ)と、$\lambda$についての分布$\mathrm{Gam}(\lambda | a, b)$のグラフを並べて比較します。ガンマ分布については「ガンマ分布の作図」を参照してください。\
+\
+
+　ガウス-ガンマ分布を計算します。
 
 ```{r}
-# ガンマ分布を計算
-dens_Gam_df <- tidyr::tibble(
-  lambda = lambda_vals, # 確率変数
-  density = dgamma(x = lambda_vals, shape = a, rate = b) # 確率密度
-)
-
-# 統計量を重ねたガンマ分布を作図
-ggplot() + 
-  geom_line(data = dens_Gam_df, mapping = aes(x = lambda, y = density), color = "orange") + # 分布
-  geom_vline(xintercept = E_lambda, color = "orange", size = 1.5, linetype = "dashed") + # 平均
-  geom_vline(xintercept = E_lambda - s_lambda, color = "orange", size = 1.5, linetype = "dotted") + # 平均 - 標準偏差
-  geom_vline(xintercept = E_lambda + s_lambda, color = "orange", size = 1.5, linetype = "dotted") + # 平均 + 標準偏差
-  geom_vline(xintercept = mode_lambda, color = "chocolate", size = 1.5, linetype = "dashed") + # 最頻値
-  labs(title = "Gamma Distribution", 
-       subtitle = paste0("a=", a, ", b=", b), 
-       x = expression(lambda), y = expression(p(lambda)))
+# ガウス-ガンマ分布を計算
+dens_df <- tidyr::expand_grid(
+  mu = mu_vals, # 確率変数μ
+  lambda = lambda_vals # 確率変数λ
+) |> # 確率変数(μとλの格子点)を作成
+  dplyr::mutate(
+    N_dens = dnorm(x = mu, mean = m, sd = 1/sqrt(beta*lambda)), # μの確率密度
+    Gam_dens = dgamma(x = lambda, shape = a, rate = b), # λの確率密度
+    density = N_dens * Gam_dens, # 確率密度
+    parameter = paste0("mu=", round(mu, 2), ", m=", m, ", beta=", beta, ", a=", a, ", b=", b) |> 
+      factor(levels = paste0("mu=", round(mu_vals, 2), ", m=", m, ", beta=", beta, ", a=", a, ", b=", b)) # フレーム切替用ラベル
+  )
+dens_df
 ```
 
-　ガウス-ガンマ分布をy軸側から見た図に対応します。\
-　ガンマ分布は対称な形ではないので、平均(オレンジ色の破線)と最頻値(茶色の破線)が一致しないのを確認できます。\
+　`mu_vals`の値ごとにフレーム切替用のラベルを作成します。\
+
+　$\lambda$についての統計量を計算します。
+
+```{r}
+# λに関する統計量を格納
+stat_lambda_df <- tibble::tibble(
+  mean = a / b, # 期待値
+  sd = sqrt(a / b^2), # 標準偏差
+  mode = (a - 1) / b # 最頻値
+) |> # 統計量を計算
+  dplyr::mutate(
+    sd_minus = mean - sd, 
+    sd_plus = mean + sd
+  ) |> # 期待値±標準偏差を計算
+  dplyr::select(!sd) |> # 不要な列を削除
+  tidyr::pivot_longer(
+    cols = dplyr::everything(), 
+    names_to = "type", 
+    values_to = "statistic"
+  ) |> # 統計量の列をまとめる
+  dplyr::mutate(
+    type = stringr::str_replace(type, pattern = "sd_.*", replacement = "sd")
+  ) # 期待値±標準偏差のカテゴリを統一
+stat_lambda_df
+```
+
+　こちらは、$\mu$の影響を受けない(値が変化しない)ので、フレーム切替用のラベルは不要です。\
+
+　$\lambda$軸側から見たガウス-ガンマ分布の断面図とガンマ分布のグラフのアニメーションを作成します。
+
+```{r}
+# λ軸側から見たガウス-ガンマ分布を作図
+dens_lambda_graph <- ggplot() + 
+  geom_vline(data = stat_lambda_df, mapping = aes(xintercept = statistic, color = type, linetype = type), 
+             size = 1, show.legend = FALSE) + # 統計量
+  geom_line(data = dens_df, mapping = aes(x = lambda, y = density, color = "NG"), 
+            size = 1) + # ガウス-ガンマ分布
+  geom_line(data = dens_df, mapping = aes(x = lambda, y = Gam_dens, color = "Gam"), 
+            size = 1) + # ガンマ分布
+  scale_color_manual(breaks = c("NG", "Gam", "mean", "sd", "mode"), 
+                     values = c("#00A968", "purple", "blue", "orange", "chocolate"), 
+                     labels = c("gaussian-gamma", "gaussian", expression(E(lambda)), expression(E(lambda) %+-% sqrt(V(lambda))), expression(mode(lambda))), 
+                     name = "distribution") + # 線の色
+  scale_linetype_manual(breaks = c("mean", "sd", "mode"), values = c("dashed", "dotted", "dashed")) + # 線の種類
+  theme(legend.text.align = 0) + # 図の体裁:凡例
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Gaussian-Gamma Distribution", 
+       subtitle = "{current_frame}", 
+       x = expression(lambda), y = "density") # ラベル
+
+# gif画像を作成
+gganimate::animate(dens_lambda_graph, nframes = length(mu_vals), fps = 10, width = 800, height = 600)
+```
+
+　ガンマ分布(紫色の曲線)は$\mu$の影響を受けない(式に$\mu$を含まない)ので、変化しません。ガウス分布の影響によってガウス-ガンマ分布(青緑色の曲線)が変化します。\
 \
 
 
-## パラメータと分布の形状の関係
+## パラメータと分布の形状の関係をアニメーションで可視化
 
-　パラメータが及ぼす分布への影響をアニメーション(gif画像)で可視化します。\
+　パラメータの値を少しずつ変化させて、分布の形状の変化をアニメーションで確認します。\
 \
 
-　パラメータの値を少しずつ変更して、分布の変化をアニメーションで確認します。
+
+### mの影響
+
+　$m$の値を変化させ、$\beta, a, b$を固定して、それぞれ分布を計算します。
 
 ```{r}
 # パラメータとして利用する値を作成
-m_vals    <- seq(from = -2, to = 2, by = 0.1)
+m_vals <- seq(from = -2, to = 2, by = 0.1)
+
+# 固定するパラメータを指定
+beta <- 2
+a    <- 5
+b    <- 6
+
+# 確率変数の値を作成
+mu_vals     <- seq(from = -3, to = 3, length.out = 201)
+lambda_vals <- seq(from = 0, to = 2, length.out = 201)
+
+# パラメータごとにガウス-ガンマ分布を計算
+anime_dens_df <- tidyr:::expand_grid(
+  mu = mu_vals, # 確率変数μ
+  lambda = lambda_vals, # 確率変数λ
+  m = m_vals # パラメータm
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(m, mu, lambda) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    N_dens = dnorm(x = mu, mean = m, sd = 1/sqrt(beta*lambda)), # μの確率密度
+    Gam_dens = dgamma(x = lambda, shape = a, rate = b), # λの確率密度
+    density = N_dens * Gam_dens, # 確率密度
+    parameter = paste0("m=", round(m, 1), ", beta=", beta, ", a=", a, ", b=", b) |> 
+      factor(levels = paste0("m=", round(m_vals, 1), ", beta=", beta, ", a=", a, ", b=", b)) # フレーム切替用ラベル
+  )
+anime_dens_df
+```
+
+　値の間隔が一定になるように$\mu$の値`m_vals`を作成します。パラメータごとにフレームを切り替えるので、`m_vals`の要素数がアニメーションのフレーム数になります。\
+　確率変数`mu_vals`・`lambda_vals`・パラメータ`m_vals`の要素の全ての組み合わせを`expand_grid()`で作成します。\
+　組み合わせごとに確率密度を計算して、パラメータごとにラベルを作成します。ラベルは、グラフを表示する順番を制御するのに使います。文字列型だと文字列の基準で順序が決まるので、因子型にしてパラメータに応じたレベル(順序)を設定します。\
+　「`mu_vals`の要素数」掛ける「`lambda_vals`の要素数」掛ける「`m_vals`の要素数」行のデータフレームになります。行数が非常に多くなるので注意してください。\
+
+　ガウス-ガンマ分布のアニメーション(gif画像)を作成します。
+
+```{r}
+# ガウス-ガンマ分布のアニメーションを作図
+anime_dens_graph <- ggplot() + 
+  geom_contour(data = anime_dens_df, aes(x = mu, y = lambda, z = density, color = ..level..)) + # 等高線
+  #geom_contour_filled(data = anime_dens_df, aes(x = mu, y = lambda, z = density, fill = ..level..), 
+  #                    alpha = 0.8) + # 塗りつぶし等高線
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Gaussian-Gamma Distribution", 
+       subtitle = "{current_frame}", 
+       color = "density", fill = "density", 
+       x = expression(mu), y = expression(lambda))
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(m_vals), fps = 10, width = 800, height = 600)
+```
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# ガウス-ガンマ分布のアニメーションを作図
+anime_dens_graph <- ggplot() + 
+  #geom_contour(data = anime_dens_df, aes(x = mu, y = lambda, z = density, color = ..level..)) + # 等高線
+  geom_contour_filled(data = anime_dens_df, aes(x = mu, y = lambda, z = density, fill = ..level..), 
+                      alpha = 0.8) + # 塗りつぶし等高線
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Gaussian-Gamma Distribution", 
+       subtitle = "{current_frame}", 
+       color = "density", fill = "density", 
+       x = expression(mu), y = expression(lambda))
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(m_vals), fps = 10, width = 800, height = 600)
+```
+
+　`transition_manual()`にフレームの順序を表す列を指定します。この例では、因子型のラベルのレベルの順に描画されます。\
+　`animate()`のフレーム数の引数`nframes`にパラメータ数、フレームレートの引数`fps`に1秒当たりのフレーム数を指定します。`fps`引数の値が大きいほどフレームが早く切り替わります。ただし、値が大きいと意図通りに動作しません。\
+
+　$\mu$(ガウス分布)の期待値が$m$なので、$\mu = m$(x軸が$m$)の確率密度が最大になります。よって、$m$が大きくなるほど山が右に移動します。\
+\
+
+
+### βの影響
+
+　$\beta$の値を変化させ、$m, a, b$を固定して、それぞれ分布を計算します。
+
+```{r}
+# パラメータとして利用する値を作成
 beta_vals <- seq(from = 0.1, to = 10, by = 0.1)
-a_vals    <- seq(from = 0.1, to = 10, by = 0.1)
-b_vals    <- seq(from = 0.1, to = 10, by = 0.1)
+
+# 固定するパラメータを指定
+m <- 0
+a <- 5
+b <- 6
+
+# パラメータごとにガウス-ガンマ分布を計算
+anime_dens_df <- tidyr:::expand_grid(
+  mu = mu_vals, # 確率変数μ
+  lambda = lambda_vals, # 確率変数λ
+  beta = beta_vals # パラメータβ
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(beta, mu, lambda) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    N_dens = dnorm(x = mu, mean = m, sd = 1/sqrt(beta*lambda)), # μの確率密度
+    Gam_dens = dgamma(x = lambda, shape = a, rate = b), # λの確率密度
+    density = N_dens * Gam_dens, # 確率密度
+    parameter = paste0("m=", m, ", beta=", round(beta, 1), ", a=", a, ", b=", b) |> 
+      factor(levels = paste0("m=", m, ", beta=", round(beta_vals, 1), ", a=", a, ", b=", b)) # フレーム切替用ラベル
+  )
+anime_dens_df
+```
+
+　`mu_vals`・`lambda_vals`・`beta_vals`の全ての組み合わせを作成して、同様に処理します。\
+
+　「mの影響」のコードで作図できます。フレーム数は`beta_vals`の要素数です。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# ガウス-ガンマ分布のアニメーションを作図
+anime_dens_graph <- ggplot() + 
+  geom_contour(data = anime_dens_df, aes(x = mu, y = lambda, z = density, color = ..level..)) + # 等高線
+  #geom_contour_filled(data = anime_dens_df, aes(x = mu, y = lambda, z = density, fill = ..level..), 
+  #                    alpha = 0.8) + # 塗りつぶし等高線
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Gaussian-Gamma Distribution", 
+       subtitle = "{current_frame}", 
+       color = "density", fill = "density", 
+       x = expression(mu), y = expression(lambda))
+```
+
+```{r}
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(beta_vals), fps = 10, width = 800, height = 600)
+```
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# ガウス-ガンマ分布のアニメーションを作図
+anime_dens_graph <- ggplot() + 
+  #geom_contour(data = anime_dens_df, aes(x = mu, y = lambda, z = density, color = ..level..)) + # 等高線
+  geom_contour_filled(data = anime_dens_df, aes(x = mu, y = lambda, z = density, fill = ..level..), 
+                      alpha = 0.8) + # 塗りつぶし等高線
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Gaussian-Gamma Distribution", 
+       subtitle = "{current_frame}", 
+       color = "density", fill = "density", 
+       x = expression(mu), y = expression(lambda))
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(beta_vals), fps = 10, width = 800, height = 600)
+```
+
+　$\mu$の分散が$\frac{1}{\beta \lambda}$(精度が$\beta \lambda$)なので、$\beta$が大きくなるほど分散が小さくなり(精度が大きくなり)、x軸($\mu$軸)についての期待値($\mu = m$)付近の確率密度が大きくなります。よって、$\beta$が大きくなるほどx軸に関して細く高い山になります。\
+\
+
+
+### aの影響
+
+　$a$の値を変化させ、$m, \beta, b$を固定して、それぞれ分布を計算します。
+
+```{r}
+# パラメータとして利用する値を作成
+a_vals <- seq(from = 0.1, to = 10, by = 0.1)
+
+# 固定するパラメータを指定
+m    <- 0
+beta <- 2
+b    <- 6
+
+# パラメータごとにガウス-ガンマ分布を計算
+anime_dens_df <- tidyr:::expand_grid(
+  mu = mu_vals, # 確率変数μ
+  lambda = lambda_vals, # 確率変数λ
+  a = a_vals # パラメータa
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(a, mu, lambda) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    N_dens = dnorm(x = mu, mean = m, sd = 1/sqrt(beta*lambda)), # μの確率密度
+    Gam_dens = dgamma(x = lambda, shape = a, rate = b), # λの確率密度
+    density = N_dens * Gam_dens, # 確率密度
+    parameter = paste0("m=", m, ", beta=", beta, ", a=", round(a, 1), ", b=", b) |> 
+      factor(levels = paste0("m=", m, ", beta=", beta, ", a=", round(a_vals, 1), ", b=", b)) # フレーム切替用ラベル
+  )
+anime_dens_df
+```
+
+　`mu_vals`・`lambda_vals`・`a_vals`の全ての組み合わせを作成して、同様に処理します。\
+
+　「mの影響」のコードで作図できます。フレーム数は`a_vals`の要素数です。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# ガウス-ガンマ分布のアニメーションを作図
+anime_dens_graph <- ggplot() + 
+  geom_contour(data = anime_dens_df, aes(x = mu, y = lambda, z = density, color = ..level..)) + # 等高線
+  #geom_contour_filled(data = anime_dens_df, aes(x = mu, y = lambda, z = density, fill = ..level..), 
+  #                    alpha = 0.8) + # 塗りつぶし等高線
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Gaussian-Gamma Distribution", 
+       subtitle = "{current_frame}", 
+       color = "density", fill = "density", 
+       x = expression(mu), y = expression(lambda))
+```
+
+```{r}
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(a_vals), fps = 10, width = 800, height = 600)
+```
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# ガウス-ガンマ分布のアニメーションを作図
+anime_dens_graph <- ggplot() + 
+  #geom_contour(data = anime_dens_df, aes(x = mu, y = lambda, z = density, color = ..level..)) + # 等高線
+  geom_contour_filled(data = anime_dens_df, aes(x = mu, y = lambda, z = density, fill = ..level..), 
+                      alpha = 0.8) + # 塗りつぶし等高線
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Gaussian-Gamma Distribution", 
+       subtitle = "{current_frame}", 
+       color = "density", fill = "density", 
+       x = expression(mu), y = expression(lambda))
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(a_vals), fps = 10, width = 800, height = 600)
+```
+
+　$\lambda$(ガンマ分布)の最頻値が$\frac{a - 1}{b}$なので、$\lambda = \frac{a - 1}{b}$(y軸が$\frac{a - 1}{b}$)の確率密度が最大になります。よって、$a$が大きくなるほど山が上に移動します。\
+　また、$\lambda$は$\mu$(ガウス分布)の精度に比例するので、$\lambda$(y軸)が大きくなるほど、$\mu$(x軸)の分散が小さくなり(精度が大きくなり)、山が細く高くなります。\
+\
+
+
+### bの影響
+
+　$b$の値を変化させ、$m, \beta, a$を固定して、それぞれ分布を計算します。
+
+```{r}
+# パラメータとして利用する値を作成
+b_vals <- seq(from = 0.1, to = 10, by = 0.1)
 
 # 固定するパラメータを指定
 m    <- 0
 beta <- 2
 a    <- 5
-b    <- 6
 
-# 作図用の変数の値を作成
-mu_vals     <- seq(from = -3, to = 3, length.out = 201)
-lambda_vals <- seq(from = 0.01, to = 2, length.out = 200)
-
-# フレーム数を設定
-frame_num <- length(m_vals)
-#frame_num <- length(beta_vals)
-#frame_num <- length(a_vals)
-#frame_num <- length(b_vals)
-
-# パラメータの値ごとに分布を計算
-anime_dens_df <- tidyr::tibble()
-for(i in 1:frame_num) {
-  # i番目の値を取得
-  m    <- m_vals[i]
-  #beta <- beta_vals[i]
-  #a    <- a_vals[i]
-  #b    <- b_vals[i]
-  
-  # ガウス-ガンマ分布を計算
-  tmp_dens_df <- tidyr::tibble(
-    mu = rep(mu_vals, times = length(lambda_vals)), # 確率変数mu
-    lambda = rep(lambda_vals, each = length(mu_vals)), # 確率変数lambda
-    N_dens = dnorm(x = mu, mean = m, sd = sqrt(1 / beta / lambda)), # muの確率密度
-    Gam_dens = dgamma(x = lambda, shape = a, rate = b), # lambdaの確率密度
+# パラメータごとにガウス-ガンマ分布を計算
+anime_dens_df <- tidyr:::expand_grid(
+  mu = mu_vals, # 確率変数μ
+  lambda = lambda_vals, # 確率変数λ
+  b = b_vals # パラメータb
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(b, mu, lambda) |> # パラメータごとに並べ替え
+  dplyr::mutate(
+    N_dens = dnorm(x = mu, mean = m, sd = 1/sqrt(beta*lambda)), # μの確率密度
+    Gam_dens = dgamma(x = lambda, shape = a, rate = b), # λの確率密度
     density = N_dens * Gam_dens, # 確率密度
-    parameter = paste0(
-      "m=", round(m, 1), ", beta=", round(beta, 1), ", a=", round(a, 1), ", b=", round(b, 1)
-    ) %>% 
-      as.factor() # フレーム切替用のラベル
+    parameter = paste0("m=", m, ", beta=", beta, ", a=", a, ", b=", round(b, 1)) |> 
+      factor(levels = paste0("m=", m, ", beta=", beta, ", a=", a, ", b=", round(b_vals, 1))) # フレーム切替用ラベル
   )
-  
-  # 結果を結合
-  anime_dens_df <- rbind(anime_dens_df, tmp_dens_df)
-  
-  # 途中経過を表示
-  #message("\r", appendLF = FALSE) # 前回の表示を消去
-  #message("\r", "i=", i, " (", round(i / frame_num * 100, 2), "%)", appendLF = FALSE)
-}
-head(anime_dens_df)
+anime_dens_df
 ```
 
-　各パラメータがとり得る値を作成して`*_vals`とします。\
-　`for()`ループを使って、注目するパラメータ`*_vals`から順番に値を取り出して確率密度を計算して、`anime_dens_df`に追加していきます。\
+　`mu_vals`・`lambda_vals`・`b_vals`の全ての組み合わせを作成して、同様に処理します。\
 
-　gif画像を作成します。
+　「mの影響」のコードで作図できます。フレーム数は`b_vals`の要素数です。
 
-```{r, eval=FALSE}
-# アニメーション用のガウス-ガンマ分布を作図
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# ガウス-ガンマ分布のアニメーションを作図
 anime_dens_graph <- ggplot() + 
-  geom_contour(data = anime_dens_df, aes(x = mu, y = lambda, z = density, color = ..level..)) + # 分布
+  geom_contour(data = anime_dens_df, aes(x = mu, y = lambda, z = density, color = ..level..)) + # 等高線
+  #geom_contour_filled(data = anime_dens_df, aes(x = mu, y = lambda, z = density, fill = ..level..), 
+  #                    alpha = 0.8) + # 塗りつぶし等高線
   gganimate::transition_manual(parameter) + # フレーム
   labs(title = "Gaussian-Gamma Distribution", 
        subtitle = "{current_frame}", 
-       x = expression(mu), y = expression(lambda), 
-       color = "density")
-
-# gif画像を作成
-gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 100)
+       color = "density", fill = "density", 
+       x = expression(mu), y = expression(lambda))
 ```
 
-　$m$は$\mu$の平均なので、$m$が大きくなるに従って、$\mu$(x軸)の値が大きいほど確率密度が大きくなり(山が右に移動し)ます。\
-　$\beta$は$\mu$の精度(分散)に影響するので、$\beta$が大きくなるに従って、$\mu$(x軸)における確率密度が大きい範囲が狭くなり(山が尖り)ます。\
-　$a, b$は$\lambda$に対して影響します。$a$が大きくなるに従って$\lambda$(y軸)が大きいほど確率密度が大きくなり、逆に$b$が大きくなるに従って$\lambda$(y軸)が小さい(0に近い)ほど確率密度が大きくなります。\
+```{r}
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(b_vals), fps = 10, width = 800, height = 600)
+```
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# ガウス-ガンマ分布のアニメーションを作図
+anime_dens_graph <- ggplot() + 
+  #geom_contour(data = anime_dens_df, aes(x = mu, y = lambda, z = density, color = ..level..)) + # 等高線
+  geom_contour_filled(data = anime_dens_df, aes(x = mu, y = lambda, z = density, fill = ..level..), 
+                      alpha = 0.8) + # 塗りつぶし等高線
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Gaussian-Gamma Distribution", 
+       subtitle = "{current_frame}", 
+       color = "density", fill = "density", 
+       x = expression(mu), y = expression(lambda))
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = length(b_vals), fps = 10, width = 800, height = 600)
+```
+
+　$b$が大きくなるほど、$\lambda$の最頻値が小さくなるので、山が下に移動します。\
+　また、$\lambda$(y軸)が小さくなるほど、$\mu$(x軸)の分散が大きくなり(精度が小さくなり)、山が太く低くなります。\
+\
+
+　この記事では、ガウス-ガンマ分布の作図を確認しました。次は、乱数を生成します。\
+\
+
+# ガウス-ガンマ分布の乱数生成
+
+　ガウス-ガンマ分布(Gaussian-Gamma Distribution)または正規-ガンマ分布(Normal-Gamma Distribution)に従う乱数を生成します。ガウス-ガンマ分布については「分布の定義式」を参照してください。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r, eval=FALSE}
+# 利用パッケージ
+library(tidyverse)
+library(gganimate)
+```
+
+```{r, echo=FALSE}
+### 資料作成用:(パッケージ読込)
+
+# チェック用
+library(ggplot2)
+```
+
+　この記事では、基本的に`パッケージ名::関数名()`の記法を使うので、パッケージを読み込む必要はありません。ただし、作図コードがごちゃごちゃしないようにパッケージ名を省略しているため、`ggplot2`は読み込む必要があります。\
+　`magrittr`パッケージのパイプ演算子`%>%`ではなく、ベースパイプ(ネイティブパイプ)演算子`|>`を使っています。`%>%`に置き換えても処理できます。\
+　分布の変化をアニメーション(gif画像)で確認するのに`gganimate`パッケージを利用します。不要であれば省略してください。\
 \
 
 
-## 乱数の生成
+## サンプリング
 
-　ガウス-ガンマ分布の乱数を生成してヒストグラムを確認します。\
+　まずは、ガウス-ガンマ分布の乱数を生成します。1次元ガウス分布とガンマ分布の乱数についてはそれぞれ「分布の乱数生成」を参照してください。\
 \
 
-
-### サンプリング
-
-　パラメータを指定して、ガウス-ガンマ分布に従う乱数を生成します。
+　ガウス-ガンマ分布のパラメータ$m, \beta, a, b$とデータ数$N$を設定します。
 
 ```{r}
-# 1次元ガウス分布の平均パラメータを指定
+# ガウス分布の平均パラメータを指定
 m <- 0
 
-# 1次元ガウス分布の精度パラメータの係数を指定
+# ガウス分布の精度パラメータの係数を指定
 beta <- 2
 
 # ガンマ分布のパラメータを指定
 a <- 5
 b <- 6
 
-# データ数を指定
+# データ数(サンプルサイズ)を指定
+N <- 10000
+```
+
+　ガウス分布の平均パラメータ$m$と精度パラメータの係数$\beta > 0$、ガンマ分布の形状パラメータ$a > 0$と尺度パラメータ$b > 0$、データ数(サンプルサイズ)$N$を指定します。\
+
+　ガウス-ガンマ分布に従う乱数を生成します。
+
+```{r}
+# ガンマ分布に従う乱数を生成
+lambda_n <- rgamma(n = N, shape = a, rate = b)
+
+# ガウス分布に従う乱数を生成
+mu_n <- rnorm(n = N, mean = m, sd = 1/sqrt(beta*lambda_n))
+
+# サンプルを格納
+data_df <- tidyr::tibble(
+  mu = mu_n, # μのサンプル
+  lambda = lambda_n # λのサンプル
+)
+data_df
+```
+
+　先にガンマ分布の乱数を生成して、生成した乱数を精度パラメータ(に比例する値)$\lambda$としてガウス分布の乱数を生成します。\
+
+　ガンマ分布の乱数は、`rgamma()`で生成できます。データ数の引数`n`に`N`、形状の引数`shape`に`a`、尺度の引数`rate`に`b`を指定します。\
+　ガウス分布の乱数は、`rnorm()`で生成できます。データ数の引数`n`に`N`、平均の引数`mean`に`m`、標準偏差の引数`sd`に`beta`と`lambda_n`の積の平方根の逆数を指定します。\
+
+　ガウス-ガンマ分布がとり得る値$\mu, \lambda$を作成して、$\mu, \lambda$の格子点ごとに確率密度を計算します。
+
+```{r}
+# μの値を作成
+mu_vals <- seq(
+  from = m - 1/sqrt(beta*a/b) * 4, 
+  to = m + 1/sqrt(beta*a/b) * 4, 
+  length.out = 200
+)
+
+# λの値を作成
+lambda_vals <- seq(from = 0, to = a/b * 3, length.out = 200)
+
+# ガウス-ガンマ分布を計算
+dens_df <- tidyr::expand_grid(
+  mu = mu_vals, # 確率変数μ
+  lambda = lambda_vals # 確率変数λ
+) |> # 確率変数(μとλの格子点)を作成
+  dplyr::mutate(
+    N_dens = dnorm(x = mu, mean = m, sd = 1/sqrt(beta*lambda)), # μの確率密度
+    Gam_dens = dgamma(x = lambda, shape = a, rate = b), # λの確率密度
+    density = N_dens * Gam_dens # 確率密度
+  )
+dens_df
+```
+
+　詳しくは「ガウス-ガンマ分布の作図」を参照してください。\
+\
+
+
+## 乱数の可視化
+
+　続いて、生成した乱数のグラフを作成します。\
+\
+
+　サンプルの散布図を確率分布と重ねて作成します。
+
+```{r, fig.width=8, fig.height=6}
+# サンプルの散布図を作成
+ggplot() + 
+  geom_point(data = data_df, mapping = aes(x = mu, y = lambda), 
+             color = "orange", alpha = 0.5) + # サンプル
+  geom_contour(data = dens_df, mapping = aes(x = mu, y = lambda, z = density, color = ..level..)) + # 元の分布
+  labs(title = "Gaussian-Gamma Distribution", 
+       subtitle = parse(text = paste0("list(m==", m, ", beta==", beta, ", a==", a, ", b==", b, ", N==", N, ")")), 
+       color = "density", 
+       x = expression(mu), y = expression(lambda)) # ラベル
+```
+
+\ 
+
+　サンプルの度数のヒートマップを作成します。
+
+```{r, fig.width=8, fig.height=6}
+# サンプルのヒストグラムを作成:度数
+ggplot() + 
+  geom_bin_2d(data = data_df, mapping = aes(x = mu, y = lambda, fill = ..count..), 
+              alpha = 0.8) + # サンプル
+  geom_contour(data = dens_df, mapping = aes(x = mu, y = lambda, z = density, color = ..level..)) + # 元の分布
+  scale_fill_distiller(palette = "Spectral") + # 塗りつぶしの色
+  scale_color_distiller(palette = "Spectral") + # 等高線の色
+  labs(title = "Gaussian-Gamma Distribution", 
+       subtitle = parse(text = paste0("list(m==", m, ", beta==", beta, ", a==", a, ", b==", b, ", N==", N, ")")), 
+       fill = "frequency", color = "density", 
+       x = expression(mu), y = expression(lambda)) # ラベル
+```
+
+　`geom_bin_2d()`で2次元の変数に対するヒートマップを描画できます。タイルの色の引数`fill`に`..count..`を指定すると度数、`..density..`を指定すると密度に応じて色付けされます。\
+
+　密度の等高線図を作成します。
+
+```{r, fig.width=8, fig.height=6}
+# サンプルのヒストグラムを作成:密度
+ggplot() + 
+  geom_density_2d_filled(data = data_df, mapping = aes(x = mu, y = lambda, fill = ..level..), 
+                         alpha = 0.8) + # サンプル
+  geom_contour(data = dens_df, mapping = aes(x = mu, y = lambda, z = density, color = ..level..)) + # 元の分布
+  scale_color_viridis_c(option = "D") + # 等高線の色
+  labs(title = "Gaussian-Gamma Distribution", 
+       subtitle = paste0("m=", m, ", beta=", beta, ", a=", a, ", b=", b, ", N=", N), 
+       fill = "density", color = "density", 
+       x = expression(mu), y = expression(lambda)) # ラベル
+```
+
+　`geom_density_2d_filled()`で密度の等高線図を描画できます。\
+
+　データ数が十分に増えると、ヒストグラムの形が分布の形に近付きます。\
+\
+
+
+## 乱数と分布の関係をアニメーションで可視化
+
+　次は、サンプルサイズとヒストグラムの形状の関係をアニメーションで確認します。\
+\
+
+
+### 1データずつ可視化
+
+　1データずつ乱数を生成するアニメーションを作成します。\
+\
+
+　パラメータ$m, \beta, a, b$とデータ数$N$を指定して、ガウス-ガンマ分布の乱数を生成します。
+
+```{r}
+# ガウス分布の平均パラメータを指定
+m <- 0
+
+# ガウス分布の精度パラメータの係数を指定
+beta <- 2
+
+# ガンマ分布のパラメータを指定
+a <- 5
+b <- 6
+
+# データ数(フレーム数)を指定
+N <- 100
+
+# ガンマ分布に従う乱数を生成
+lambda_n <- rgamma(n = N, shape = a, rate = b)
+
+# ガウス分布に従う乱数を生成
+mu_n <- rnorm(n = N, mean = m, sd = 1/sqrt(beta*lambda_n))
+head(mu_n); head(lambda_n)
+```
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# μの値を作成
+mu_vals <- seq(
+  from = m - 1/sqrt(beta*a/b) * 4, 
+  to = m + 1/sqrt(beta*a/b) * 4, 
+  length.out = 200
+)
+
+# λの値を作成
+lambda_vals <- seq(from = 0, to = a/b * 3, length.out = 200)
+
+# ガウス-ガンマ分布を計算
+dens_df <- tidyr::expand_grid(
+  mu = mu_vals, # 確率変数μ
+  lambda = lambda_vals # 確率変数λ
+) |> 
+  dplyr::mutate(
+    N_dens = dnorm(x = mu, mean = m, sd = 1/sqrt(beta*lambda)), # μの確率密度
+    Gam_dens = dgamma(x = lambda, shape = a, rate = b), # λの確率密度
+    density = N_dens * Gam_dens # 確率密度
+  )
+```
+
+　`mu_n, lambda_n`の`n`番目の要素を、`n`番目のデータ(`n`回目にサンプリングされた値)とみなします。アニメーションの`n`番目のフレームでは、`n`個のサンプル`mu_n[1:n], lambda_n[1:n]`のグラフを描画します。\
+
+　サンプルをデータフレームに格納します。
+
+```{r}
+# サンプルを格納
+anime_data_df <- tibble::tibble(
+  n = 1:N, # データ番号
+  mu = mu_n, # μのサンプル
+  lambda = lambda_n, # λのサンプル
+  parameter = paste0("m=", m, ", beta=", beta, ", a=", a, ", b=", b, ", N=", 1:N) |> 
+    factor(levels = paste0("m=", m, ", beta=", beta, ", a=", a, ", b=", b, ", N=", 1:N)) # フレーム切替用ラベル
+)
+anime_data_df
+```
+
+　$\mu$のサンプル`mu_n`と$\lambda$のサンプル`lambda_n`をデータフレームに格納して、フレーム切替用のラベルを作成します。ラベルが文字列型だと文字列の基準で順序が決まるので、因子型にしてサンプリング回数に応じたレベル(順序)を設定します。\
+　このデータフレームは、各試行におけるサンプルを描画するのに使います。\
+
+　サンプリング回数ごとに、それまでのサンプルを持つデータフレームを作成します。
+
+```{r}
+# サンプルを複製して格納
+anime_freq_df <- tidyr::expand_grid(
+  frame = 1:N, # フレーム番号
+  n = 1:N # データ番号
+) |> # 全ての組み合わせを作成
+  dplyr::filter(n <= frame) |> # 各フレームで利用するサンプルを抽出
+  dplyr::mutate(
+    mu = mu_n[n], # μのサンプル
+    lambda = lambda_n[n], # λのサンプル
+    parameter = paste0("m=", m, ", beta=", beta, ", a=", a, ", b=", b, ", N=", frame) |> 
+      factor(levels = paste0("m=", m, ", beta=", beta, ", a=", a, ", b=", b, ", N=", 1:N)) # フレーム切替用ラベル
+  )
+anime_freq_df
+```
+
+　フレーム番号とデータ番号(それぞれ`1`から`N`の整数)の全ての組み合わせを`expand_grid()`で作成して、フレーム番号以下のデータ番号を抽出します。\
+　データ番号をインデックスとして使って、`mu_n, lambdan`から対応するサンプルを抽出します。\
+　フレーム番号をデータ番号として、フレーム切替用のラベルを作成します。\
+　このデータフレームは、ヒートマップなどのグラフを描画するのに使います。\
+\
+
+　サンプルの散布図のグラフに重ねてアニメーション(gif画像)を作成します。
+
+```{r}
+# 散布図のアニメーションを作図
+anime_freq_graph <- ggplot() + 
+  geom_contour(data = dens_df, mapping = aes(x = mu, y = lambda, z = density, color = ..level..)) + # 元の分布
+  geom_point(data = anime_freq_df, mapping = aes(x = mu, y = lambda), 
+             color = "orange", alpha = 0.5, size = 3) + # n個のサンプル
+  geom_point(data = anime_data_df, mapping = aes(x = mu, y = lambda), 
+             color = "orange", size = 6) + # n番目のサンプル
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Gaussian-Gamma Distribution", 
+       subtitle = "{current_frame}", 
+       color = "density", 
+       x = expression(mu), y = expression(lambda)) # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_freq_graph, nframes = N, fps = 10, width = 800, height = 600)
+```
+
+　`transition_manual()`にフレームの順序を表す列を指定します。この例では、因子型のラベルのレベルの順に描画されます。\
+　`animate()`のフレーム数の引数`nframes`にデータ数(サンプルサイズ)、フレームレートの引数`fps`に1秒当たりのフレーム数を指定します。`fps`引数の値が大きいほどフレームが早く切り替わります。ただし、値が大きいと指定した通りに動作しません。\
+
+　サンプルの度数のヒートマップのアニメーションを作成します。
+
+```{r}
+# メッシュ用の値を設定
+mu_breaks     <- seq(from = min(mu_vals), to = max(mu_vals), length.out = 30)
+lambda_breaks <- seq(from = min(lambda_vals), to = max(lambda_vals), length.out = 30)
+
+# 度数のヒートマップのアニメーションを作図
+anime_freq_graph <- ggplot() + 
+  geom_bin_2d(data = anime_freq_df, mapping = aes(x = mu, y = lambda, fill = ..count..), 
+              breaks = list(x = mu_breaks, y = lambda_breaks), 
+              alpha = 0.8) + # n個のサンプル
+  geom_contour(data = dens_df, mapping = aes(x = mu, y = lambda, z = density, color = ..level..)) + # 元の分布
+  geom_point(data = anime_data_df, mapping = aes(x = mu, y = lambda), 
+             color = "orange", size = 6) + # n番目のサンプル
+  gganimate::transition_manual(parameter) + # 
+  scale_fill_distiller(palette = "Spectral") + # 塗りつぶしの色
+  scale_color_distiller(palette = "Spectral") + # 等高線の色
+  labs(title = "Gaussian-Gamma Distribution", 
+       subtitle = "{current_frame}", 
+       fill = "frequency", color = "density", 
+       x = expression(mu), y = expression(lambda)) # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_freq_graph, nframes = N, fps = 10, width = 800, height = 600)
+```
+
+　集計範囲(メッシュ)を固定するために、`geom_bin_2d()`の`breaks`引数に区切り位置を指定します。x軸とy軸を分けて指定する場合は、リストにして渡します。この例では、`mu_vals, lambda_vals`それぞれの最小値から最大値の範囲を`30`分割します。(指定しなくてもよしなにしてくれるっぽい？)\
+
+　サンプルの密度の等高線のアニメーションを作成します。
+
+```{r}
+# (データが少ないと密度を計算できないため)最初のフレームを除去
+n_min <- 10
+tmp_data_df <- anime_data_df|> 
+  dplyr::filter(n > n_min) |> # 始めのデータを削除
+  dplyr::mutate(
+    parameter = parameter |> 
+      as.character() |> 
+      (\(.){factor(., levels = unique(.))})() # レベルを再設定
+  )
+tmp_freq_df <- anime_freq_df |> 
+  dplyr::filter(frame > n_min) |> # 始めのデータを削除
+  dplyr::mutate(
+    parameter = parameter |> 
+      as.character() |> 
+      (\(.){factor(., levels = unique(.))})() # レベルを再設定
+  )
+
+# 密度の等高線のアニメーションを作図
+anime_freq_graph <- ggplot() + 
+  geom_density_2d_filled(data = tmp_freq_df, mapping = aes(x = mu, y = lambda, fill = ..level..), 
+                         alpha = 0.8) + # n個のサンプル
+  geom_contour(data = dens_df, mapping = aes(x = mu, y = lambda, z = density, color = ..level..)) + # 元の分布
+  geom_point(data = tmp_data_df, mapping = aes(x = mu, y = lambda), 
+             color = "orange", size = 6) + # n番目のサンプル
+  gganimate::transition_manual(parameter) + # 
+  scale_color_viridis_c(option = "D") + # 等高線の色
+  labs(title = "Gaussian-Gamma Distribution", 
+       subtitle = "{current_frame}", 
+       fill = "density", color = "density", 
+       x = expression(mu), y = expression(lambda)) # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_freq_graph, nframes = N-n_min, fps = 10, width = 800, height = 600)
+```
+
+　データが1つだと密度を計算できず、またデータが少ないと密度が大きくなり(z軸の最大値が大きくなり)アニメーション全体でのグラデーション(等高線)が分かりにくくなるので、始めのフレームに対応する行を取り除いておきます。\
+　データフレームからデータを除いても、因子レベルの情報がアニメーションのフレームに影響してしまうので、因子の情報を再設定する必要があります。\
+\
+
+
+### 複数データずつ可視化
+
+　続いて、フレームごとに複数データを生成します。\
+\
+
+　$\mu, \lambda$のサンプルを生成します。
+
+```{r}
+# データ数(フレーム数)を指定
 N <- 10000
 
 # ガンマ分布に従う乱数を生成
 lambda_n <- rgamma(n = N, shape = a, rate = b)
 
-# 1次元ガウス分布に従う乱数を生成
-mu_n <- rnorm(n = N, mean = m, sd = sqrt(1 / beta / lambda_n))
-mu_n[1:5]; lambda_n[1:5]
-```
-
-　ガンマ分布の乱数生成関数`rgamma()`のデータ数(サンプルサイズ)の引数`n`に`N`、パラメータの引数`shape, rate`に`a, b`を指定して、精度パラメータ$\lambda$を生成します。\
-　$\lambda$のサンプル`lambda_n`を用いて、平均パラメータ$\mu$をサンプリングします。1次元ガウス分布の乱数生成関数`rnorm()`のデータ数(サンプルサイズ)の引数`n`に`N`、平均の引数`mean`に`m`、標準偏差の引数`sd`に精度`beta * lambda_n`の逆数`1 / beta / lambda_n`の平方根を指定します。`N`個の乱数ごとに標準偏差が異なります。\
-
-　作図に利用するため、サンプルをデータフレームに格納し、また$\mu, \lambda$の値(ベクトル)と分布(データフレーム)を作成しておきます。
-
-```{r}
-# サンプルを格納
-data_df <- tidyr::tibble(
-  mu = mu_n, # muのサンプル
-  lambda = lambda_n # lambdaのサンプル
-)
-
-# 作図用のmuの値を作成
-mu_vals <- seq(from = -3, to = 3, length.out = 101)
-
-# 作図用のlambdaの値を作成
-lambda_vals <- seq(from = 0.02, to = 2, length.out = 100)
-
-# ガウス-ガンマ分布を計算
-dens_df <- tidyr::tibble(
-  mu = rep(mu_vals, times = length(lambda_vals)), # 確率変数mu
-  lambda = rep(lambda_vals, each = length(mu_vals)), # 確率変数lambda
-  N_dens = dnorm(x = mu, mean = m, sd = sqrt(1 / beta / lambda)), # muの確率密度
-  Gam_dens = dgamma(x = lambda, shape = a, rate = b), # lambdaの確率密度
-  density = N_dens * Gam_dens # 確率密度
-)
+# ガウス分布に従う乱数を生成
+mu_n <- rnorm(n = N, mean = m, sd = 1/sqrt(beta*lambda_n))
 ```
 
 \ 
 
-
-### 乱数の可視化
-
-　サンプルの散布図を作成します。
-
-```{r}
-# サンプルの散布図を作成
-ggplot() + 
-  geom_point(data = data_df, mapping = aes(x = mu, y = lambda), color = "orange") + # サンプル
-  geom_contour(data = dens_df, mapping = aes(x = mu, y = lambda, z = density, color = ..level..)) + # 元の分布
-  labs(title = "Gaussian-Gamma Distribution", 
-       subtitle = paste0("m=", m, ", beta=", beta, ", a=", a, ", b=", b, ", N=", N), 
-       x = expression(mu), y = expression(lambda), 
-       color = "density") # ラベル
-```
-
-\ 
-
-　サンプルのヒストグラムを作成します。
-
-```{r}
-# サンプルのヒストグラムを作成
-ggplot() + 
-  geom_bin2d(data = data_df, mapping = aes(x = mu, y = lambda), alpha = 0.8) + # 頻度
-  geom_contour(data = dens_df, mapping = aes(x = mu, y = lambda, z = density, color = ..level..)) + # 元の分布
-  scale_fill_distiller(palette = "Spectral") + # 塗りつぶしの色
-  scale_color_distiller(palette = "Spectral") + # 等高線の色
-  labs(title = "Gaussian-Gamma Distribution", 
-       subtitle = paste0("m=", m, ", beta=", beta, ", a=", a, ", b=", b, ", N=", N), 
-       x = expression(mu), y = expression(lambda), 
-       fill = "frequency", color = "density") # ラベル
-```
-
-　`geom_bin2d()`で2次元の変数に対するヒストグラムを描画できます。\
-
-　頻度を密度に変換して作図します。
-
-```{r}
-# サンプルの密度を作図
-ggplot() + 
-  geom_density2d_filled(data = data_df, mapping = aes(x = mu, y = lambda, fill = ..level..), alpha = 0.8) + # 密度
-  geom_contour(data = dens_df, mapping = aes(x = mu, y = lambda, z = density, color = ..level..)) + # 元の分布
-  scale_color_viridis_c(option = "D") + # 等高線の色
-  labs(title = "Gaussian-Gamma Distribution", 
-       subtitle = paste0("m=", m, ", beta=", beta, ", a=", a, ", b=", b, ", N=", N), 
-       x = expression(mu), y = expression(lambda), 
-       fill = "frequency", color = "density") # ラベル
-```
-
-　`geom_density2d_filled()`で頻度を密度に変換したグラフを作成できます。\
-\
-
-
-### 1データずつアニメーションで可視化
-
-　データ数を指定して、サンプルを1つずつ増やしてヒストグラムの変化をアニメーションで確認します。
-
-```{r}
-# フレーム数(データ数)を指定
-N_frame <- 100
-
-# 乱数を1つずつ生成
-#lambda_n <- rep(NA, times = N_frame)
-#mu_n <- rep(NA, times = N_frame)
-anime_freq_df <- tidyr::tibble()
-anime_data_df <- tidyr::tibble()
-anime_dens_df <- tidyr::tibble()
-for(n in 1:N_frame) {
-  # ガンマ分布に従う乱数を生成
-  #lambda_n[n] <- rgamma(n = 1, shape = a, rate = b)
-  
-  # 1次元ガウス分布に従う乱数を生成
-  #mu_n[n] <- rnorm(n = 1, mean = m, sd = sqrt(1 / beta / lambda_n[n]))
-  
-  # ラベル用のテキストを作成
-  label_text <- paste0("m=", m, ", beta=", beta, ", a=", a, ", b=", b, ", N=", n)
-  
-  # n個のサンプルを格納
-  tmp_freq_df <- tidyr::tibble(
-    mu = mu_n[1:n], # muのサンプル
-    lambda = lambda_n[1:n], # lambdaのサンプル
-    n = n, # データ数
-    parameter = as.factor(label_text) # フレーム切替用のラベル
-  )
-  
-  # n番目のサンプルを格納
-  tmp_data_df <- tidyr::tibble(
-    mu = mu_n[n], # muのサンプル
-    lambda = lambda_n[n], # lambdaのサンプル
-    n = n, # データ数
-    parameter = as.factor(label_text) # フレーム切替用のラベル
-  )
-  
-  # n回目のラベルを付与
-  tmp_dens_df <- dens_df %>% 
-    dplyr::mutate(
-      n = n, 
-      parameter = as.factor(label_text)
-    )
-  
-  # 結果を結合
-  anime_freq_df <- rbind(anime_freq_df, tmp_freq_df)
-  anime_data_df <- rbind(anime_data_df, tmp_data_df)
-  anime_dens_df <- rbind(anime_dens_df, tmp_dens_df)
-  
-  # 途中経過を表示
-  #message("\r", appendLF = FALSE) # 前回の表示を消去
-  #message("\r", "n=", n, " (", round(n / N_frame * 100, 2), "%)", appendLF = FALSE)
-}
-head(anime_freq_df)
-```
-
-　`for()`ループを使って、乱数を1つずつ取り出すまたは生成して、結果を`anime_***_df`に追加していきます。\
-
-　ヒストグラムのアニメーションを作成します。
-
-```{r, eval=FALSE}
-# メッシュ用の値を設定
-mu_breaks     <- seq(from = min(mu_vals), to = max(mu_vals), length.out = 30)
-lambda_breaks <- seq(from = min(lambda_vals), to = max(lambda_vals), length.out = 30)
-
-# アニメーション用のサンプルのヒストグラムを作成
-anime_freq_graph <- ggplot() + 
-  geom_bin2d(data = anime_freq_df, mapping = aes(x = mu, y = lambda), 
-             breaks = list(x = mu_breaks, y = lambda_breaks), alpha = 0.8) + # 頻度
-  geom_point(data = anime_data_df, mapping = aes(x = mu, y = lambda), color = "orange", size = 5) + # サンプル
-  geom_contour(data = anime_dens_df, mapping = aes(x = mu, y = lambda, z = density, color = ..level..)) + # 元の分布
-  scale_fill_distiller(palette = "Spectral") + # 塗りつぶしの色
-  scale_color_distiller(palette = "Spectral") + # 等高線の色
-  gganimate::transition_manual(parameter) + # フレーム
-  labs(title = "Gaussian-Gamma Distribution", 
-       subtitle = "{current_frame}", 
-       x = expression(mu), y = expression(lambda), 
-       fill = "frequency", color = "density") # ラベル
-
-# gif画像を作成
-gganimate::animate(anime_freq_graph, nframes = N_frame, fps = 100)
-```
-
-　`geom_bin2d()`の`breaks`引数で頻度をカウントする位置を指定できます。x軸とy軸を分けて指定する場合は、リストにして渡します。カウントする位置を指定することで、サンプルの範囲によってカウントの仕方が変わらないようにします。\
-
-　密度のアニメーションを作成します。
-
-```{r, eval=FALSE}
-# (データが少ないと密度が計算できないため)最初のフレームを除去
-n_min <- 10
-tmp_freq_df <- anime_freq_df %>% 
-  dplyr::filter(n > n_min)
-tmp_data_df <- anime_data_df %>% 
-  dplyr::filter(n > n_min)
-tmp_dens_df <- anime_dens_df %>% 
-  dplyr::filter(n > n_min)
-
-# (表示が上手くいかなくなるため)因子のレベルを再設定
-tmp_freq_df[["parameter"]] <- factor(as.character(tmp_freq_df[["parameter"]]), levels = unique(tmp_freq_df[["parameter"]]))
-tmp_data_df[["parameter"]] <- factor(as.character(tmp_data_df[["parameter"]]), levels = unique(tmp_data_df[["parameter"]]))
-tmp_dens_df[["parameter"]] <- factor(as.character(tmp_dens_df[["parameter"]]), levels = unique(tmp_dens_df[["parameter"]]))
-
-# アニメーション用のサンプルの密度を作図
-anime_prop_graph <- ggplot() + 
-  geom_density2d_filled(data = tmp_freq_df, mapping = aes(x = mu, y = lambda), alpha = 0.8) + # 密度
-  geom_point(data = tmp_data_df, mapping = aes(x = mu, y = lambda), color = "orange", size = 5) + # サンプル
-  geom_contour(data = tmp_dens_df, mapping = aes(x = mu, y = lambda, z = density, color = ..level..)) + # 元の分布
-  scale_color_viridis_c(option = "D") + # 等高線の色
-  gganimate::transition_manual(parameter) + # フレーム
-  xlim(c(min(mu_vals), max(mu_vals))) + # x軸の表示範囲
-  ylim(c(min(lambda_vals), max(lambda_vals))) + # y軸の表示範囲
-  labs(title = "Gaussian-Gamma Distribution", 
-       subtitle = "{current_frame}", 
-       x = expression(mu), y = expression(lambda), 
-       fill = "density", color = "density") # ラベル
-
-# gif画像を作成
-gganimate::animate(anime_prop_graph, nframes = N_frame - n_min, fps = 100)
-```
-
-　データ数が少ないと密度を計算できない(？)ので、始めの頃のデータ(行)取り除いておきます。\
-　データフレームからデータを除いても因子のレベル情報に含まれるとアニメーションに含まれてしまう(？)ので、因子の情報を再設定します。\
-\
-
-
-### 全データをアニメーションで可視化
-
-　続いて、フレーム数を指定して、フレームごとに均等に分けたサンプルを増やしてヒストグラムの変化をアニメーションで確認します。
+　フレーム数を指定します。
 
 ```{r}
 # フレーム数を指定
@@ -937,147 +1458,180 @@ frame_num <- 100
 
 # 1フレーム当たりのデータ数を計算
 n_per_frame <- N %/% frame_num
-
-# 乱数を1つずつ生成
-anime_freq_df <- tidyr::tibble()
-anime_dens_df <- tidyr::tibble()
-for(i in 1:frame_num) {
-  # ラベル用のテキストを作成
-  label_text <- paste0(
-    "m=", m, ", beta=", beta, ", a=", a, ", b=", b, ", N=", i * n_per_frame
-  )
-  
-  # n個のサンプルを格納
-  tmp_freq_df <- tidyr::tibble(
-    mu = mu_n[1:(i*n_per_frame)], # muのサンプル
-    lambda = lambda_n[1:(i*n_per_frame)], # lambdaのサンプル
-    parameter = as.factor(label_text) # フレーム切替用のラベル
-  )
-  
-  # n回目のラベルを付与
-  tmp_dens_df <- dens_df %>% 
-    dplyr::mutate( parameter = as.factor(label_text))
-  
-  # 結果を結合
-  anime_freq_df <- rbind(anime_freq_df, tmp_freq_df)
-  anime_dens_df <- rbind(anime_dens_df, tmp_dens_df)
-  
-  # 途中経過を表示
-  #message("\r", appendLF = FALSE) # 前回の表示を消去
-  #message("\r", "i=", i, " (", round(i / frame_num * 100, 2), "%)", appendLF = FALSE)
-}
-head(anime_freq_df)
+n_per_frame
 ```
 
-　1フレーム当たりのデータ数を計算して`n_per_frame`とします。\
-　乱数を`n_per_frame`個ずつ取り出して、結果を`anime_freq_df`に追加していきます。\
+　フレーム数`frame_num`を指定して、1フレーム当たりのデータ数`n_per_frame`を計算します。\
 
-　ヒストグラムのアニメーションを作成します。
+　フレームごとに、`n_per_frame`個ずつサンプルが増えるデータフレームを作成します。
 
-```{r, eval=FALSE}
+```{r}
+# サンプルを複製して格納
+anime_freq_df <- tidyr::expand_grid(
+  frame = 1:frame_num, # フレーム番号
+  n = 1:N # データ番号
+) |> # 全ての組み合わせを作成
+  dplyr::filter(n <= frame*n_per_frame) |> # 各試行までのサンプルを抽出
+  dplyr::mutate(
+    mu = mu_n[n], # μのサンプル
+    lambda = lambda_n[n], # λのサンプル
+    parameter = paste0("m=", m, ", beta=", beta, ", a=", a, ", b=", b, ", N=", frame*n_per_frame) |> 
+      factor(levels = paste0("m=", m, ", beta=", beta, ", a=", a, ", b=", b, ", N=", 1:frame_num*n_per_frame)) # フレーム切替用ラベル
+  )
+anime_freq_df
+```
+
+　1データずつのときと同様に、作図用のデータを作成します。こちらは、フレームごとに「フレーム番号」掛ける「1フレーム当たりのデータ数」番目までのサンプルを抽出します。\
+
+　散布図のアニメーションを作成します。
+
+```{r}
+# 散布図のアニメーションを作図
+anime_freq_graph <- ggplot() + 
+  geom_point(data = anime_freq_df, mapping = aes(x = mu, y = lambda), 
+             color = "orange", alpha = 0.5, size = 3) + # サンプル
+  geom_contour(data = dens_df, mapping = aes(x = mu, y = lambda, z = density, color = ..level..)) + # 元の分布
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title = "Gaussian-Gamma Distribution", 
+       subtitle = "{current_frame}", 
+       color = "density", 
+       x = expression(mu), y = expression(lambda)) # ラベル
+
+# gif画像を作成
+gganimate::animate(anime_freq_graph, nframes = frame_num+10, end_pause = 10, fps = 10, width = 800, height = 600)
+```
+
+　1データずつのときと同様に処理します。\
+
+　サンプルの度数のヒートマップのアニメーションを作成します。
+
+```{r}
 # メッシュ用の値を設定
 mu_breaks     <- seq(from = min(mu_vals), to = max(mu_vals), length.out = 30)
 lambda_breaks <- seq(from = min(lambda_vals), to = max(lambda_vals), length.out = 30)
 
-# アニメーション用のサンプルのヒストグラムを作成
+# 度数のヒートマップのアニメーションを作図
 anime_freq_graph <- ggplot() + 
-  geom_bin2d(data = anime_freq_df, mapping = aes(x = mu, y = lambda), 
-             breaks = list(x = mu_breaks, y = lambda_breaks), alpha = 0.8) + # 頻度
-  geom_contour(data = anime_dens_df, mapping = aes(x = mu, y = lambda, z = density, color = ..level..)) + # 元の分布
+  geom_bin2d(data = anime_freq_df, mapping = aes(x = mu, y = lambda, fill = ..count..), 
+             breaks = list(x = mu_breaks, y = lambda_breaks), 
+             alpha = 0.8) + # サンプル
+  geom_contour(data = dens_df, mapping = aes(x = mu, y = lambda, z = density, color = ..level..)) + # 元の分布
+  gganimate::transition_manual(parameter) + # 
   scale_fill_distiller(palette = "Spectral") + # 塗りつぶしの色
   scale_color_distiller(palette = "Spectral") + # 等高線の色
-  gganimate::transition_manual(parameter) + # フレーム
   labs(title = "Gaussian-Gamma Distribution", 
        subtitle = "{current_frame}", 
-       x = expression(mu), y = expression(lambda), 
-       fill = "frequency", color = "density") # ラベル
+       fill = "frequency", color = "density", 
+       x = expression(mu), y = expression(lambda)) # ラベル
 
 # gif画像を作成
-gganimate::animate(anime_freq_graph, nframes = frame_num, fps = 100)
+gganimate::animate(anime_freq_graph, nframes = frame_num+10, end_pause = 10, fps = 10, width = 800, height = 600)
 ```
 
 \ 
 
-　密度のアニメーションを作成します。
+　サンプルの密度の等高線のアニメーションを作成します。
 
-```{r, eval=FALSE}
-# アニメーション用のサンプルの密度を作図
-anime_prop_graph <- ggplot() + 
-  geom_density2d_filled(data = anime_freq_df, mapping = aes(x = mu, y = lambda), alpha = 0.8) + # 密度
-  geom_contour(data = anime_dens_df, mapping = aes(x = mu, y = lambda, z = density, color = ..level..)) + # 元の分布
+```{r}
+# 密度の等高線のアニメーションを作図
+anime_freq_graph <- ggplot() + 
+  geom_density2d_filled(data = anime_freq_df, mapping = aes(x = mu, y = lambda, fill = ..level..), alpha = 0.8) + # サンプル
+  geom_contour(data = dens_df, mapping = aes(x = mu, y = lambda, z = density, color = ..level..)) + # 元の分布
+  gganimate::transition_manual(parameter) + # 
   scale_color_viridis_c(option = "D") + # 等高線の色
-  xlim(c(min(mu_vals), max(mu_vals))) + # x軸の表示範囲
-  ylim(c(min(lambda_vals), max(lambda_vals))) + # y軸の表示範囲
-  gganimate::transition_manual(parameter) + # フレーム
+  coord_cartesian(xlim = c(min(mu_vals), max(mu_vals)), 
+                  ylim = c(min(lambda_vals), max(lambda_vals))) + # 軸の表示範囲
   labs(title = "Gaussian-Gamma Distribution", 
        subtitle = "{current_frame}", 
-       x = expression(mu), y = expression(lambda), 
-       fill = "density", color = "density") # ラベル
+       fill = "density", color = "density", 
+       x = expression(mu), y = expression(lambda)) # ラベル
 
 # gif画像を作成
-gganimate::animate(anime_prop_graph, nframes = frame_num, fps = 100)
+gganimate::animate(anime_freq_graph, nframes = frame_num+10, end_pause = 10, fps = 10, width = 800, height = 600)
 ```
 
 　サンプルが増えるに従って、元の分布に近付くのを確認できます。\
 \
 
-
-## 分布の生成
-
-　ガウス-ガンマ分布が共役事前分布となる1次元ガウス分布のパラメータを生成して分布を作図します。\
+　この記事では、ガウス-ガンマ分布の乱数生成を確認しました。次は、ガウス-ガンマ分布から確率分布を生成します。\
 \
 
-　パラメータを$m, \beta, a, b$とするガウス-ガンマ分布
 
-$$
-\mathrm{NG}(\mu, \lambda | m, \beta, a, b)
-    = \mathcal{N}(\mu | m, (\beta \lambda)^{-1})
-      \mathrm{Gam}(\lambda | a, b)
-$$
+# ガウス-ガンマ分布から確率分布の生成
 
-を事前分布として、$\mu, \lambda$を生成します。\
-　生成した$\mu, \lambda$を用いて、平均$\mu$・精度$\lambda$の1次元ガウス分布
-
-$$
-\mathcal{N}(x | \mu, \lambda^{-1})
-    = \frac{1}{\sqrt{2 \pi \lambda^{-1}}}
-      \exp \left(
-          - \frac{\lambda}{2}
-            (x - \mu)^2
-      \right)
-$$
-
-を描画します。\
+　ガウス-ガンマ分布(Gaussian-Gamma Distribution)から1次元ガウス分布(Gaussian Distribution)または正規-ガンマ分布(Normal-Gamma Distribution)を生成します。ガウス-ガンマ分布とガウス分布についてはそれぞれ「分布の定義式」を参照してください。\
 \
 
-　パラメータ$\mu, \lambda$を生成します。
+　利用するパッケージを読み込みます。
+
+```{r, eval=FALSE}
+# 利用パッケージ
+library(tidyverse)
+library(patchwork)
+```
+
+```{r, echo=FALSE}
+### 資料作成用
+
+# チェック用
+library(ggplot2)
+library(patchwork)
+```
+
+　この記事では、基本的に`パッケージ名::関数名()`の記法を使うので、パッケージを読み込む必要はありません。ただし、作図コードがごちゃごちゃしないようにパッケージ名を省略しているため、`ggplot2`は読み込む必要があります。\
+　`magrittr`パッケージのパイプ演算子`%>%`ではなく、ベースパイプ(ネイティブパイプ)演算子`|>`を使っています。`%>%`に置き換えても処理できます。  
+\
+
+
+## 生成分布の設定
+
+　まずは、パラメータの生成分布としてガウス-ガンマ分布を設定して、ガウス分布のパラメータを生成(サンプリング)します。\
+\
+
+　ガウス-ガンマ分布のパラメータ$\mu, \beta, a, b$とサンプルサイズ$N$を設定します。
 
 ```{r}
-# 1次元ガウス分布の平均パラメータを指定
+# ガウス分布の平均パラメータを指定
 m <- 0
 
-# 1次元ガウス分布の精度パラメータの係数を指定
+# ガウス分布の精度パラメータの係数を指定
 beta <- 2
 
 # ガンマ分布のパラメータを指定
 a <- 5
 b <- 6
 
-# サンプルサイズを指定
+# 分布の数(サンプルサイズ)を指定
 N <- 10
-
-# 精度パラメータを生成
-lambda_n <- rgamma(n = N, shape = a, rate = b)
-
-# 平均パラメータを生成
-mu_n <- rnorm(n = N, mean = m, sd = sqrt(1 / beta / lambda_n))
-mu_n[1:5]; lambda_n[1:5]
 ```
 
-　ガンマ分布に従う乱数を生成して、精度パラメータ$\lambda$として利用します。\
-　$\lambda$のサンプル`lambda_n`を用いて、平均パラメータ$\mu$をサンプリングします。\
+　ガウス分布の平均パラメータ$m$と精度パラメータの係数$\beta > 0$、ガンマ分布の形状パラメータ$a > 0$と尺度パラメータ$b > 0$、サンプルサイズ(パラメータ数)$N$を指定します。\
 
-　まずは、目安となるように$\mu, \lambda$の期待値$\mathbb{E}[\mu], \mathbb{E}[\lambda]$による分布を求めます。
+　ガウス-ガンマ分布に従う乱数を生成します。
+
+```{r}
+# ガンマ分布の精度パラメータを生成
+lambda_n <- rgamma(n = N, shape = a, rate = b)
+
+# ガウス分布の平均パラメータを生成
+mu_n <- rnorm(n = N, mean = m, sd = 1/sqrt(beta*lambda_n))
+
+# パラメータを格納
+param_df <- tibble::tibble(
+  mu = mu_n, 
+  lambda = lambda_n, 
+  parameter = paste0("mu=", round(mu_n, 2), ", lambda=", round(lambda_n, 3)) |> 
+    factor() # 色分け用ラベル
+)
+param_df
+```
+
+　先にガンマ分布の乱数を生成して、生成した乱数を精度パラメータ(に比例する値)としてガウス分布の乱数を生成します。\
+
+　ガンマ分布の乱数は、`rgamma()`で生成できます。データ数の引数`n`に`N`、形状の引数`shape`に`a`、尺度の引数`rate`に`b`を指定します。生成した値を精度パラメータ$\lambda$のサンプル`lambda_n`とします。\
+　ガウス分布の乱数は、`rnorm()`で生成できます。データ数の引数`n`に`N`、平均の引数`mean`に`m`、標準偏差の引数`sd`に`beta`と`lambda_n`の積の平方根の逆数を指定します。生成した値を平均パラメータ$\mu$のサンプル`mu_n`とします。\
+
+　ガウス-ガンマ分布の期待値を計算します。
 
 ```{r}
 # 平均パラメータの期待値を計算
@@ -1085,67 +1639,162 @@ E_mu <- m
 
 # 精度パラメータの期待値を計算
 E_lambda <- a / b
-
-# 標準偏差パラメータの期待値を計算
-E_sigma <- sqrt(1 / E_lambda)
-
-# 作図用のxの点を作成
-x_vals <- seq(from = E_mu - E_sigma*5, to = E_mu + E_sigma*5, length.out = 250)
-
-# パラメータの期待値による1次元ガウス分布を計算
-res_dens_df <- tidyr::tibble(
-  x = x_vals, # 確率変数
-  density = dnorm(x = x_vals, mean = E_mu, sd = E_sigma), # 確率密度
-  parameter = paste0("E[mu]=", E_mu, ", E[lambda]=", round(E_lambda, 2)) %>% 
-    as.factor() # 色分け用のラベル
-)
-head(res_dens_df)
 ```
 
-　平均パラメータの期待値$\mathbb{E}[\mu] = m$を`E_mu`、精度パラメータの期待値$\mathbb{E}[\lambda] = \frac{a}{b}$を`E_lambda`とします。\
-　また、標準偏差パラメータの期待値$\mathbb{E}[\sigma] = \sqrt{\frac{1}{\mathbb{E}[\lambda]}}$を計算して`E_sigma`とします。\
+　$\mu$の期待値$\mathbb{E}[\mu] = m$を`E_mu`、$\lambda$の期待値$\mathbb{E}[\lambda] = \frac{a}{b}$を`E_lambda`とします。\
+　サンプリングされたパラメータとその分布の基準を示すのに使います。\
 
-　$x$として利用する値を作成して`x_vals`とします。この例では、平均`E_mu`を中心に標準偏差`E_sigma`の`5`倍を範囲とします。\
-　`dnorm()`で1次元ガウス分布の確率密度を計算します。変数の引数`x`に`x_vals`、平均の引数`mean`に`E_mu`、標準偏差の引数`sd`に`E_sigma`を指定します。\
-
-　次に、パラメータのサンプル`mu_n, lambda_n`の値ごとに分布を計算します。
+　ガウス-ガンマ分布を計算します。
 
 ```{r}
-# サンプルごとに分布を計算
-for(n in 1:N) {
-  # n番目のパラメータを取得
-  mu     <- mu_n[n]
-  lambda <- lambda_n[n]
-  
-  # 1次元ガウス分布を計算
-  tmp_dens_df <- tidyr::tibble(
-    x = x_vals, # 確率変数
-    density = dnorm(x = x_vals, mean = mu, sd = sqrt(1 / lambda)), # 確率密度
-    parameter = paste0("mu=", round(mu, 2), ", lambda=", round(lambda, 2)) %>% 
-      as.factor() # 色分け用のラベル
+# μの値を作成
+mu_vals <- seq(
+  from = E_mu - 1/sqrt(beta*E_lambda) * 4, 
+  to = E_mu + 1/sqrt(beta*E_lambda) * 4, 
+  length.out = 200
+)
+
+# λの値を作成
+lambda_vals <- seq(from = 0, to = E_lambda * 3, length.out = 200)
+
+# ガウス-ガンマ分布を計算
+gaussian_gamma_df <- tidyr::expand_grid(
+  mu = mu_vals, # 確率変数μ
+  lambda = lambda_vals # 確率変数λ
+) |> # 確率変数(μとλの格子点)を作成
+  dplyr::mutate(
+    N_dens = dnorm(x = mu, mean = m, sd = 1/sqrt(beta*lambda)), # μの確率密度
+    Gam_dens = dgamma(x = lambda, shape = a, rate = b), # λの確率密度
+    density = N_dens * Gam_dens # 確率密度
   )
-  
-  # 結果を結合
-  res_dens_df <- rbind(res_dens_df, tmp_dens_df)
-}
+gaussian_gamma_df
 ```
 
-　`for()`ループを使って、`mu_n, lambda_n`から順番に値を取り出して確率密度を計算して、`res_dens_df`に追加していきます。\
+　詳しくは「ガウス-ガンマ分布の作図」を参照してください。\
+
+　生成分布(ガウス-ガンマ分布)とパラメータのサンプルをプロットします。
+
+```{r, fig.width=8, fig.height=6}
+# ガウス-ガンマ分布を作図
+gaussian_gamma_graph <- ggplot() + 
+  geom_contour_filled(data = gaussian_gamma_df, mapping = aes(x = mu, y = lambda, z = density, fill = ..level..), 
+                      alpha = 0.6) + # パラメータの生成分布
+  geom_point(mapping = aes(x = E_mu, y = E_lambda), 
+             color = "red", size = 6, shape = 4) + # パラメータの期待値
+  geom_point(data = param_df, mapping = aes(x = mu, y = lambda, color = parameter), 
+             alpha = 0.8, size = 6, show.legend = FALSE) + # パラメータのサンプル
+  labs(
+    title = "Gaussian-Gamma Distribution", 
+    subtitle = parse(text = paste0("list(m==", m, ", beta==", beta, ", a==", a, ", b==", b, ")")), 
+    fill = "density", 
+    x = expression(mu), y = expression(lambda)
+  ) # ラベル
+gaussian_gamma_graph
+```
+
+　期待値をバツ印で示します。\
+\
+
+　以上で、生成分布を設定して、パラメータを生成しました。次は、パラメータのサンプルを用いて、ガウス分布を作図します。\
+\
+
+
+## 分布の作図：1次元ガウス分布
+
+　生成した値を1次元ガウス分布の平均パラメータと精度パラメータ(分散パラメータの逆数)として利用します。グラフ作成については「1次元ガウス分布の作図」を参照してください。\
+\
+
+　パラメータのサンプルごとにガウス分布を計算します。
+
+```{r}
+# xの値を作成
+x_vals <- mu_vals
+
+# パラメータのサンプルごとにガウス分布を計算
+res_gaussian_df <- tidyr::expand_grid(
+  x = x_vals, # 確率変数
+  n = 1:N # パラメータ番号
+) |> # 全ての組み合わせを作成
+  dplyr::arrange(n, x) |> # パラメータのごとに並べ替え
+  dplyr::mutate(
+    mu = mu_n[n], # パラメータμ
+    lambda = lambda_n[n], # パラメータλ
+    density = dnorm(x = x, mean = mu, sd = 1/sqrt(lambda)), # 確率密度
+    parameter = paste0("mu=", round(mu, 2), ", lambda=", round(lambda, 3)) |> 
+      factor() # 色分け用ラベル
+  )
+res_gaussian_df
+```
+
+　ガウス分布(生成された分布)の確率変数がとり得る値$x$を作成して`x_vals`とします。この例では、作図時に対応関係が分かりやすいように、`mu_vals`の値を使います。\
+　$x$の値`x_vals`とパラメータ番号`1:N`それぞれの要素の全ての組み合わせを`expand_grid()`で作成して、`mu_n, lambda_n`から値を取り出し、それぞれ確率密度を計算します。\
+　ガウス分布の確率密度は、`dnorm()`で計算できます。確率変数の引数`x`に`x_vals`の値、平均の引数`mean`に`mu_n`の値、標準偏差の引数`sd`に`lambda_n`の値の平方根の逆数を指定します。\
+
+　凡例を数式で表示する場合は、`expression()`に対応した記法に変換します。
+
+```{r}
+# 凡例用のラベルを作成:(数式表示用)
+label_vec <- res_gaussian_df[["parameter"]] |> 
+  stringr::str_replace_all(pattern = "=", replacement = "==") |> # 等号表示用の記法に変換
+  (\(.){paste0("list(", ., ")")})() |> # カンマ表示用の記法に変換
+  unique() |> # 重複を除去
+  parse(text = _) # expression化
+names(label_vec) <- unique(res_gaussian_df[["parameter"]]) # ggplotに指定する文字列に対応する名前付きベクトルに変換
+label_vec[1]
+```
+
+　3行目の処理では、無名関数`function()`の省略記法`\()`を使って、`(\(引数){引数を使った具体的な処理})()`としています。直前のパイプ演算子を`%>%`にすると、行全体`(\(引数){処理})()`を`{}`の中の`処理`(この例だと`paste0("list(", ., ")")`)に置き換えられます(置き換えられるように引数名を`.`にしています)。\
+　変換後の文字列のベクトルに対して`names()`を使って、元の文字列を各要素の名前として設定します。\
+
+　ガウス-ガンマ分布の期待値(ガウス分布のパラメータの期待値)を用いて、ガウス分布を計算します。
+
+```{r}
+# パラメータの期待値によるガウス分布を計算
+E_gaussian_df <- tidyr::tibble(
+  x = x_vals, # 確率変数
+  density = dnorm(x = x_vals, mean = E_mu, sd = 1/sqrt(E_lambda)) # 確率密度
+)
+E_gaussian_df
+```
+
+　`mean`引数に`E_mu`、`sd`引数に`E_lambda`の平方根の逆数を指定します。\
 
 　$N + 1$個の1次元ガウス分布を作図します。
 
-```{r}
+```{r, fig.width=8, fig.height=6}
 # サンプルによる1次元ガウス分布を作図
-ggplot() + 
-  geom_line(data = res_dens_df, 
-            mapping = aes(x = x, y = density, color = parameter, 
-                          alpha = parameter, linetype = parameter), size = 0.8) + # 分布
-  scale_linetype_manual(values = c("dashed", rep("solid", times = N))) + # 線の種類
-  scale_alpha_manual(values = c(1, rep(0.5, times = N))) + # 透過度
-  labs(title = "Gaussian Distribution", 
-       subtitle = paste0("m=", m, ", beta=", beta, ", a=", a, ", b=", b, ", N=", N), 
-       x = expression(x)) # ラベル
+gaussian_graph <- ggplot() + 
+  geom_line(data = E_gaussian_df, mapping = aes(x = x, y = density), 
+            color = "red", size = 1, linetype = "dashed") + # 期待値による分布 
+  geom_line(data = res_gaussian_df, mapping = aes(x = x, y = density, color = parameter), 
+            alpha = 0.8, size = 1) + # サンプルによる分布
+  scale_color_hue(labels = label_vec) + # 凡例テキスト:(数式表示用)
+  guides(color = guide_legend(override.aes = list(alpha = 1))) + # 凡例の体裁
+  theme(legend.text.align = 0) + # 図の体裁
+  labs(
+    title = "Gaussian Distribution", 
+    subtitle = parse(text = paste0("list(E(mu)==", round(E_mu, 2), ", E(lambda)==", round(E_lambda, 3), ")")), 
+    x = expression(x), y = "density"
+  ) # ラベル
+gaussian_graph
 ```
 
-　期待値による分布(破線)を中心に分布しているのを確認できます。\
+　期待値による分布を破線で示します。\
+
+　パラメータの生成分布(ガウス-ガンマ分布)と生成された分布(ガウス分布)を並べて描画します。
+
+```{r, fig.width=8, fig.height=8}
+# グラフを並べて描画
+gaussian_gamma_graph / gaussian_graph + 
+  patchwork::plot_layout(guides = "collect")
+```
+
+　`patchwork`パッケージの`/`演算子を使うと上下に並べて描画できます。\
+
+　平均$\mu$が大きいほど、$x$が大きいほど確率密度が大きくなり、山が右に位置します。また、精度$\lambda$が大きいほど、分散が小さくなるので、平均付近の確率密度が大きくなり、山が高くなります。パラメータのサンプルの点と、分布のピークが対応しているのが分かります。\
 \
+
+　この記事では、ガウス-ガンマ分布からの分布生成を確認しました。\
+\
+
+

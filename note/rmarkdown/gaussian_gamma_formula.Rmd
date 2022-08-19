@@ -1,0 +1,152 @@
+---
+title: "ガウス-ガンマ分布"
+author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M:%S')`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_section: true
+    toc: true
+    toc_depth: 4
+    keep_tex: false
+header-includes:
+  - \usepackage{bookmark}
+  - \usepackage{xltxtra}
+  - \usepackage{zxjatype}
+  - \usepackage[ipa]{zxjafont}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, error = FALSE, warning = FALSE, # メッセージを非表示
+  fig.align = "center", # 画像を中央揃え
+  fig.width = 5, fig.height = 4, # 画像のサイズ
+  dev = "cairo_pdf", dev.args = list(family = "ipaexg"), # {ggplot2}に日本語を組み込む場合の対処
+  class.source = "numberLines lineAnchors", # ソースを番号付けする
+  class.output = "numberLines lineAnchors chunkout" # 出力を番号付けする
+)
+```
+
+----
+
+【編集履歴】
+
+- 2022/07/28：「定義式の確認」を追加
+
+----
+
+\newpage
+
+
+# ガウス-ガンマ分布の定義式
+
+　ガウス-ガンマ分布(Gaussian-Gamma Distribution)または正規-ガンマ分布(Normal-Gamma Distribution)の定義を確認します。1次元ガウス分布とガンマ分布についてはそれぞれ「分布の定義式」を参照してください。\
+\
+
+
+## 定義式
+
+　まずは、ガウス-ガンマ分布の定義式を確認します。\
+\
+
+　ガウス-ガンマ分布は、1次元ガウス分布とガンマ分布の積で定義される$\mu, \lambda$の同時分布です。
+
+$$
+\begin{aligned}
+\mathrm{NG}(\mu, \lambda | m, \beta, a, b)
+   &= \mathcal{N}(\mu | m, (\beta \lambda)^{-1})
+      \mathrm{Gam}(\lambda | a, b)
+\\
+   &= \Bigl(
+          \frac{\beta \lambda}{2 \pi}
+      \Bigr)^{\frac{1}{2}}
+      \exp \left(
+          - \frac{\beta \lambda}{2}
+            (\mu - m)^2
+      \right)
+      \frac{b^a}{\Gamma(a)}
+      \lambda^{a-1} \exp(- b \lambda)
+\end{aligned}
+$$
+
+　ここで、$\mathcal{N}(\cdot)$はガウス分布、$\mathrm{Gam}(\cdot)$はガンマ分布を表します。$\mu$と$\lambda$の2つの分布には$p(\mu, \lambda) = p(\mu | \lambda) p(\lambda)$の依存関係があります(独立ではありません)。\
+　$\mu$はガウス分布の確率変数で、$m$は平均パラメータ、$\beta$は精度パラメータの係数です。$\lambda$は精度に比例する値で、$\beta \lambda$が精度、精度の逆数$(\beta \lambda)^{-1} = \frac{1}{\beta \lambda}$が分散、分散の平方根$(\beta \lambda)^{-\frac{1}{2}} = \frac{1}{\sqrt{\beta \lambda}}$が標準偏差です。また、$\lambda$はガンマ分布の確率変数でもあり、$a$は形状パラメータ、$b$は尺度パラメータです。$\pi$は円周率、$\Gamma(x)$はガンマ関数です。\
+　確率変数の値$\mu$は実数、$\lambda$は正の実数$\lambda > 0$をとります。パラメータ$\lambda, \beta, a, b$はそれぞれ正の実数$\lambda > 0, \beta > 0, a > 0, b > 0$を満たす必要があります。\
+
+　ガウス-ガンマ分布の対数をとると、次の式になります。
+
+$$
+\begin{aligned}
+\log \mathrm{NG}(\mu, \lambda | m, \beta, a, b)
+   &= \log \mathcal{N}(\mu | m, (\beta \lambda)^{-1})
+      + \log \mathrm{Gam}(\lambda | a, b)
+\\
+   &= - \frac{1}{2} \Bigl\{
+          \beta \lambda
+          (x - m)^2
+          - \log(\beta \lambda)
+          + \log(2 \pi)
+      \Bigr\} \\
+   &\quad
+      + (a - 1) \log \lambda
+      - b \lambda
+      + a \log b
+      - \log \Gamma(a)
+\end{aligned}
+$$
+
+　対数の性質より$\log x^a = a \log x$、$\log (x y) = \log x + \log y$です。また、平方根は2分の1乗$\sqrt{x} = x^{\frac{1}{2}}$です。\
+\
+
+　ガウス-ガンマ分布は、平均と精度が未知の1次元ガウス分布の事前分布として利用されます。\
+\
+
+
+## 他の分布との関係
+
+　ガウス-逆ガンマ分布との関係を書きたい。\
+\
+
+
+## 統計量の計算式
+
+　ガウス-ガンマ分布の2つの確率変数$\mu, \lambda$それぞれの統計量の計算式を確認します。詳しくはいつか書きます。\
+\
+
+　$\mu$の期待値・分散・最頻値は、1次元ガウス分布の統計量なので、次の式で計算できます。
+
+$$
+\begin{aligned}
+\mathbb{E}[\mu]
+   &= m
+\\
+\mathbb{V}[\mu]
+   &= \frac{1}{\beta \lambda}
+\\
+\mathrm{mode}[\mu]
+   &= m
+\end{aligned}
+$$
+
+　期待値と最頻値(モード)は一致します。\
+　また、$\lambda$の期待値・分散・最頻値は、ガンマ分布の統計量なので、次の式で計算できます。
+
+$$
+\begin{aligned}
+\mathbb{E}[\lambda]
+   &= \frac{a}{b}
+\\
+\mathbb{V}[\lambda]
+   &= \frac{a}{b^2}
+\\
+\mathrm{mode}[\lambda]
+   &= \frac{a - 1}{b}
+    \quad (a \geq 1)
+\end{aligned}
+$$
+
+　ガンマ分布の確率変数は$\lambda > 0$の値をとるので、$a \geq 1$のとき最頻値が定義されます($a < 1$だと計算結果が負の値になってしまいます)。\
+\
+
+
