@@ -1,0 +1,557 @@
+---
+title: "多次元ガウス分布"
+author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M:%S')`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_section: true
+    toc: true
+    toc_depth: 4
+    keep_tex: false
+header-includes:
+  - \usepackage{bookmark}
+  - \usepackage{xltxtra}
+  - \usepackage{zxjatype}
+  - \usepackage[ipa]{zxjafont}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, error = FALSE, warning = FALSE, # メッセージを非表示
+  fig.align = "center", # 画像を中央揃え
+  fig.width = 5, fig.height = 4, # 画像のサイズ
+  dev = "cairo_pdf", dev.args = list(family = "ipaexg"), # {ggplot2}に日本語を組み込む場合の対処
+  class.source = "numberLines lineAnchors", # ソースを番号付けする
+  class.output = "numberLines lineAnchors chunkout" # 出力を番号付けする
+)
+```
+
+----
+
+【編集履歴】
+
+- 2022/08/27：「定義式」を追加
+
+----
+
+\newpage
+
+
+# 多次元ガウス分布の定義式
+
+　多次元ガウス分布(Maltivariate Gaussian Distribution)・多変量正規分布(Maltivariate Normal Distribution)の定義を確認します。\
+\
+
+
+## 定義式
+
+　多次元ガウス分布は、1次元ガウス分布を$D$次元に拡張(一般化)した分布です。2種類のパラメータによる定義式を確認します。\
+\
+
+　ガウス分布は、パラメータ$\boldsymbol{\mu}, \boldsymbol{\Sigma}$を用いて、次の式で定義されます。
+
+$$
+\mathcal{N}(\mathbf{x} | \boldsymbol{\mu}, \boldsymbol{\Sigma})
+    = \frac{1}{\sqrt{(2 \pi)^D |\boldsymbol{\Sigma}|}}
+      \exp \left\{
+          - \frac{1}{2}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Sigma}^{-1}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \right\}
+\tag{1}
+$$
+
+　または、$\boldsymbol{\Lambda}$を用いて、次の式でも定義されます。
+
+$$
+\mathcal{N}(\mathbf{x} | \boldsymbol{\mu}, \boldsymbol{\Lambda}^{-1})
+    = \left\{
+          \frac{|\boldsymbol{\Lambda}|}{(2 \pi)^D}
+      \right\}^{\frac{1}{2}}
+      \exp \left\{
+          - \frac{1}{2}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Lambda}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \right\}
+\tag{2}
+$$
+
+　ここで、$\boldsymbol{\mu}$は平均ベクトル、$\boldsymbol{\Sigma}$は分散共分散行列、$\boldsymbol{\Lambda}$は精度行列、$\pi$は円周率です。また、$\mathbf{A}^{\top}$は行列$\mathbf{A}$の転置行列、$\mathbf{A}^{-1}$は逆行列、$|\mathbf{A}|$は行列式、ネイピア数$e$による指数関数$e^x = \exp(x)$、平方根$\sqrt{a} = a^{\frac{1}{2}}$です。\
+　$\mathbf{x}, \boldsymbol{\mu}$は$D$次元ベクトル、$\boldsymbol{\Sigma}$は$D \times D$の行列です。
+
+$$
+\mathbf{x}
+    = \begin{pmatrix}
+          x_1 \\
+          x_2 \\
+          \vdots \\
+          x_D
+      \end{pmatrix}
+,\ 
+\boldsymbol{\mu}
+    = \begin{pmatrix}
+          \mu_1 \\
+          \mu_2 \\
+          \vdots \\
+          \mu_D
+      \end{pmatrix}
+,\ 
+\boldsymbol{\Sigma}
+    = \begin{pmatrix}
+          \sigma_1^2 & \sigma_{1,2} & \cdots & \sigma_{1,D} \\
+          \sigma_{2,1} & \sigma_2^2 & \cdots & \sigma_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \sigma_{D,1} & \sigma_{D,2} & \cdots & \sigma_D^2
+      \end{pmatrix}
+$$
+
+　$\sigma_d$は$x_d$の標準偏差、$\sigma_d^2 = \sigma_{d,d}$は$x_d$の分散、$\sigma_{i,j}$は$x_i$と$x_j$の共分散です。\
+　$x_d$は実数をとり、$\mu_d$は実数、$\sigma, \sigma_d^2$は正の実数、$\sigma_{i,j}\ (i \neq j)$は実数、また$\boldsymbol{\Sigma}$は正定値行列を満たす必要があります。\
+　精度行列は、分散共分散行列の逆行列で定義されます。
+
+$$
+\begin{aligned}
+\boldsymbol{\Lambda}
+   &= \boldsymbol{\Sigma}^{-1}
+\\
+\boldsymbol{\Sigma}
+   &= \boldsymbol{\Lambda}^{-1}
+\end{aligned}
+$$
+
+　精度行列も正定値行列を満たします。\
+\
+
+　ガウス分布の対数をとると、それぞれ次の式になります。
+
+$$
+\begin{aligned}
+\log \mathcal{N}(\mathbf{x} | \boldsymbol{\mu}, \boldsymbol{\Sigma})
+   &= - \frac{1}{2} \Bigl\{
+          D \log(2 \pi)
+          + \log |\boldsymbol{\Sigma}|
+          + (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Sigma}^{-1}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \Bigr\}
+\\
+\log \mathcal{N}(\mathbf{x} | \boldsymbol{\mu}, \boldsymbol{\Lambda}^{-1})
+   &= - \frac{1}{2} \Bigl\{
+          D \log (2 \pi)
+          - \log |\boldsymbol{\Lambda}|
+          + (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Lambda}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \Bigr\}
+\end{aligned}
+$$
+
+　対数の性質より$\log x^a = a \log x$、$\log (x y) = \log x + \log y$、$\log \frac{x}{y} = \log x - \log y$です。\
+\
+
+
+## 定義式の関係
+
+　2つの定義式と1次元の定義式の対応関係を導出します。1次元ガウス分布については「1次元ガウス分布の定義式」を参照してください。\
+\
+
+
+### 分散共分散行列による式と精度行列による式の変換
+
+　まずは、$\boldsymbol{\Sigma}$を用いた定義式と$\boldsymbol{\Lambda}$を用いた定義式の関係を考えます。\
+\
+
+　$\boldsymbol{\Sigma}$を用いた定義式(1)について、平方根の性質$\sqrt{x} = x^{\frac{1}{2}}$、$\sqrt{\frac{x}{y}} = \frac{\sqrt{x}}{\sqrt{y}}$より、変形します。
+
+
+\begin{align*}
+\mathcal{N}(\mathbf{x} | \boldsymbol{\mu}, \boldsymbol{\Sigma})
+   &= \frac{1}{\sqrt{(2 \pi)^D |\boldsymbol{\Sigma}|}}
+      \exp \left\{
+          - \frac{1}{2}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Sigma}^{-1}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \right\}
+\tag{1}\\
+   &= \left\{
+          \frac{1}{(2 \pi)^D |\boldsymbol{\Sigma}|}
+      \right\}^{\frac{1}{2}}
+      \exp \left\{
+          - \frac{1}{2}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Sigma}^{-1}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \right\}
+\end{align*}
+
+
+　定義より、$\boldsymbol{\Sigma}^{-1} = \boldsymbol{\Lambda}$を代入します。
+
+$$
+\mathcal{N}(\mathbf{x} | \boldsymbol{\mu}, \boldsymbol{\Sigma})
+    = \left\{
+          \frac{1}{(2 \pi)^D |\boldsymbol{\Lambda}^{-1}|}
+      \right\}^{\frac{1}{2}}
+      \exp \left\{
+          - \frac{1}{2}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Lambda}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \right\}
+$$
+
+　行列式の性質$|\mathbf{A}^{-1}| = |\mathbf{A}|^{-1}$、逆数$x^{-1} = \frac{1}{x}$より、変形します。
+
+$$
+\mathcal{N}(\mathbf{x} | \boldsymbol{\mu}, \boldsymbol{\Sigma})
+    = \left\{
+          \frac{|\boldsymbol{\Lambda}|}{(2 \pi)^D}
+      \right\}^{\frac{1}{2}}
+      \exp \left\{
+          - \frac{1}{2}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Lambda}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \right\}
+    = \mathcal{N}(\mathbf{x} | \boldsymbol{\mu}, \boldsymbol{\Lambda}^{-1})
+\tag{2}
+$$
+
+　$\boldsymbol{\Lambda}$を用いた定義式(2)が得られました。\
+\
+
+
+### 1次元ガウス分布との関係
+
+　次は、1次元の場合の定義式を考えます。\
+\
+
+　1次元$D = 1$のとき、$\mathbf{x}, \boldsymbol{\mu}, \boldsymbol{\Sigma}$はそれぞれスカラになります。
+
+
+\begin{align*}
+\mathcal{N}(\mathbf{x} = x_1 | \boldsymbol{\mu} = \mu_1, \boldsymbol{\Sigma} = \sigma_1^2)
+   &= \frac{1}{\sqrt{(2 \pi)^1 |\sigma_1^2}|}
+      \exp \Bigl\{
+          - \frac{1}{2}
+            (x_1 - \mu_1)^{\top}
+            \sigma_1^{-1}
+            (x_1 - \mu_1)
+      \Bigr\}
+\tag{1'}\\
+   &= \frac{1}{\sqrt{2 \pi \sigma_1^2}}
+      \exp \left\{
+          - \frac{(x_1 - \mu_1)^2}{2 \sigma_1}
+      \right\}
+    = \mathcal{N}(x = x_1 | \mu = \mu_1, \sigma^2 = \sigma_1^2)
+\end{align*}
+
+
+　スカラなので、転置と行列式はそのまま$x^{\top} = x, |x| = x$、逆行列は逆数$x^{-1} = \frac{1}{x}$になります。\
+
+　$\boldsymbol{\Lambda}$を用いる場合も同様です。
+
+
+\begin{align*}
+\mathcal{N}(\mathbf{x} = x_1 | \boldsymbol{\mu} = \mu_1, \boldsymbol{\Lambda}^{-1} = \lambda_1^{-1})
+   &= \left\{
+          \frac{|\lambda_1|}{(2 \pi)^1}
+      \right\}^{\frac{1}{2}}
+      \exp \left\{
+          - \frac{1}{2}
+            (x_1 - \mu_1)^{\top}
+            \lambda_1
+            (x_1 - \mu_1)
+      \right\}
+\tag{2'}\\
+   &= \left(
+          \frac{\lambda_1}{2 \pi}
+      \right)^{\frac{1}{2}}
+      \exp \left\{
+          - \frac{\lambda_1 (x_1 - \mu_1)^2}{2}
+      \right\}
+    = \mathcal{N}(x = x_1 | \mu = \mu_1, \lambda^{-1} = \lambda_1^{-1})
+\end{align*}
+
+
+　それぞれ1次元ガウス分布の定義式が得られました。\
+\
+
+
+### 変数間に依存関係がない場合
+
+　続いて、変数間に依存関係がない(独立である)場合のガウス分布を考えます。\
+\
+
+　まずは、分散共分散行列について確認します。\
+
+　各変数が独立のとき全ての共分散が0になります。
+
+$$
+\boldsymbol{\Sigma}
+    = \begin{pmatrix}
+          \sigma_1^2 & 0 & \cdots & 0 \\
+          0 & \sigma_2^2 & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & \sigma_D^2
+      \end{pmatrix}
+$$
+
+　各変数$x_d$の分散$\sigma_d^2$を対角成分とする対角行列になります。\
+
+　対角行列の逆行列は、対角成分の逆数を対角成分とする対角行列になります。
+
+$$
+\boldsymbol{\Sigma}^{-1}
+    = \begin{pmatrix}
+          \frac{1}{\sigma_1^2} & 0 & \cdots & 0 \\
+          0 & \frac{1}{\sigma_2^2} & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & \frac{1}{\sigma_D^2}
+      \end{pmatrix}
+$$
+
+　各変数$x_d$の分散$\sigma_d^2$の逆数$\frac{1}{\sigma_d^2} = \sigma_d^{-2}$を対角成分とする対角行列になります。\
+\
+
+　次に、定義式(1)の各因子を変形します。
+
+$$
+\mathcal{N}(\mathbf{x} | \boldsymbol{\mu}, \boldsymbol{\Sigma})
+    = \frac{1}{\sqrt{(2 \pi)^D |\boldsymbol{\Sigma}|}}
+      \exp \left\{
+          - \frac{1}{2}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Sigma}^{-1}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \right\}
+\tag{1}
+$$
+
+　$(2 \pi)^D$は、$D$個の$2 \pi$の積で表せます。
+
+$$
+(2 \pi)^D
+    = \prod_{d=1}^D
+          2 \pi
+$$
+
+　分散共分散行列の行列式$|\boldsymbol{\Sigma}|$は、対角行列の行列式は対角成分の積になるので、各次元($D$個)の分散の積になります。
+
+$$
+\begin{aligned}
+|\boldsymbol{\Sigma}|
+   &= \left|
+          \begin{pmatrix}
+              \sigma_1^2 & 0 & \cdots & 0 \\
+              0 & \sigma_2^2 & \cdots & 0 \\
+              \vdots & \vdots & \ddots & \vdots \\
+              0 & 0 & \cdots & \sigma_D^2
+          \end{pmatrix}
+      \right|
+\\
+   &= \sigma_1^2
+      \sigma_2^2
+      \cdots
+      \sigma_D^2
+\\
+   &= \prod_{d=1}^D
+          \sigma_d^2
+\end{aligned}
+$$
+
+　よって、正規化係数の計算は、次のように変形できます。
+
+
+\begin{align*}
+\frac{1}{\sqrt{(2 \pi)^D |\boldsymbol{\Sigma}|}}
+   &= \frac{
+          1
+      }{
+          \sqrt{
+              \prod_{d=1}^D
+                  2 \pi
+                  \sigma_d^2
+          }
+      }
+\\
+   &= \frac{
+          1
+      }{
+          \sqrt{
+              2 \pi \sigma_1^2
+              2 \pi \sigma_2^2
+              \cdots
+              2 \pi \sigma_D^2
+          }
+      }
+\\
+   &= \frac{
+          1
+      }{
+          \sqrt{2 \pi \sigma_1^2}
+          \sqrt{2 \pi \sigma_2^2}
+          \cdots
+          \sqrt{2 \pi \sigma_D^2}
+      }
+\\
+   &= \prod_{d=1}^D
+          \frac{1}{\sqrt{2 \pi \sigma_d^2}}
+\tag{a}
+\end{align*}
+
+
+　平方根の性質$\sqrt{a b} = \sqrt{a} \sqrt{b}$より、$\prod$をルートの外に出せます。\
+
+　続いて、二次形式を計算します。
+
+$$
+\begin{aligned}
+(\mathbf{x} - \boldsymbol{\mu})^{\top}
+\boldsymbol{\Sigma}^{-1}
+(\mathbf{x} - \boldsymbol{\mu})
+   &= \begin{pmatrix}
+          x_1 - \mu_1 & 
+          x_2 - \mu_2 & 
+          \cdots & 
+          x_D - \mu_D
+      \end{pmatrix}
+      \begin{pmatrix}
+          \frac{1}{\sigma_1^2} & 0 & \cdots & 0 \\
+          0 & \frac{1}{\sigma_2^2} & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & \frac{1}{\sigma_D^2}
+      \end{pmatrix}
+      \begin{pmatrix}
+          x_1 - \mu_1 \\
+          x_2 - \mu_2 \\
+          \vdots \\
+          x_D - \mu_D
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          \frac{x_1 - \mu_1}{\sigma_1^2} & 
+          \frac{x_2 - \mu_2}{\sigma_2^2} & 
+          \cdots & 
+          \frac{x_D - \mu_D}{\sigma_D^2}
+      \end{pmatrix}
+      \begin{pmatrix}
+          x_1 - \mu_1 \\
+          x_2 - \mu_2 \\
+          \vdots \\
+          x_D - \mu_D
+      \end{pmatrix}
+\\
+   &= \frac{(x_1 - \mu_1)^2}{\sigma_1^2}
+      + \frac{(x_2 - \mu_2)^2}{\sigma_2^2}
+      + \cdots
+      + \frac{(x_D - \mu_D)^2}{\sigma_D^2}
+\\
+   &= \sum_{d=1}^D
+          \frac{(x_d - \mu_d)^2}{\sigma_d^2}
+\end{aligned}
+$$
+
+　行列の積の計算において次元の異なる項は0によって消えるので、各次元の因子の和になります。\
+
+　よって、指数部分は、次のように変形できます。
+
+
+\begin{align*}
+\exp \left\{
+    - \frac{1}{2}
+      (\mathbf{x} - \boldsymbol{\mu})^{\top}
+      \boldsymbol{\Sigma}^{-1}
+      (\mathbf{x} - \boldsymbol{\mu})
+\right\}
+   &= \exp \left\{
+          - \frac{1}{2}
+            \sum_{d=1}^D
+                \frac{(x_d - \mu_d)^2}{\sigma_d^2}
+      \right\}
+\\
+   &= \exp \left\{
+          - \frac{(x_1 - \mu_1)^2}{2 \sigma_1^2}
+          - \frac{(x_2 - \mu_2)^2}{2 \sigma_2^2}
+          - \cdots
+          - \frac{(x_D - \mu_D)^2}{2 \sigma_D^2}
+      \right\}
+\\
+   &= \exp \left\{
+          - \frac{(x_1 - \mu_1)^2}{2 \sigma_1^2}
+      \right\}
+      \exp \left\{
+          - \frac{(x_2 - \mu_2)^2}{2 \sigma_2^2}
+      \right\}
+      \cdots
+      \exp \left\{
+          - \frac{(x_D - \mu_D)^2}{2 \sigma_D^2}
+      \right\}
+\\
+   &= \prod_{d=1}^D
+          \exp \left\{
+              - \frac{(x_d - \mu_d)^2}{2 \sigma_d^2}
+          \right\}
+\tag{b}
+\end{align*}
+
+
+　指数の性質$\exp(a + b) = \exp(a) \exp(b)$より、総和$\sum$を指数関数の外に出すと総乗$\prod$になります。\
+
+　各因子の計算を確認できたので、式(1)に式(a,b)を代入します。
+
+$$
+\begin{aligned}
+\mathcal{N}(\mathbf{x} | \boldsymbol{\mu}, \boldsymbol{\Sigma})
+   &= \prod_{d=1}^D
+          \frac{1}{\sqrt{2 \pi \sigma_d^2}}
+          \exp \left\{
+              - \frac{(x_d - \mu_d)^2}{2 \sigma_d^2}
+          \right\}
+\\
+   &= \prod_{d=1}^D
+          \mathcal{N}(x_d | \mu_d, \sigma_d^2)
+\end{aligned}
+$$
+
+　各次元($D$個)の1次元ガウス分布の積になるのが分かりました。\
+\
+
+　ここまでで、ガウス分布の定義式を確認しました。\
+\
+
+
+## 統計量の計算式
+
+　ガウス分布の期待値・分散・最頻値は、定義より次になります。詳しくはいつか書きます。分散共分散行列に関する統計量については「分散共分散行列と相関行列の関係」を参照してください。
+
+$$
+\begin{aligned}
+\mathbb{E}[\mathbf{x}]
+   &= \boldsymbol{\mu}
+\\
+\mathbb{E}[x_d]
+   &= \mu_d
+\\
+\mathbb{V}[x_d]
+   &= \sigma_d^2
+\\
+\mathrm{Cov}[x_i, x_j]
+   &= \sigma_{i,j}
+\\
+\mathrm{mode}[\mathbf{x}]
+   &= \boldsymbol{\mu}
+\\
+\mathrm{mode}[x_d]
+   &= \mu_d
+\end{aligned}
+$$
+
+　期待値と最頻値は一致します。\
+\
+
