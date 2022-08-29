@@ -1,0 +1,291 @@
+---
+title: "多次元ガウス分布"
+author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M:%S')`"
+output:
+  html_document:
+    toc: TRUE       # 目次
+    toc_depth: 3    # 目次の見出しレベル
+    toc_float: TRUE # 目次のスクロール追跡
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, error = FALSE, warning = FALSE # メッセージを非表示
+)
+```
+
+----
+
+【編集履歴】
+
+- 2022/08/27：「相関行列との関係」を追加
+
+----
+
+
+# 分散共分散行列と相関行列の関係
+
+　分散共分散行列(Variance–Covariance Matrix)と相関行列(Correlation Matrix)の関係を計算で確認します。計算式については「分散共分散行列と相関行列の関係の導出」を参照してください。\
+\
+
+　この記事では、`magrittr`パッケージのパイプ演算子`%>%`ではなく、ベースパイプ(ネイティブパイプ)演算子`|>`を使っています。`%>%`に置き換えても処理できます。  
+\
+
+
+## 分散共分散行列の設定
+
+　まずは、分散共分散行列を設定します。\
+\
+
+　分散共分散行列$\boldsymbol{\Sigma}$を作成します。
+
+```{r}
+# 次元数を指定
+D <- 3
+
+# 分散共分散行列を指定
+sigma_dd <- c(
+  4, 1.8, -0.1, 
+  1.8, 9, 2.4, 
+  -0.1, 2.4, 1
+) |> # 値を指定
+  matrix(nrow = D, ncol = D, byrow = TRUE) # マトリクスに変換
+sigma_dd
+```
+
+　$D \times D$の正定値行列を指定します。
+
+$$
+\boldsymbol{\Sigma}
+    = \begin{pmatrix}
+          \sigma_1^2 & \sigma_{1,2} & \cdots & \sigma_{1,D} \\
+          \sigma_{2,1} & \sigma_2^2 & \cdots & \sigma_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \sigma_{D,1} & \sigma_{D,2} & \cdots & \sigma_D^2
+      \end{pmatrix}
+$$
+
+　$D$次元ベクトルの変数を$\mathbf{x} = (x_1, x_2, \cdots, x_D)^{\top}$とすると、$\sigma_d$は$x_d$の標準偏差、$\sigma_d^2 = \sigma_{d,d}$は$x_d$の分散、$\sigma_{i,j}$は$x_i$と$x_j$の共分散です。
+　$\sigma_d^2$は正の実数、$\sigma_{i,j}\ (i \neq j)$は実数を満たす必要があります。設定した値に従う相関係数などを計算します。\
+\
+
+
+## 標準偏差と相関係数の計算
+
+　次に、分散と共分散を用いて標準偏差と相関係数を計算します。\
+\
+
+　注目する成分番号(インデックス)$i, j$を指定します。
+
+```{r}
+# 次元を指定
+i <- 1
+j <- 2
+```
+
+　行番号を`i`、列番号を`j`とします。\
+
+　分散$\sigma_i^2, \sigma_j^2$を抽出します。
+
+```{r}
+# 分散を抽出
+sigma2_i <- sigma_dd[i, i]
+sigma2_j <- sigma_dd[j, j]
+sigma2_i; sigma2_j
+```
+
+　インデックスを指定して`sigma_dd`の対角成分(対角要素)を抽出します。\
+
+　ちなみに、全ての対角成分は`diag()`で抽出できます。
+
+```{r}
+# 全ての分散を抽出
+diag(sigma_dd)
+```
+
+　`diag()`にマトリクスを渡すと対角要素を返します。マトリクスの形状に関わらず抽出できます。\
+
+　共分散$\sigma_{i,j}, \sigma_{j,i}$を抽出します。\
+
+```{r}
+# 共分散を抽出
+sigma_ij <- sigma_dd[i, j]
+sigma_ji <- sigma_dd[j, i]
+sigma_ij; sigma_ji
+```
+
+　インデックスを指定して`sigma_dd`の要素を抽出します。$\sigma_{i,j} = \sigma_{j,i}$なのを確認できます。\
+
+　標準偏差$\sigma_i, \sigma_j$を計算します。
+
+```{r}
+# 標準偏差を計算
+sigma_i <- sqrt(sigma2_i)
+sigma_j <- sqrt(sigma2_j)
+sigma_i; sigma_j
+```
+
+　分散の平方根をとります。
+
+$$
+\sigma_d
+    = \sqrt{\sigma_d^2}
+$$
+
+　相関係数$\rho_{i,i} \rho_{i,j}, \rho_{j,i}, \rho_{j,j}$を計算します。
+
+```{r}
+# 相関係数を計算
+rho_ii <- sigma2_i / sigma_i / sigma_i
+rho_ij <- sigma_ij / sigma_i / sigma_j
+rho_ji <- sigma_ji / sigma_j / sigma_i
+rho_jj <- sigma2_j / sigma_j / sigma_j
+rho_ii; rho_ij; rho_ji; rho_jj
+```
+
+　分散を対応する標準偏差で割ります。
+
+$$
+\rho_{i,j}
+    = \frac{\sigma_{i,j}}{\sigma_i \sigma_j}
+$$
+
+　$\rho_{i,j} = \rho_{j,i}$、$\rho_{d,d} = \frac{\sigma_d^2}{\sigma_d \sigma_d} = 1$になるのを確認できます。\
+
+　$D \times D$の相関係数を並べた行列を相関行列と言います。
+
+$$
+\mathbf{P}
+    = \begin{pmatrix}
+          \rho_{1,1} & \rho_{1,2} & \cdots & \rho_{1,D} \\
+          \rho_{2,1} & \rho_{2,2} & \cdots & \rho_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \rho_{D,1} & \rho_{D,2} & \cdots & \rho_{D,D}
+      \end{pmatrix}
+    = \begin{pmatrix}
+          1 & \rho_{1,2} & \cdots & \rho_{1,D} \\
+          \rho_{2,1} & 1 & \cdots & \rho_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \rho_{D,1} & \rho_{D,2} & \cdots & 1
+      \end{pmatrix}
+$$
+
+　対角成分が1の対称行列です。\
+\
+
+
+## 分散共分散行列と相関行列の計算
+
+　最後に、分散共分散行列と相関行列を計算します。\
+\
+
+　計算に利用する2つの対角行列、標準偏差$\sigma_d$を対角成分とする行列$\mathbf{S}$と、標準偏差の逆数$\frac{1}{\sigma_d}$を対角成分とする行列$\mathbf{S}^{-1}$を作成します。
+
+$$
+\mathbf{S}
+    = \begin{pmatrix}
+          \sigma_1 & 0 & \cdots & 0 \\
+          0 & \sigma_2 & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & \sigma_D
+      \end{pmatrix}
+,\ 
+\mathbf{S}^{-1}
+    = \begin{pmatrix}
+          \frac{1}{\sigma_1} & 0 & \cdots & 0 \\
+          0 & \frac{1}{\sigma_2} & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & \frac{1}{\sigma_D}
+      \end{pmatrix}
+$$
+
+　対角行列の逆行列は、対角成分の逆数を対角成分とする対角行列になるので、$\sigma_d$の行列と$\frac{1}{\sigma_d}$の行列は逆行列の関係です。\
+
+　分散共分散行列$\boldsymbol{\Sigma}$を使って、$\sigma_d$の行列$\mathbf{S}$を作成します。
+
+```{r}
+# 標準偏差が対角成分の行列を作成
+s_dd <- sigma_dd |> 
+  diag() |> # 対角成分(分散)を抽出
+  (\(.){sqrt(.)})() |> # 標準偏差を計算
+  diag() # 対角行列を作成
+s_dd
+```
+
+　`sigma_dd`の対角要素(分散)を`diag()`で抽出します。D個の分散からそれぞれ標準偏差を計算して、`diag()`で対角行列を作成します。`diag()`にベクトルを渡すと対角行列を返します。\
+　標準偏差の計算処理では、無名関数`function()`の省略記法`\()`を使って、`(\(引数){引数を使った具体的な処理})()`としています。直前のパイプ演算子を`%>%`にすると、行全体`(\(引数){処理})()`を`{}`の中の`処理`(この例だと`sqrt(.)`)に置き換えられます(置き換えられるように引数名を`.`にしています)。\
+
+　同様に、$\frac{1}{\sigma_d}$の行列$\mathbf{S}^{-1}$を作成します。
+
+```{r}
+# 標準偏差の逆数が対角成分の行列を作成
+s_inv_dd <- sigma_dd |> 
+  diag() |> # 対角成分(分散)を抽出
+  (\(.){1 / sqrt(.)})() |> # 標準偏差の逆数を計算
+  diag() # 対角行列を作成
+s_inv_dd
+```
+
+　こちらは、標準偏差の逆数を計算して、対角行列を作成します。\
+
+　$\mathbf{S}$がある場合は、逆行列を計算して$\mathbf{S}^{-1}$を作成できます。
+
+```{r}
+# 標準偏差の逆数が対角成分の行列を計算
+s_inv_dd <- solve(s_dd)
+s_inv_dd
+```
+
+　`s_dd`の逆行列を`solve()`で計算します。\
+
+　逆に、$\mathbf{S}^{-1}$から$\mathbf{S}$も計算できます。
+
+```{r}
+# 標準偏差が対角成分の行列を計算
+s_dd <- solve(s_inv_dd)
+s_dd
+```
+
+　逆行列の逆行列を計算すると元の行列になります。\
+
+　利用する行列を用意できたので、分散共分散行列から相関係数を計算します。
+
+```{r}
+# 相関行列を計算
+rho_dd <- s_inv_dd %*% sigma_dd %*% s_inv_dd
+rho_dd
+```
+
+　分散共分散行列$\boldsymbol{\Sigma}$の左右から$\mathbf{S}$の逆行列を掛けると、相関行列$\mathbf{P}$が求まります。
+
+$$
+\mathbf{P}
+    = \mathbf{S}^{-1} \boldsymbol{\Sigma} \mathbf{S}^{-1}
+$$
+
+　`rho_dd[i, j]`が`rho_ij`の値になっているのを確認できます。\
+
+　相関行列から分散共分散行列を計算します。
+
+```{r}
+# 分散共分散行列を計算
+sigma_dd <- s_dd %*% rho_dd %*% s_dd
+sigma_dd
+```
+
+　相関行列$\mathbf{P}$の左右から$\mathbf{S}$を掛けると、分散共分散行列$\boldsymbol{\Sigma}$が求まります。
+
+$$
+\boldsymbol{\Sigma}
+    = \mathbf{S} \mathbf{P} \mathbf{S}
+$$
+
+　元の値になるのを確認できます。\
+\
+
+　この記事では、分散共分散行列と相関行列の関係を確認しました。次は、固有値・固有ベクトルとの関係を確認します。\
+\
+
+
