@@ -25,7 +25,7 @@ knitr::opts_chunk$set(
 ----
 
 
-# 分散共分散行列と相関行列の関係
+# 分散共分散行列と相関行列の関係の計算
 
 　分散共分散行列(Variance–Covariance Matrix)と相関行列(Correlation Matrix)の関係を計算で確認します。計算式については「分散共分散行列と相関行列の関係の導出」を参照してください。\
 \
@@ -288,4 +288,767 @@ $$
 　この記事では、分散共分散行列と相関行列の関係を確認しました。次は、固有値・固有ベクトルとの関係を確認します。\
 \
 
+
+# 分散共分散行列とユークリッド距離・マハラノビス距離の関係の可視化
+
+　分散共分散行列(Variance–Covariance Matrix)とユークリッド距離(Euclidean Distance)・マハラノビス距離(Mahalanobis Dostance)の関係を2次元ガウス分布を用いて可視化します。分散共分散行列と距離の関係については「分散共分散行列とユークリッド距離・マハラノビス距離の関係の導出」を参照してください。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r, eval=FALSE}
+# 利用パッケージ
+library(tidyverse)
+library(mvnfast)
+library(ggrepel)
+```
+
+```{r, echo=FALSE}
+### 資料作成用:(チェック用)
+
+# チェック用
+library(ggplot2)
+```
+
+　この記事では、基本的に`パッケージ名::関数名()`の記法を使うので、パッケージを読み込む必要はありません。ただし、作図コードがごちゃごちゃしないようにパッケージ名を省略しているため、`ggplot2`は読み込む必要があります。\
+　`magrittr`パッケージのパイプ演算子`%>%`ではなく、ベースパイプ(ネイティブパイプ)演算子`|>`を使っています。`%>%`に置き換えても処理できます。\
+\
+
+
+## サンプルの距離の可視化
+
+　2次元ガウス分布の乱数を生成して、サンプルごとのユークリッド距離とマハラノビス距離を可視化します。2次元ガウス分布のグラフ作成については「2次元ガウス分布の作図」、乱数生成については「多次元ガウス分布の乱数生成」を参照してください。\
+\
+
+　ガウス分布のパラメータ$\boldsymbol{\mu}, \boldsymbol{\Sigma}$を設定します。この例では、2次元のグラフで可視化するため、次元数を$D = 2$とします。
+
+```{r}
+# 平均ベクトルを指定
+mu_d <- c(6, 10)
+
+# 分散共分散行列を指定
+sigma_dd <- matrix(c(1, 0.6, 0.6, 1.5), nrow = 2, ncol = 2)
+```
+
+　平均ベクトル$\boldsymbol{\mu} = (\mu_1, \mu_2)$、分散共分散行列$\boldsymbol{\Sigma} = (\sigma_1^2, \sigma_{2,1}, \sigma_{1,2}, \sigma_2^2)$を指定します。\
+　平均$\mu_d$は実数、分散$\sigma_d^2$は非負の実数、共分散$\sigma_{1,2}$は実数、また$\boldsymbol{\Sigma}$は正定値行列を満たす必要があります。\
+
+　設定したパラメータに応じて、ガウス分布の確率変数がとり得る値$\mathbf{x}$を作成します。
+
+```{r}
+# xの値を作成
+x_1_vals <- seq(
+  from = mu_d[1] - sqrt(sigma_dd[1, 1]) * 3, 
+  to = mu_d[1] + sqrt(sigma_dd[1, 1]) * 3, 
+  length.out = 100
+)
+x_2_vals <- seq(
+  from = mu_d[2] - sqrt(sigma_dd[2, 2]) * 3, 
+  to = mu_d[2] + sqrt(sigma_dd[2, 2]) * 3, 
+  length.out = 100
+)
+
+# xの点を作成
+x_mat <- tidyr::expand_grid(
+  x_1 = x_1_vals, # x軸の値
+  x_2 = x_2_vals # y軸の値
+) |> # 格子点を作成
+  as.matrix() # マトリクスに変換
+head(x_mat)
+```
+
+　$x_1$(x軸)の値を`x_1_vals`、$x_2$(y軸)の値を`x_2_vals`とします。この例では、それぞれ平均を中心に標準偏差の3倍を範囲とします。\
+　`x_1_vals`と`x_2_vals`の要素の全ての組み合わせ(格子状の点)を`expand_grid()`で作成します。データフレームが出力されるので、`as.matrix()`でマトリクスに変換して`x_mat`とします。`x_mat`の各行が点$\mathbf{x} = (x_1, x_2)$に対応します。\
+
+　$\mathbf{x}$の点ごとの確率密度を計算します。
+
+```{r}
+# 多次元ガウス分布を計算
+dens_df <- tibble::tibble(
+  x_1 = x_mat[, 1], # x軸の値
+  x_2 = x_mat[, 2], # y軸の値
+  density = mvnfast::dmvn(X = x_mat, mu = mu_d, sigma = sigma_dd) # 確率密度
+)
+dens_df
+```
+
+　多次元ガウス分布の確率密度は、`mvnfast`パッケージの`dmvn()`で計算できます。確率変数の引数`X`に`x_mat`、平均の引数`mu`に`mu_d`、共分散の引数`sigma`に`sigma_dd`を指定します。\
+
+　$\mathbf{x}$の点ごとのユークリッド距離とマハラノビス距離を計算します。
+
+```{r}
+# 点ごとに距離を計算
+dist_df <- tibble::tibble(
+  x_1 = x_mat[, 1], # x軸の値
+  x_2 = x_mat[, 2], # y軸の値
+  euclidean = apply((t(x_mat) - mu_d)^2, 2, sum) |> 
+    sqrt(), # ユークリッド距離
+  mahalanobis = t(t(x_mat)-mu_d) %*% solve(sigma_dd) %*% (t(x_mat)-mu_d) |> 
+    diag() |> 
+    sqrt() # マハラノビス距離
+)
+dist_df
+```
+
+　ユークリッド距離とマハラノビス距離は、それぞれ次の式で定義されます。
+
+$$
+\begin{aligned}
+\Delta_{\mathrm{euclid}}
+   &= \sqrt{
+          \sum_{d=1}^D
+              (x_d - \mu_d)^2
+      }
+\\
+\Delta_{\mathrm{mahal}}
+   &= \sqrt{
+          (\mathbf{x} - \boldsymbol{\mu})^{\top}
+          \boldsymbol{\Sigma}^{-1}
+          (\mathbf{x} - \boldsymbol{\mu})
+      }
+\end{aligned}
+$$
+
+　転置は`t()`、逆行列の計算は`solve()`、行列の積の計算は`%*%`演算子で行えます。\
+　ただし、複数個の$\mathbf{x}$を同時に処理するために、適宜転置して計算する必要があります。また、二次形式(平方根の中)の計算において全ての点の組み合わせで処理されます。そのため、同じ点による計算結果(対角要素)を`daig()`で取り出します。\
+\
+
+　作図用の$\mathbf{x}$に関して処理できました。次は、サンプル$\mathbf{x}_n$に関して処理します。\
+
+　ガウス分布に従う乱数を生成します。
+
+```{r}
+# データ数(サンプルサイズ)を指定
+N <- 10
+
+# 多次元ガウス分布に従う乱数を生成
+x_nd <- mvnfast::rmvn(n = N, mu = mu_d, sigma = sigma_dd)
+head(x_nd)
+```
+
+　多次元ガウス分布の乱数は、`mvnfast`パッケージの`rmvn()`で生成できます。データ数の引数`n`に`N`、平均の引数`mu`に`mu_d`、共分散の引数`sigma`に`sigma_dd`を指定します。\
+　生成した値をN個のサンプル`x_nd`とします。`x_nd`の各行が$\mathbf{x}_n = (x_{n,1}, x_{n,2})$に対応します。\
+
+　サンプル$\mathbf{x}_n$ごとにユークリッド距離とマハラノビス距離を計算します。
+
+```{r}
+# サンプルごとに距離を計算
+data_df <- tibble::tibble(
+  n = factor(1:N), # データ番号
+  x_1 = x_nd[, 1], # x軸の値
+  x_2 = x_nd[, 2], # y軸の値
+  euclidean = apply((t(x_nd) - mu_d)^2, 2, sum) |> 
+    sqrt(), # ユークリッド距離
+  mahalanobis = t(t(x_nd)-mu_d) %*% solve(sigma_dd) %*% (t(x_nd)-mu_d) |> 
+    diag() |> 
+    sqrt(), # マハラノビス距離
+  coord_label = paste0("x=(", round(x_1, 1), ", ", round(x_2, 1), ")"), # 座標ラベル
+  dist_label = paste0("ED=", round(euclidean, 2), "\nMD=", round(mahalanobis, 2)) # 距離ラベル
+)
+data_df
+```
+
+　先ほどと同様に計算します。こちらは、色分け用の因子型のデータ番号列と、グラフに載せる情報として座標と距離のラベル列を作成します。\
+\
+
+　作図用のデータフレームを作成できました。次は、作図処理を行います。\
+
+　生成分布の確率密度の等高線と、ユークリッド距離とマハラノビス距離の等高線に、サンプルを重ねたグラフを作成します。
+
+```{r, fig.width=8, fig.height=8}
+# 距離の等高線のプロット位置を指定
+dist_vals <- seq(from = 1, to = 5, by = 1)
+
+# パラメータラベルを作成:(数式表示用)
+math_text <- paste0(
+  "list(", 
+  "mu==group('(', list(", paste0(mu_d, collapse = ", "), "), ')')", 
+  ", Sigma==group('(', list(", paste0(sigma_dd, collapse = ", "), "), ')')", 
+  ")"
+)
+
+# サンプルごとのユークリッド距離とマハラノビス距離の可視化
+ggplot() + 
+  geom_contour_filled(data = dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), 
+                      alpha = 0.5) + # 2次元ガウス分布
+  geom_contour(data = dist_df, mapping = aes(x = x_1, y = x_2, z = euclidean, linetype = "ed"), 
+               breaks = dist_vals, color = "pink", size = 1) + # ユークリッド距離
+  geom_contour(data = dist_df, mapping = aes(x = x_1, y = x_2, z = mahalanobis, linetype = "md"), 
+               breaks = dist_vals, color = "skyblue", size = 1) + # マハラノビス距離
+  geom_segment(data = data_df, mapping = aes(x = mu_d[1], y = mu_d[2], xend = x_1, yend = x_2, color = n), 
+               arrow = arrow(length = unit(5, "pt"), type = "closed"), show.legend = FALSE) + # 期待値とサンプルの線分
+  geom_point(data = data_df, mapping = aes(x = x_1, y = x_2, color = n), 
+             alpha = 0.8, size = 5, show.legend = FALSE) + # サンプル
+  ggrepel::geom_label_repel(data = data_df, mapping = aes(x = x_1, y = x_2, color = n, label = paste0(coord_label, "\n", dist_label)), 
+                            alpha = 0.8, size = 2.5, label.padding = unit(3, "pt"), 
+                            box.padding = unit(10, "pt"), point.padding = unit(10, "pt"), 
+                            min.segment.length = 0, max.overlaps = Inf, show.legend = FALSE) + # サンプルラベル
+  coord_fixed(ratio = 1) + # アスペクト比
+  scale_linetype_manual(breaks = c("ed", "md"), values = c("solid", "solid"), 
+                        labels = c("euclidean", "mahalanobis"), name = "distance") + # (凡例表示用の黒魔術)
+  guides(linetype = guide_legend(override.aes = list(color = c("pink", "skyblue")))) + # (凡例表示用の黒魔術)
+  labs(title ="Maltivariate Gaussian Distribution", 
+       subtitle = parse(text = math_text), # (数式表示用)
+       color = "x", fill = "density", 
+       x = expression(x[1]), y = expression(x[2]))
+```
+
+　確率密度の塗りつぶし等高線図を`geom_contour_filled()`で描画します。\
+　ユークリッド距離とマハラノビス距離の等高線図をそれぞれ`geom_contour()`で描画します。線を引くz軸の値の引数`breaks`に値を指定します。この例では、1から5の整数とします。\
+　期待値(距離が0の点)と各サンプルを結ぶ線分を`geom_segment()`で描画します。\
+　サンプルの散布図を`geom_point()`で描画します。\
+　サンプルごとの距離を`ggrepel`パッケージの`geom_label_repel()`でラベルとして表示します。\
+　ユークリッド距離の等高線は、アスペクト比が1のとき円になります。グラフのアスペクト比は`coord_fixed()`の`ratio`引数で指定できます。\
+\
+
+　続いて、ユークリッド距離とマハラノビス距離が等しい等高線を1本だけ引いて比較します。\
+
+　線を引く距離を指定して、それぞれの距離の内外のサンプルを判別します。
+
+```{r}
+# 距離を指定
+dist <- 1.5
+
+# 指定した範囲の内外を判定
+data_df2 <- data_df |> 
+  dplyr::mutate(
+    color_flag = dplyr::case_when(
+      euclidean <= dist & mahalanobis <= dist ~ "both", 
+      euclidean <= dist ~ "euclid", 
+      mahalanobis <= dist ~ "mahal", 
+      TRUE ~ "none"
+    ) # 色分け用フラグ
+  )
+data_df2
+```
+
+　`case_when()`で場合分けして色分け用のラベルを作成します(距離の内外で色分けする必要はありません)。\
+
+　確率密度と距離の等高線にサンプルを重ねなグラフを作成します。
+
+```{r, fig.width=8, fig.height=8}
+# ユークリッド距離とマハラノビス距離の比較
+ggplot() + 
+  geom_contour_filled(data = dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), 
+                      alpha = 0.5) + # 2次元ガウス分布
+  geom_contour(data = dist_df, mapping = aes(x = x_1, y = x_2, z = euclidean, linetype = "ed"), 
+               breaks = dist, color = "pink", size = 1) + # ユークリッド距離
+  geom_contour(data = dist_df, mapping = aes(x = x_1, y = x_2, z = mahalanobis, linetype = "md"), 
+               breaks = dist, color = "skyblue", size = 1) + # マハラノビス距離
+  geom_point(data = data_df2, mapping = aes(x = x_1, y = x_2, color = color_flag), 
+             alpha = 0.8, size = 5, show.legend = FALSE) + # サンプル
+  geom_label(mapping = aes(x = min(x_1_vals), y = max(x_2_vals), label = paste0("dist:", dist)), 
+             hjust = 0) + # 距離ラベル
+  coord_fixed(ratio = 1) + # アスペクト比
+  scale_color_manual(breaks = c("both", "euclid", "mahal", "none"), 
+                     values = c("#00A968", "pink", "skyblue", "gray")) + # サンプルの色
+  scale_linetype_manual(breaks = c("ed", "md"), values = c("solid", "solid"), 
+                        labels = c("euclidean", "mahalanobis"), name = "distance") + # (凡例表示用の黒魔術)
+  guides(linetype = guide_legend(override.aes = list(color = c("pink", "skyblue")))) + # (凡例表示用の黒魔術)
+  labs(title ="Maltivariate Gaussian Distribution", 
+       subtitle = parse(text = math_text), 
+       color = "x", fill = "density", 
+       x = expression(x[1]), y = expression(x[2]))
+```
+
+　サンプルの色分けを設定する場合は、`scale_color_manual()`の`breaks`引数にラベルの文字列、`values`引数に色を指定します。\
+\
+
+・分散共分散行列が単位行列の場合
+
+```{r, echo=FALSE, fig.width=8, fig.height=8}
+# 平均ベクトルを指定
+mu_d <- c(6, 10)
+
+# 分散共分散行列を指定
+sigma_dd <- matrix(c(1, 0, 0, 1), nrow = 2, ncol = 2)
+
+# xの値を作成
+x_1_vals <- seq(
+  from = mu_d[1] - sqrt(sigma_dd[1, 1]) * 3, 
+  to = mu_d[1] + sqrt(sigma_dd[1, 1]) * 3, 
+  length.out = 100
+)
+x_2_vals <- seq(
+  from = mu_d[2] - sqrt(sigma_dd[2, 2]) * 3, 
+  to = mu_d[2] + sqrt(sigma_dd[2, 2]) * 3, 
+  length.out = 100
+)
+
+# xの点を作成
+x_mat <- tidyr::expand_grid(
+  x_1 = x_1_vals, # x軸の値
+  x_2 = x_2_vals # y軸の値
+) |> # 格子点を作成
+  as.matrix() # マトリクスに変換
+
+# 多次元ガウス分布を計算
+dens_df <- tibble::tibble(
+  x_1 = x_mat[, 1], # x軸の値
+  x_2 = x_mat[, 2], # y軸の値
+  density = mvnfast::dmvn(X = x_mat, mu = mu_d, sigma = sigma_dd) # 確率密度
+)
+
+# 点ごとに距離を計算
+dist_df <- tibble::tibble(
+  x_1 = x_mat[, 1], # x軸の値
+  x_2 = x_mat[, 2], # y軸の値
+  euclidean = apply((t(x_mat) - mu_d)^2, 2, sum) |> 
+    sqrt(), # ユークリッド距離
+  mahalanobis = t(t(x_mat)-mu_d) %*% solve(sigma_dd) %*% (t(x_mat)-mu_d) |> 
+    diag() |> 
+    sqrt() # マハラノビス距離
+)
+
+# データ数(サンプルサイズ)を指定
+N <- 10
+
+# 多次元ガウス分布に従う乱数を生成
+x_nd <- mvnfast::rmvn(n = N, mu = mu_d, sigma = sigma_dd)
+
+# サンプルごとに距離を計算
+data_df <- tibble::tibble(
+  n = factor(1:N), # データ番号
+  x_1 = x_nd[, 1], # x軸の値
+  x_2 = x_nd[, 2], # y軸の値
+  euclidean = apply((t(x_nd) - mu_d)^2, 2, sum) |> 
+    sqrt(), # ユークリッド距離
+  mahalanobis = t(t(x_nd)-mu_d) %*% solve(sigma_dd) %*% (t(x_nd)-mu_d) |> 
+    diag() |> 
+    sqrt(), # マハラノビス距離
+  coord_label = paste0("x=(", round(x_1, 1), ", ", round(x_2, 1), ")"), # 座標ラベル
+  dist_label = paste0("ED=", round(euclidean, 2), "\nMD=", round(mahalanobis, 2)) # 距離ラベル
+)
+
+# 距離の等高線のプロット位置を指定
+dist_vals <- seq(from = 1, to = 10, by = 1)
+
+# パラメータラベルを作成:(数式表示用)
+math_text <- paste0(
+  "list(", 
+  "mu==group('(', list(", paste0(mu_d, collapse = ", "), "), ')')", 
+  ", Sigma==group('(', list(", paste0(sigma_dd, collapse = ", "), "), ')')", 
+  ")"
+)
+
+# サンプルごとのユークリッド距離とマハラノビス距離の可視化
+ggplot() + 
+  geom_contour_filled(data = dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), 
+                      alpha = 0.5) + # 2次元ガウス分布
+  geom_contour(data = dist_df, mapping = aes(x = x_1, y = x_2, z = euclidean, linetype = "ed"), 
+               breaks = dist_vals, color = "pink", size = 1) + # ユークリッド距離
+  geom_contour(data = dist_df, mapping = aes(x = x_1, y = x_2, z = mahalanobis, linetype = "md"), 
+               breaks = dist_vals, color = "skyblue", size = 1) + # マハラノビス距離
+  geom_segment(data = data_df, mapping = aes(x = mu_d[1], y = mu_d[2], xend = x_1, yend = x_2, color = n), 
+               arrow = arrow(length = unit(5, "pt"), type = "closed"), show.legend = FALSE) + # 期待値とサンプルの線分
+  geom_point(data = data_df, mapping = aes(x = x_1, y = x_2, color = n), 
+             alpha = 0.8, size = 5, show.legend = FALSE) + # サンプル
+  ggrepel::geom_label_repel(data = data_df, mapping = aes(x = x_1, y = x_2, color = n, label = paste0(coord_label, "\n", dist_label)), 
+                            alpha = 0.8, size = 2.5, label.padding = unit(3, "pt"), 
+                            box.padding = unit(10, "pt"), point.padding = unit(10, "pt"), 
+                            min.segment.length = 0, max.overlaps = Inf, show.legend = FALSE) + # サンプルラベル
+  coord_fixed(ratio = 1) + # アスペクト比
+  scale_linetype_manual(breaks = c("ed", "md"), values = c("solid", "solid"), 
+                        labels = c("euclidean", "mahalanobis"), name = "distance") + # (凡例表示用の黒魔術)
+  guides(linetype = guide_legend(override.aes = list(color = c("pink", "skyblue")))) + # (凡例表示用の黒魔術)
+  labs(title ="Maltivariate Gaussian Distribution", 
+       subtitle = parse(text = math_text), # (数式表示用)
+       fill = "density", 
+       x = expression(x[1]), y = expression(x[2]))
+```
+
+　確率密度(の等高線)とマハラノビス距離(の等高線)が対応しているのが分かります。\
+　分散共分散行列が単位行列の場合、ユークリッド距離とマハラノビス距離が一致します。\
+\
+
+
+## パラメータと距離の関係をアニメーションで可視化
+
+　パラメータの値を少しずつ変化させて、ユークリッド距離とマハラノビス距離の等高線の変化をアニメーションで確認します。\
+\
+
+
+### 分散(1軸)の影響
+
+　まずは、x軸方向の分散$\sigma_1^2$の値を変化させ、$\sigma_{1,2}, \sigma_{2,1}, \sigma_2^2$を固定します。
+
+```{r}
+# 平均ベクトルを指定
+mu_d <- c(0, 0)
+
+# x軸の分散として利用する値を指定
+sigma2_1_vals <- seq(from = 0.5, to = 5, by = 0.1) |> 
+  round(2)
+
+# y軸の分散を指定
+sigma2_2 <- 2
+
+# 共分散を指定
+sigma_12 <- 0.6
+
+# フレーム数を確認
+length(sigma2_1_vals)
+```
+
+　値の間隔が一定になるように$\sigma_1^2$の値を`sigma2_1_vals`として作成します。パラメータごとにフレームを切り替えるので、`sigma2_1_vals`の要素数がアニメーションのフレーム数になります。\
+　また、共分散$\sigma_{1,2} = \sigma_{2,1}$を`sigma2_2`、y軸方向の分散$\sigma_2^2$を`sigma2_2`として値を指定します。\
+
+　設定したパラメータに応じて確率変数の値$\mathbf{x}$を作成して、パラメータごとに分布を計算します。
+
+```{r}
+# xの値を作成
+x_1_vals <- seq(
+  from = mu_d[1] - sqrt(max(sigma2_1_vals)) * 2, 
+  to = mu_d[1] + sqrt(max(sigma2_1_vals)) * 2, 
+  length.out = 100
+)
+x_2_vals <- seq(
+  from = mu_d[2] - sqrt(sigma2_2) * 3, 
+  to = mu_d[2] + sqrt(sigma2_2) * 3, 
+  length.out = 100
+)
+
+# xの点を作成
+x_mat <- tidyr::expand_grid(
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # 格子点を作成
+  as.matrix() # マトリクスに変換
+
+# パラメータごとに多次元ガウス分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  sigma2_1 = sigma2_1_vals, 
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(sigma2_1) |> # 確率密度の計算用にグループ化
+  dplyr::mutate(
+    density = mvnfast::dmvn(
+      X = x_mat, 
+      mu = mu_d, 
+      sigma = matrix(c(unique(sigma2_1), sigma_12, sigma_12, sigma2_2), nrow = 2, ncol = 2)
+    ), # 確率密度
+    parameter = paste0("mu=(", mu_d[1], ", ", mu_d[2], "), Sigma=(", sigma2_1, ", ", sigma_12, ", ", sigma_12, ", ", sigma2_2, ")") |> 
+      factor(levels = paste0("mu=(", mu_d[1], ", ", mu_d[2], "), Sigma=(", sigma2_1_vals, ", ", sigma_12, ", ", sigma_12, ", ", sigma2_2, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_dens_df
+```
+
+　パラメータ`sigma2_1_vals`と確率変数`x_1_vals, x_2_vals`の要素の全ての組み合わせを`expand_grid()`を作成します。これにより、パラメータごとに`x_mat`を複製できます。\
+　パラメータ列`sigma2_1`でグループ化することで、`x_mat`ごとに確率密度を計算できます。\
+　パラメータごとにフレーム切替用のラベルを作成します。文字列型だと文字列の基準で順序が決まるので、因子型にしてパラメータに応じたレベル(順序)を設定します。\
+
+　同様に、パラメータごとに描画範囲全体の距離を計算します。
+
+```{r}
+# パラメータごとに距離を計算
+anime_dist_df <- tidyr::expand_grid(
+  sigma2_1 = sigma2_1_vals, 
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(sigma2_1) |> # 距離の計算用にグループ化
+  dplyr::mutate(
+    euclidean = apply((t(x_mat) - mu_d)^2, 2, sum) |> 
+      sqrt(), # ユークリッド距離
+    mahalanobis = t(t(x_mat)-mu_d) %*% solve(matrix(c(unique(sigma2_1), sigma_12, sigma_12, sigma2_2), nrow = 2, ncol = 2)) %*% (t(x_mat)-mu_d) |> 
+      diag() |> 
+      sqrt(), # マハラノビス距離
+    parameter = paste0("mu=(", mu_d[1], ", ", mu_d[2], "), Sigma=(", sigma2_1, ", ", sigma_12, ", ", sigma_12, ", ", sigma2_2, ")") |> 
+      factor(levels = paste0("mu=(", mu_d[1], ", ", mu_d[2], "), Sigma=(", sigma2_1_vals, ", ", sigma_12, ", ", sigma_12, ", ", sigma2_2, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() |> # グループ化を解除
+  tidyr::pivot_longer(
+    cols = c(euclidean, mahalanobis), 
+    names_to = "type", 
+    values_to = "distance"
+  ) # 距離の列をまとめる
+anime_dist_df
+```
+
+　「サンプルの距離の可視化」と同様に計算した2つの距離の列を`pivot_longer()`でまとめます。\
+
+　等高線のアニメーション(gif画像)を作成します。
+
+```{r}
+# 距離の等高線のプロット位置を指定
+dist_vals <- seq(from = 0, to = 10, by = 1)
+
+# ユークリッド距離とマハラノビス距離のアニメーションを作図
+anime_dist_graph <- ggplot() + 
+  geom_contour_filled(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), 
+                      alpha = 0.5) + # 2次元ガウス分布
+  geom_contour(data = anime_dist_df, mapping = aes(x = x_1, y = x_2, z = distance, color = type), 
+               breaks = dist_vals, size = 1) + # 距離
+  gganimate::transition_manual(parameter) + # フレーム
+  coord_fixed(ratio = 1) + # アスペクト比
+  scale_color_manual(breaks = c("euclidean", "mahalanobis"), values = c("pink", "skyblue"), name = "distance") + # 線の色
+  labs(title ="Maltivariate Gaussian Distribution", 
+       subtitle = "{current_frame}", 
+       fill = "density", 
+       x = expression(x[1]), y = expression(x[2]))
+
+# gif画像を作成
+gganimate::animate(anime_dist_graph, nframes = length(sigma2_1_vals), fps = 10, width = 800, height = 800)
+```
+
+　`transition_manual()`にフレームの順序を表す列を指定します。この例では、因子型のラベルのレベルの順に描画されます。\
+　`animate()`のフレーム数の引数`nframes`にパラメータ数、フレームレートの引数`fps`に1秒当たりのフレーム数を指定します。`fps`引数の値が大きいほどフレームが早く切り替わります。ただし、値が大きいと意図通りに動作しません。\
+
+　$\sigma_1^2$が大きくなるほど、x軸方向のマハラノビス距離が変化しています。ユークリッド距離は変化しません。これは計算式に$\boldsymbol{\Sigma}$を含まないためです。\
+\
+
+
+### 分散(2軸)の影響
+
+　次は、y軸方向の分散$\sigma_2^2$の値を変化させ、$\sigma_1^2, \sigma_{1,2}, \sigma_{2,1}$を固定します。
+
+```{r}
+# 平均ベクトルを指定
+mu_d <- c(0, 0)
+
+# x軸の分散を指定
+sigma2_1 <- 2
+
+# y軸の分散として利用する値を指定
+sigma2_2_vals <- seq(from = 0.5, to = 5, by = 0.1) |> 
+  round(2)
+
+# 共分散を指定
+sigma_12 <- 0.6
+
+# フレーム数を確認
+length(sigma2_2_vals)
+```
+
+　値の間隔が一定になるように$\sigma_2^2$の値を`sigma2_2_vals`として作成します。\
+　また、x軸方向の分散$\sigma_1^2$を`sigma2_1`として値を指定します。\
+
+　確率変数の値を作成して、パラメータごとに分布を計算します。
+
+```{r}
+# xの値を作成
+x_1_vals <- seq(
+  from = mu_d[1] - sqrt(sigma2_1) * 3, 
+  to = mu_d[1] + sqrt(sigma2_1) * 3, 
+  length.out = 100
+)
+x_2_vals <- seq(
+  from = mu_d[2] - sqrt(max(sigma2_2_vals)) * 2, 
+  to = mu_d[2] + sqrt(max(sigma2_2_vals)) * 2, 
+  length.out = 100
+)
+
+# xの点を作成
+x_mat <- tidyr::expand_grid(
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # 格子点を作成
+  as.matrix() # マトリクスに変換
+
+# パラメータごとに多次元ガウス分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  sigma2_2 = sigma2_2_vals, 
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(sigma2_2) |> # 確率密度の計算用にグループ化
+  dplyr::mutate(
+    density = mvnfast::dmvn(
+      X = x_mat, 
+      mu = mu_d, 
+      sigma = matrix(c(sigma2_1, sigma_12, sigma_12, unique(sigma2_2)), nrow = 2, ncol = 2)
+    ), # 確率密度
+    parameter = paste0("mu=(", mu_d[1], ", ", mu_d[2], "), Sigma=(", sigma2_1, ", ", sigma_12, ", ", sigma_12, ", ", sigma2_2, ")") |> 
+      factor(levels = paste0("mu=(", mu_d[1], ", ", mu_d[2], "), Sigma=(", sigma2_1, ", ", sigma_12, ", ", sigma_12, ", ", sigma2_2_vals, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_dens_df
+```
+
+　「分散(1軸)の影響」と同様に処理します。\
+
+　パラメータごとに描画範囲全体の距離を計算します。
+
+```{r}
+# パラメータごとに距離を計算
+anime_dist_df <- tidyr::expand_grid(
+  sigma2_2 = sigma2_2_vals, 
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(sigma2_2) |> # 距離の計算用にグループ化
+  dplyr::mutate(
+    euclidean = apply((t(x_mat) - mu_d)^2, 2, sum) |> 
+      sqrt(), # ユークリッド距離
+    mahalanobis = t(t(x_mat)-mu_d) %*% solve(matrix(c(sigma2_1, sigma_12, sigma_12, unique(sigma2_2)), nrow = 2, ncol = 2)) %*% (t(x_mat)-mu_d) |> 
+      diag() |> 
+      sqrt(), # マハラノビス距離
+    parameter = paste0("mu=(", mu_d[1], ", ", mu_d[2], "), Sigma=(", sigma2_1, ", ", sigma_12, ", ", sigma_12, ", ", sigma2_2, ")") |> 
+      factor(levels = paste0("mu=(", mu_d[1], ", ", mu_d[2], "), Sigma=(", sigma2_1, ", ", sigma_12, ", ", sigma_12, ", ", sigma2_2_vals, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() |> # グループ化を解除
+  tidyr::pivot_longer(
+    cols = c(euclidean, mahalanobis), 
+    names_to = "type", 
+    values_to = "distance"
+  ) # 距離の列をまとめる
+anime_dist_df
+```
+
+　「分散(1軸)の影響」と同様に処理します。\
+
+　「分散(1軸)の影響」のコードで作図できます。フレーム数は`sigma2_2_vals`の要素数です。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# ユークリッド距離とマハラノビス距離のアニメーションを作図
+anime_dist_graph <- ggplot() + 
+  geom_contour_filled(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), 
+                      alpha = 0.5) + # 2次元ガウス分布
+  geom_contour(data = anime_dist_df, mapping = aes(x = x_1, y = x_2, z = distance, color = type), 
+               breaks = dist_vals, size = 1) + # 距離
+  gganimate::transition_manual(parameter) + # フレーム
+  coord_fixed(ratio = 1) + # アスペクト比
+  scale_color_manual(breaks = c("euclidean", "mahalanobis"), values = c("pink", "skyblue"), name = "distance") + # 線の色
+  labs(title ="Maltivariate Gaussian Distribution", 
+       subtitle = "{current_frame}", 
+       fill = "density", 
+       x = expression(x[1]), y = expression(x[2]))
+```
+
+```{r}
+# gif画像を作成
+gganimate::animate(anime_dist_graph, nframes = length(sigma2_2_vals), fps = 10, width = 800, height = 800)
+```
+
+　$\sigma_2^2$が大きくなるほど、y軸方向のマハラノビス距離が変化しています。\
+\
+
+
+### 共分散の影響
+
+　最後に、共分散$\sigma_{1,2} = \sigma_{2,1}$の値を変化させ、$\sigma_1^2, \sigma_2^2$を固定します。
+
+```{r}
+# 平均ベクトルを指定
+mu_d <- c(0, 0)
+
+# 分散を指定
+sigma2_1 <- 3
+sigma2_2 <- 4.5
+
+# 共分散を指定として利用する値を指定
+sigma_12_vals <- seq(from = -2, to = 2, by = 0.1) |> 
+  round(2)
+
+# フレーム数を確認
+length(sigma_12_vals)
+```
+
+　値の間隔が一定になるように$\sigma_{1,2}$の値を`sigma_12_vals`として作成します。\
+
+　確率変数の値を作成して、パラメータごとに分布を計算します。
+
+```{r}
+# xの値を作成
+x_1_vals <- seq(
+  from = mu_d[1] - sqrt(sigma2_1) * 3, 
+  to = mu_d[1] + sqrt(sigma2_1) * 3, 
+  length.out = 100
+)
+x_2_vals <- seq(
+  from = mu_d[2] - sqrt(sigma2_2) * 3, 
+  to = mu_d[2] + sqrt(sigma2_2) * 3, 
+  length.out = 100
+)
+
+# xの点を作成
+x_mat <- tidyr::expand_grid(
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # 格子点を作成
+  as.matrix() # マトリクスに変換
+
+# パラメータごとに多次元ガウス分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  sigma_12 = sigma_12_vals, 
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(sigma_12) |> # 確率密度の計算用にグループ化
+  dplyr::mutate(
+    density = mvnfast::dmvn(
+      X = x_mat, 
+      mu = mu_d, 
+      sigma = matrix(c(sigma2_1, unique(sigma_12), unique(sigma_12), sigma2_2), nrow = 2, ncol = 2)
+    ), # 確率密度
+    parameter = paste0("mu=(", mu_d[1], ", ", mu_d[2], "), Sigma=(", sigma2_1, ", ", sigma_12, ", ", sigma_12, ", ", sigma2_2, ")") |> 
+      factor(levels = paste0("mu=(", mu_d[1], ", ", mu_d[2], "), Sigma=(", sigma2_1, ", ", sigma_12_vals, ", ", sigma_12_vals, ", ", sigma2_2, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_dens_df
+```
+
+　「分散(1軸)の影響」と同様に処理します。\
+
+　パラメータごとに描画範囲全体の距離を計算します。
+
+```{r}
+# パラメータごとに距離を計算
+anime_dist_df <- tidyr::expand_grid(
+  sigma_12 = sigma_12_vals, 
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(sigma_12) |> # 距離の計算用にグループ化
+  dplyr::mutate(
+    euclidean = apply((t(x_mat) - mu_d)^2, 2, sum) |> 
+      sqrt(), # ユークリッド距離
+    mahalanobis = t(t(x_mat)-mu_d) %*% solve(matrix(c(sigma2_1, unique(sigma_12), unique(sigma_12), sigma2_2), nrow = 2, ncol = 2)) %*% (t(x_mat)-mu_d) |> 
+      diag() |> 
+      sqrt(), # マハラノビス距離
+    parameter = paste0("mu=(", mu_d[1], ", ", mu_d[2], "), Sigma=(", sigma2_1, ", ", sigma_12, ", ", sigma_12, ", ", sigma2_2, ")") |> 
+      factor(levels = paste0("mu=(", mu_d[1], ", ", mu_d[2], "), Sigma=(", sigma2_1, ", ", sigma_12_vals, ", ", sigma_12_vals, ", ", sigma2_2, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() |> # グループ化を解除
+  tidyr::pivot_longer(
+    cols = c(euclidean, mahalanobis), 
+    names_to = "type", 
+    values_to = "distance"
+  ) # 距離の列をまとめる
+anime_dist_df
+```
+
+　「分散(1軸)の影響」と同様に処理します。\
+
+　「分散(1軸)の影響」のコードで作図できます。フレーム数は`sigma_12_vals`の要素数です。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# ユークリッド距離とマハラノビス距離のアニメーションを作図
+anime_dist_graph <- ggplot() + 
+  geom_contour_filled(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), 
+                      alpha = 0.5) + # 2次元ガウス分布
+  geom_contour(data = anime_dist_df, mapping = aes(x = x_1, y = x_2, z = distance, color = type), 
+               breaks = dist_vals, size = 1) + # 距離
+  gganimate::transition_manual(parameter) + # フレーム
+  coord_fixed(ratio = 1) + # アスペクト比
+  scale_color_manual(breaks = c("euclidean", "mahalanobis"), values = c("pink", "skyblue"), name = "distance") + # 線の色
+  labs(title ="Maltivariate Gaussian Distribution", 
+       subtitle = "{current_frame}", 
+       fill = "density", 
+       x = expression(x[1]), y = expression(x[2]))
+```
+
+```{r}
+# gif画像を作成
+gganimate::animate(anime_dist_graph, nframes = length(sigma_12_vals), fps = 10, width = 800, height = 800)
+```
+
+　$\sigma_{1,2}$の値に応じて、マハラノビス距離の楕円の向きが変化しています。\
+\
 
