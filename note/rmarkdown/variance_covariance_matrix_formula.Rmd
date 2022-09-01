@@ -33,13 +33,14 @@ knitr::opts_chunk$set(
 【編集履歴】
 
 - 2022/08/27：「相関行列との関係」を追加
+- 2022/08/29：「マハラノビス距離との関係」を追加
 
 ----
 
 \newpage
 
 
-# 分散共分散行列と相関行列の関係
+# 分散共分散行列と相関行列の関係の導出
 
 　分散共分散行列(Variance–Covariance Matrix)と相関行列(Correlation Matrix)の関係を式で確認します。\
 \
@@ -443,7 +444,937 @@ $$
 　分散共分散行列の計算式が得られました。\
 \
 
-　この記事では、分散共分散行列と相関行列の関係を導出しました。\
+　この記事では、分散共分散行列と相関行列の関係を導出しました。次は、ユークリッド距離・マハラノビス距離との関係を導出します。\
 \
+
+
+# 分散共分散行列とユークリッド距離・マハラノビス距離の関係の導出
+
+　分散共分散行列(Variance–Covariance Matrix)とユークリッド距離(Euclidean Distance)・マハラノビス距離(Mahalanobis Dostance)の関係を導出します。\
+\
+
+
+## 定義式の確認
+
+　まずは、ユークリッド距離とマハラノビス距離の定義式を確認します。\
+\
+
+　(確率)変数$\mathbf{x}$を$D$次元ベクトルとすると、平均ベクトル$\boldsymbol{\mu}$は$D$次元ベクトル、分散共分散行列$\boldsymbol{\Sigma}$は$D \times D$の行列になります。
+
+$$
+\mathbf{x}
+    = \begin{pmatrix}
+          x_1 \\
+          x_2 \\
+          \vdots \\
+          x_D
+      \end{pmatrix}
+,\ 
+\boldsymbol{\mu}
+    = \begin{pmatrix}
+          \mu_1 \\
+          \mu_2 \\
+          \vdots \\
+          \mu_D
+      \end{pmatrix}
+,\ 
+\boldsymbol{\Sigma}
+    = \begin{pmatrix}
+          \sigma_1^2 & \sigma_{1,2} & \cdots & \sigma_{1,D} \\
+          \sigma_{2,1} & \sigma_2^2 & \cdots & \sigma_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \sigma_{D,1} & \sigma_{D,2} & \cdots & \sigma_D^2
+      \end{pmatrix}
+$$
+
+　$\mu_d$は$x_d$の平均、$\sigma_d$は$x_d$の標準偏差、$\sigma_d^2 = \sigma_{d,d}$は$x_d$の分散、$\sigma_{i,j} = \sigma_{j,i}$は$x_i, x_j$の共分散です。\
+
+　このとき、点$\mathbf{x}$と点$\boldsymbol{\mu}$のユークリッド距離は、次の式で定義されます。
+
+$$
+\Delta_{\mathrm{euclid}}
+    = \sqrt{
+          \sum_{d=1}^D
+              (x_d - \mu_d)^2
+      }
+$$
+
+　$\mathbf{x}, \boldsymbol{\mu}$の各成分の差の平方和の平方根です。\
+
+　また、マハラノビス距離は、次の式で定義定義されます。
+
+$$
+\Delta_{\mathrm{mahal}}
+    = \sqrt{
+          (\mathbf{x} - \boldsymbol{\mu})^{\top}
+          \boldsymbol{\Sigma}^{-1}
+          (\mathbf{x} - \boldsymbol{\mu})
+      }
+$$
+
+　$\mathbf{x}, \boldsymbol{\mu}$と$\boldsymbol{\Sigma}$の逆行列の二次形式の平方根です。\
+
+　ユークリッド距離を$\Delta_{\mathrm{euclid}}$、マハラノビス距離を$\Delta_{\mathrm{mahal}}$で表すことにします。\
+\
+
+
+## マハラノビス距離とユークリッド距離の関係
+
+　分散共分散行列が単位行列(変数間に依存関係がない)場合のマハラノビス距離を考えます。\
+\
+
+　分散共分散行列$\boldsymbol{\Sigma}$を単位行列$\mathbf{I}$とします。\
+
+$$
+\boldsymbol{\Sigma}
+    = \begin{pmatrix}
+          \sigma_1^2 & \sigma_{1,2} & \cdots & \sigma_{1,D} \\
+          \sigma_{2,1} & \sigma_2^2 & \cdots & \sigma_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \sigma_{D,1} & \sigma_{D,2} & \cdots & \sigma_D^2
+      \end{pmatrix}
+    = \begin{pmatrix}
+          1 & 0 & \cdots & 0 \\
+          0 & 1 & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & 1
+      \end{pmatrix}
+    = \mathbf{I}
+$$
+
+　つまり、各変数の標準偏差と分散が1で、共分散が0です。\
+
+　単位行列の逆行列も単位行列なので、分散共分散行列の逆行列も単位行列になります。
+
+$$
+\boldsymbol{\Sigma}
+    = \boldsymbol{\Sigma}^{-1}
+    = \mathbf{I}
+$$
+
+　マハラノビス距離の平方根の中(二次形式)に、単位行列を代入して計算します。
+
+$$
+\begin{aligned}
+(\mathbf{x} - \boldsymbol{\mu})^{\top}
+\boldsymbol{\Sigma}^{-1}
+(\mathbf{x} - \boldsymbol{\mu})
+   &= \begin{pmatrix}
+          x_1 - \mu_1 & x_2 - \mu_2 & \cdots & x_D - \mu_D
+      \end{pmatrix}
+      \begin{pmatrix}
+          1 & 0 & \cdots & 0 \\
+          0 & 1 & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & 1
+      \end{pmatrix}
+      \begin{pmatrix}
+          x_1 - \mu_1 \\
+          x_2 - \mu_2 \\
+          \vdots \\
+          x_D - \mu_D
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          x_1 - \mu_1 & x_2 - \mu_2 & \cdots & x_D - \mu_D
+      \end{pmatrix}
+      \begin{pmatrix}
+          x_1 - \mu_1 \\
+          x_2 - \mu_2 \\
+          \vdots \\
+          x_D - \mu_D
+      \end{pmatrix}
+\\
+   &= (x_1 - \mu_1)^2
+      + (x_2 - \mu_2)^2
+      + \cdots
+      + (x_D - \mu_D)^2
+\\
+   &= \sum_{d=1}^D
+          (x_d - \mu_d)^2
+\end{aligned}
+$$
+
+　マハラノビス距離の定義式に代入します。
+
+$$
+\begin{aligned}
+\Delta_{\mathrm{mahal}}
+   &= \sqrt{
+          (\mathbf{x} - \boldsymbol{\mu})^{\top}
+          \boldsymbol{\Sigma}^{-1}
+          (\mathbf{x} - \boldsymbol{\mu})
+      }
+\\
+   &= \sqrt{
+          \sum_{d=1}^D
+              (x_d - \mu_d)^2
+      }
+    = \Delta_{\mathrm{euclid}}
+\end{aligned}
+$$
+
+　分散共分散行列が単位行列のとき、マハラノビス距離がユークリッド距離になるのが分かりました。\
+\
+
+　この記事では、分散共分散行列とユークリッド距離・マハラノビス距離の関係を導出しました。次は、固有値・固有ベクトルとの関係を導出します。\
+\
+
+
+# 分散共分散行列と固有値・固有ベクトルの関係
+
+　分散共分散行列(Variance–Covariance Matrix)と固有値(Eigenvalue)・固有ベクトル(Eigenvector)の関係を導出します。\
+\
+
+
+## 固有ベクトル
+
+　まずは、分散共分散行列の固有値と固有ベクトルを確認します。固有値・固有ベクトルの求め方などについてはこの記事で扱いません。\
+\
+
+　分散共分散行列は、$D \times D$の正定値行列で定義されます。
+
+$$
+\boldsymbol{\Sigma}
+    = \begin{pmatrix}
+          \sigma_1^2 & \sigma_{1,2} & \cdots & \sigma_{1,D} \\
+          \sigma_{2,1} & \sigma_2^2 & \cdots & \sigma_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \sigma_{D,1} & \sigma_{D,2} & \cdots & \sigma_D^2 \\
+      \end{pmatrix}
+$$
+
+　$D$次元ベクトルの変数を$\mathbf{x} = (x_1, x_2, \cdots, x_D)^{\top}$とすると、$\sigma_d$は$x_d$の標準偏差、$\sigma_d^2 = \sigma_{d,d}$は$x_d$の分散、$\sigma_{i,j} = \sigma_{j,i}$は$x_i, x_j$の共分散です。\
+
+　分散共分散行列$\boldsymbol{\Sigma}$は正定値行列なので、固有ベクトルの方程式が成り立ちます。
+
+$$
+\boldsymbol{\Sigma} \mathbf{u}_i
+    = \lambda_i \mathbf{u}_i
+\tag{2.45}
+$$
+
+　$\lambda_i$を固有値、$\mathbf{u}_i$を固有ベクトルと言い、$\mathbf{u}_i$は$D$次元ベクトルです。
+
+$$
+\mathbf{u}_i
+    = \begin{pmatrix}
+          u_{i,1} \\
+          u_{i,2} \\
+          \vdots \\
+          u_{i,D}
+      \end{pmatrix}
+$$
+
+　$i = 1, 2, \dots, D$の$D$個の固有ベクトル$\mathbf{u}_i^{\top}$を行とする(行方向に並べた)$D \times D$の行列を$\mathbf{U}$で表します。
+
+$$
+\mathbf{U}
+    = \begin{pmatrix}
+          \mathbf{u}_1^{\top} \\
+          \mathbf{u}_2^{\top} \\
+          \vdots \\
+          \mathbf{u}_D^{\top}
+      \end{pmatrix}
+    = \begin{pmatrix}
+          \begin{pmatrix}
+              u_{1,1} & u_{2,1} & \cdots & u_{D,1}
+          \end{pmatrix} \\
+          \begin{pmatrix}
+              u_{1,2} & u_{2,2} & \cdots & u_{D,2}
+          \end{pmatrix} \\
+          \vdots \\
+          \begin{pmatrix}
+              u_{1,D} & u_{2,D} & \cdots & u_{D,D}
+          \end{pmatrix}
+      \end{pmatrix}
+    = \begin{pmatrix}
+          u_{1,1} & u_{1,2} & \cdots & u_{1,D} \\
+          u_{2,1} & u_{2,2} & \cdots & u_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          u_{D,1} & u_{D,2} & \cdots & u_{D,D}
+      \end{pmatrix}
+$$
+
+　$\mathbf{U}$の$i$行目が$\mathbf{u}_i^{\top}$に対応します。\
+　$\mathbf{U}$の転置行列は、$\mathbf{u}_i$を列とする(列方向に並べた)行列です。
+
+$$
+\mathbf{U}^{\top}
+    = \begin{pmatrix}
+          \mathbf{u}_1 & \mathbf{u}_2 & \cdots & \mathbf{u}_D
+      \end{pmatrix}
+    = \begin{pmatrix}
+          \begin{pmatrix}
+              u_{1,1} \\ u_{2,1} \\ \vdots \\ u_{D,1}
+          \end{pmatrix} &
+          \begin{pmatrix}
+              u_{1,2} \\ u_{2,2} \\ \vdots \\ u_{D,2}
+          \end{pmatrix} &
+          \cdots &
+          \begin{pmatrix}
+              u_{1,D} \\ u_{2,D} \\ \vdots \\ u_{D,D}
+          \end{pmatrix}
+      \end{pmatrix}
+    = \begin{pmatrix}
+          u_{1,1} & u_{2,1} & \cdots & u_{D,1} \\
+          u_{1,2} & u_{2,2} & \cdots & u_{D,2} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          u_{1,D} & u_{2,D} & \cdots & u_{D,D}
+      \end{pmatrix}
+$$
+
+　$\mathbf{U}^{\top}$の$i$列目が$\mathbf{u}_i$に対応します。\
+\
+
+
+## 固有ベクトルの積
+
+　分散共分散行列と固有値・固有ベクトルの関係の前に、固有ベクトルを使った計算について確認します。\
+\
+
+　2つの固有ベクトル$\mathbf{u}_i, \mathbf{u}_j$の内積は、0か1の値をとります。
+
+
+\begin{align*}
+\mathbf{u}_i^{\top} \mathbf{u}_j
+   &= \begin{pmatrix}
+          u_{i,1} & u_{i,2} \cdots & u_{i,D}
+      \end{pmatrix}
+      \begin{pmatrix}
+          u_{j,1} \\
+          u_{j,2} \\
+          \vdots \\
+          u_{j,D}
+      \end{pmatrix}
+\\
+   &= u_{i,1} u_{j,1}
+      + u_{i,2} u_{j,2}
+      + \cdots
+      + u_{i,D} u_{j,D}
+\\
+   &= \sum_{d=1}^D
+          u_{i,d} u_{j,d}
+    = I_{i,j}
+\tag{2.46}
+\end{align*}
+
+
+　$\{0, 1\}$の2値をとるので単位行列の成分$I_{i,j}$で表します。
+
+$$
+\mathbf{u}_i^{\top} \mathbf{u}_j
+    = I_{i,j}
+    = \begin{cases}
+          1 &\quad (i = j) \\
+          0 &\quad (i \neq j)
+      \end{cases}
+\tag{2.47}
+$$
+
+　$I_{i,j}$は、$i = j$のとき1、$i \neq j$のとき0になります。\
+
+　$\mathbf{U}, \mathbf{U}^{\top}$の行列の積は、単位行列$\mathbf{I}$になります。
+
+$$
+\begin{aligned}
+\mathbf{U} \mathbf{U}^{\top}
+   &= \begin{pmatrix}
+          u_{1,1} & u_{1,2} & \cdots & u_{1,D} \\
+          u_{2,1} & u_{2,2} & \cdots & u_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          u_{D,1} & u_{D,2} & \cdots & u_{D,D}
+      \end{pmatrix}
+      \begin{pmatrix}
+          u_{1,1} & u_{2,1} & \cdots & u_{D,1} \\
+          u_{1,2} & u_{2,2} & \cdots & u_{D,2} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          u_{1,D} & u_{2,D} & \cdots & u_{D,D}
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          \sum_{d=1}^D u_{1,d} u_{1,d} & 
+          \sum_{d=1}^D u_{1,d} u_{2,d} & 
+          \cdots & 
+          \sum_{d=1}^D u_{1,d} u_{D,d} \\
+          \sum_{d=1}^D u_{2,d} u_{1,d} & 
+          \sum_{d=1}^D u_{2,d} u_{2,d} & 
+          \cdots & 
+          \sum_{d=1}^D u_{2,d} u_{D,d} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \sum_{d=1}^D u_{D,d} u_{1,d} & 
+          \sum_{d=1}^D u_{D,d} u_{2,d} & 
+          \cdots & 
+          \sum_{d=1}^D u_{D,d} u_{D,d}
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          I_{1,1} & I_{1,2} & \cdots & I_{1,D} \\
+          I_{2,1} & I_{2,2} & \cdots & I_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          I_{D,1} & I_{D,2} & \cdots & I_{D,D}
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          1 & 0 & \cdots & 0 \\
+          0 & 1 & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & 1
+      \end{pmatrix}
+    = \mathbf{I}
+\end{aligned}
+$$
+
+　対角成分は($i = j$のとき)1、それ以外の成分は($i \neq j$のとき)0になります。\
+　この計算を、$\mathbf{u}_i$を並べた表現の行列で行ってみます。
+
+$$
+\begin{aligned}
+\mathbf{U} \mathbf{U}^{\top}
+   &= \begin{pmatrix}
+          \mathbf{u}_1^{\top} \\
+          \mathbf{u}_2^{\top} \\
+          \vdots \\
+          \mathbf{u}_D^{\top}
+      \end{pmatrix}
+      \begin{pmatrix}
+          \mathbf{u}_1 & \mathbf{u}_2 & \cdots & \mathbf{u}_D
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          \mathbf{u}_1^{\top} \mathbf{u}_1 & 
+          \mathbf{u}_1^{\top} \mathbf{u}_2 & 
+          \cdots & 
+          \mathbf{u}_1^{\top} \mathbf{u}_D \\
+          \mathbf{u}_2^{\top} \mathbf{u}_1 & 
+          \mathbf{u}_2^{\top} \mathbf{u}_2 & 
+          \cdots & 
+          \mathbf{u}_2^{\top} \mathbf{u}_D \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \mathbf{u}_D^{\top} \mathbf{u}_1 & 
+          \mathbf{u}_D^{\top} \mathbf{u}_2 & 
+          \cdots & 
+          \mathbf{u}_D^{\top} \mathbf{u}_D
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          I_{1,1} & I_{1,2} & \cdots & I_{1,D} \\
+          I_{2,1} & I_{2,2} & \cdots & I_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          I_{D,1} & I_{D,2} & \cdots & I_{D,D}
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          1 & 0 & \cdots & 0 \\
+          0 & 1 & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & 1
+      \end{pmatrix}
+    = \mathbf{I}
+\end{aligned}
+$$
+
+　各成分が式(2.46)に対応しているのが分かります。\
+
+　$\mathbf{U}^{\top}, \mathbf{U}$の行列の積も単位行列になります。
+
+$$
+\begin{aligned}
+\mathbf{U}^{\top} \mathbf{U}
+   &= \begin{pmatrix}
+          u_{1,1} & u_{2,1} & \cdots & u_{D,1} \\
+          u_{1,2} & u_{2,2} & \cdots & u_{D,2} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          u_{1,D} & u_{2,D} & \cdots & u_{D,D}
+      \end{pmatrix}
+      \begin{pmatrix}
+          u_{1,1} & u_{1,2} & \cdots & u_{1,D} \\
+          u_{2,1} & u_{2,2} & \cdots & u_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          u_{D,1} & u_{D,2} & \cdots & u_{D,D}
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          \sum_{d=1}^D u_{d,1} u_{d,1} & 
+          \sum_{d=1}^D u_{d,2} u_{d,1} & 
+          \cdots & 
+          \sum_{d=1}^D u_{d,D} u_{d,1} \\
+          \sum_{d=1}^D u_{d,1} u_{d,2} & 
+          \sum_{d=1}^D u_{d,2} u_{d,2} & 
+          \cdots & 
+          \sum_{d=1}^D u_{d,D} u_{d,2} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \sum_{d=1}^D u_{d,1} u_{d,D} & 
+          \sum_{d=1}^D u_{d,2} u_{d,D} & 
+          \cdots & 
+          \sum_{d=1}^D u_{d,D} u_{d,D}
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          I_{1,1} & I_{2,1} & \cdots & I_{D,1} \\
+          I_{1,2} & I_{2,2} & \cdots & I_{D,2} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          I_{1,D} & I_{2,D} & \cdots & I_{D,D}
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          1 & 0 & \cdots & 0 \\
+          0 & 1 & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & 1
+      \end{pmatrix}
+    = \mathbf{I}
+\end{aligned}
+$$
+
+　この計算も$\mathbf{u}_i$を並べた行列のまま計算してみます。
+
+$$
+\begin{aligned}
+\mathbf{U}^{\top} \mathbf{U}
+   &= \begin{pmatrix}
+          \mathbf{u}_1 & \mathbf{u}_2 & \cdots & \mathbf{u}_D
+      \end{pmatrix}
+      \begin{pmatrix}
+          \mathbf{u}_1^{\top} \\
+          \mathbf{u}_2^{\top} \\
+          \vdots \\
+          \mathbf{u}_D^{\top}
+      \end{pmatrix}
+\\
+   &= \sum_{d=1}^D
+          \mathbf{u}_d \mathbf{u}_d^{\top}
+\end{aligned}
+$$
+
+　$\mathbf{u}_i, \mathbf{u}_i^{\top}$のベクトルの積は
+
+$$
+\begin{aligned}
+\mathbf{u}_i \mathbf{u}_i^{\top}
+   &= \begin{pmatrix}
+          u_{i,1} \\
+          u_{i,2} \\
+          \vdots \\
+          u_{i,D}
+      \end{pmatrix}
+      \begin{pmatrix}
+          u_{i,1} & u_{i,2} & \cdots & u_{i,D}
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          u_{i,1}^2 & u_{i,1} u_{i,2} & \cdots & u_{i,1} u_{i,D} \\
+          u_{i,2} u_{i,1} & u_{i,2}^2 & \cdots & u_{i,2} u_{i,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          u_{i,D} u_{i,1} &  u_{i,D} u_{i,2} & \cdots & u_{i,D}^2
+      \end{pmatrix}
+\end{aligned}
+$$
+
+となるので、これを代入します。
+
+$$
+\begin{aligned}
+\mathbf{U}^{\top} \mathbf{U}
+   &= \sum_{d=1}^D
+          \begin{pmatrix}
+              u_{d,1}^2 & u_{d,1} u_{d,2} & \cdots & u_{d,1} u_{d,D} \\
+              u_{d,2} u_{d,1} & u_{d,2}^2 & \cdots & u_{d,2} u_{d,D} \\
+              \vdots & \vdots & \ddots & \vdots \\
+              u_{d,D} u_{d,1} &  u_{d,D} u_{d,2} & \cdots & u_{d,D}^2
+          \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          u_{1,1}^2 & u_{1,1} u_{1,2} & \cdots & u_{1,1} u_{1,D} \\
+          u_{1,2} u_{1,1} & u_{1,2}^2 & \cdots & u_{1,2} u_{1,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          u_{1,D} u_{1,1} &  u_{1,D} u_{1,2} & \cdots & u_{1,D}^2
+      \end{pmatrix}
+      + \begin{pmatrix}
+          u_{2,1}^2 & u_{2,1} u_{2,2} & \cdots & u_{2,1} u_{2,D} \\
+          u_{2,2} u_{2,1} & u_{2,2}^2 & \cdots & u_{2,2} u_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          u_{2,D} u_{2,1} &  u_{2,D} u_{2,2} & \cdots & u_{2,D}^2
+        \end{pmatrix} \\
+   &\qquad
+      + \cdots
+      + \begin{pmatrix}
+          u_{D,1}^2 & u_{D,1} u_{D,2} & \cdots & u_{D,1} u_{D,D} \\
+          u_{D,2} u_{D,1} & u_{D,2}^2 & \cdots & u_{D,2} u_{D,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          u_{D,D} u_{D,1} &  u_{D,D} u_{D,2} & \cdots & u_{D,D}^2
+        \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          \sum_{d=1}^D u_{d,1}^2 & 
+          \sum_{d=1}^D u_{d,1} u_{d,2} & 
+          \cdots & 
+          \sum_{d=1}^D u_{d,1} u_{d,D} \\
+          \sum_{d=1}^D u_{d,2} u_{d,1} & 
+          \sum_{d=1}^D u_{d,2}^2 & 
+          \cdots & 
+          \sum_{d=1}^D u_{d,2} u_{d,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \sum_{d=1}^D u_{d,D} u_{d,1} & 
+          \sum_{d=1}^D u_{d,D} u_{d,2} & 
+          \cdots & 
+          \sum_{d=1}^D u_{d,D}^2
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          I_{1,1} & I_{2,1} & \cdots & I_{D,1} \\
+          I_{1,2} & I_{2,2} & \cdots & I_{D,2} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          I_{1,D} & I_{2,D} & \cdots & I_{D,D}
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          1 & 0 & \cdots & 0 \\
+          0 & 1 & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & 1
+      \end{pmatrix}
+    = \mathbf{I}
+\end{aligned}
+$$
+
+
+　$\mathbf{U}, \mathbf{U}^{\top}$の積は掛ける順番に関わらず単位行列になりました。
+
+$$
+\mathbf{U}^{\top} \mathbf{U}
+    = \mathbf{U} \mathbf{U}^{\top}
+    = \mathbf{I}
+$$
+
+　この関係は、単位行列は$\mathbf{I} = \mathbf{I}^{\top}$なので、両辺を転置できることからも言えます。
+
+$$
+\mathbf{U}^{\top} \mathbf{U}
+    = (\mathbf{U}^{\top} \mathbf{U})^{\top}
+    = \mathbf{U} \mathbf{U}^{\top}
+    = \mathbf{I}
+$$
+
+　行列の性質$(\mathbf{A}^{\top} \mathbf{B})^{\top} = \mathbf{A} \mathbf{B}^{\top}$を使って変形しました。\
+
+　逆行列の定義$\mathbf{A} \mathbf{A}^{-1} = \mathbf{I}$より、$\mathbf{U}$の転置行列と逆行列が等しくなります。
+
+$$
+\mathbf{U}^{\top}
+    = \mathbf{U}^{-1}
+$$
+
+　直交行列と言います。\
+\
+
+
+## 分散共分散行列と固有値・固有ベクトル
+
+　次は、分散共分散行列と固有値・固有ベクトルの関係を導出します。\
+\
+
+　固有ベクトルの方程式を考えます。
+
+$$
+\boldsymbol{\Sigma} \mathbf{u}_i
+    = \lambda_i \mathbf{u}_i
+\tag{2.45}
+$$
+
+　両辺に、右から$\mathbf{u}_i^{\top}$を掛けます。
+
+$$
+\boldsymbol{\Sigma} \mathbf{u}_i \mathbf{u}_i^{\top}
+    = \lambda_i \mathbf{u}_i \mathbf{u}_i^{\top}
+$$
+
+　(見やすいように両辺を入れ替えて、)両辺で$i$について和をとります。
+
+$$
+\begin{aligned}
+\sum_{i=1}^D
+    \lambda_i
+    \mathbf{u}_i \mathbf{u}_i^{\top}
+   &= \sum_{i=1}^D
+          \boldsymbol{\Sigma}
+          \mathbf{u}_i \mathbf{u}_i^{\top}
+\\
+   &= \boldsymbol{\Sigma}
+      \sum_{i=1}^D
+          \mathbf{u}_i \mathbf{u}_i^{\top}
+\end{aligned}
+$$
+
+　$\boldsymbol{\Sigma}$は$i$と無関係なので、$\sum_i$の外に出せます。\
+　先ほど確認した$\mathbf{U}^{\top} \mathbf{U} = \sum_{i=1}^D \mathbf{u}_i \mathbf{u}_i^{\top} = \mathbf{I}$より、右辺は$\boldsymbol{\Sigma}$になります。
+
+$$
+\begin{aligned}
+\sum_{i=1}^D
+    \lambda_i
+    \mathbf{u}_i \mathbf{u}_i^{\top}
+   &= \boldsymbol{\Sigma}
+      \mathbf{I}
+\\
+   &= \boldsymbol{\Sigma}
+\end{aligned}
+$$
+
+　(両辺を再度入れ替えると、)次の式が成り立ちます。
+
+$$
+\boldsymbol{\Sigma}
+    = \sum_{i=1}^D
+        \lambda_i
+        \mathbf{u}_i \mathbf{u}_i^{\top}
+\tag{2.48}
+$$
+
+　固有値と固有ベクトルの積の和によって、分散共分散行列を表せるのが分かります。\
+\
+
+　もう一度、固有ベクトルの方程式を考えます。
+
+$$
+\boldsymbol{\Sigma} \mathbf{u}_i
+    = \lambda_i \mathbf{u}_i
+\tag{2.45}
+$$
+
+　両辺に、左から$\boldsymbol{\Sigma}$の逆行列と$\lambda_i$の逆数を掛けて、左辺の$\boldsymbol{\Sigma}$と右辺の$\lambda_i$を打ち消します。
+
+$$
+\begin{aligned}
+\frac{1}{\lambda_i}
+\boldsymbol{\Sigma}^{-1} \boldsymbol{\Sigma}
+\mathbf{u}_i
+   &= \frac{1}{\lambda_i} \lambda_i
+      \boldsymbol{\Sigma}^{-1} \mathbf{u}_i
+\\
+\Leftrightarrow
+\frac{1}{\lambda_i} \mathbf{I} \mathbf{u}_i
+   &= \boldsymbol{\Sigma}^{-1} \mathbf{u}_i
+\\
+\Leftrightarrow
+\frac{1}{\lambda_i} \mathbf{u}_i
+   &= \boldsymbol{\Sigma}^{-1} \mathbf{u}_i
+\end{aligned}
+$$
+
+　さらに、右から$\mathbf{u}_i^{\top}$を掛けます。
+
+$$
+\frac{1}{\lambda_i}
+\mathbf{u}_i \mathbf{u}_i^{\top}
+    = \boldsymbol{\Sigma}^{-1}
+      \mathbf{u}_i \mathbf{u}_i^{\top}
+$$
+
+　両辺で、$i$について和をとります。
+
+$$
+\begin{aligned}
+\sum_{i=1}^D
+    \frac{1}{\lambda_i}
+    \mathbf{u}_i \mathbf{u}_i^{\top}
+   &= \boldsymbol{\Sigma}^{-1}
+      \sum_{i=1}^D
+          \mathbf{u}_i \mathbf{u}_i^{\top}
+\\
+   &= \boldsymbol{\Sigma}^{-1}
+      \mathbf{I}
+\\
+   &= \boldsymbol{\Sigma}^{-1}
+\end{aligned}
+$$
+
+
+　(両辺を入れ替えると、)次の式が成り立ちます。
+
+$$
+\boldsymbol{\Sigma}^{-1}
+    = \sum_{i=1}^D
+        \frac{1}{\lambda_i}
+        \mathbf{u}_i \mathbf{u}_i^{\top}
+\tag{2.49}
+$$
+
+　分散共分散行列の逆行列も、固有値と固有ベクトルで表せるのが分かります。\
+\
+
+
+# 分散共分散行列の固有ベクトルによる回転
+
+　。\
+\
+
+
+## 多次元ガウス分布とマハラノビス距離の関係
+
+　まずは、この記事で利用する多次元ガウス分布と定義式を確認します。\
+\
+
+　多次元ガウス分布は、次の式で定義されます。
+
+$$
+\mathcal{N}(\mathbf{x} | \boldsymbol{\mu}, \boldsymbol{\Sigma})
+    = \frac{1}{\sqrt{(2 \pi)^D |\boldsymbol{\Sigma}|}}
+      \exp \left\{
+          - \frac{1}{2}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Sigma}^{-1}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \right\}
+$$
+
+　マハラノビス距離は、次の式で定義されます。
+
+$$
+\Delta
+    = \sqrt{
+          (\mathbf{x} - \boldsymbol{\mu})^{\top}
+          \boldsymbol{\Sigma}^{-1}
+          (\mathbf{x} - \boldsymbol{\mu})
+      }
+$$
+
+　多次元ガウス分布の指数部分の二次形式が、マハラノビス距離の2乗(マハラノビス距離のルートの中)になっています。
+
+$$
+\Delta^2
+    = (\mathbf{x} - \boldsymbol{\mu})^{\top}
+      \boldsymbol{\Sigma}^{-1}
+      (\mathbf{x} - \boldsymbol{\mu})
+\tag{2.44}
+$$
+
+　マハラノビス距離を$\Delta$、マハラノビス距離の2乗を$\Delta^2$で表すことにします。\
+\
+
+
+## 二次形式の変換
+
+
+　マハラノビス距離の2乗の式に、前回求めた
+
+$$
+\boldsymbol{\Sigma}^{-1}
+    = \sum_{i=1}^D
+        \frac{1}{\lambda_i}
+        \mathbf{u}_i \mathbf{u}_i^{\top}
+\tag{2.49}
+$$
+
+を代入します。
+
+
+\begin{align*}
+\Delta^2
+   &= (\mathbf{x} - \boldsymbol{\mu})^{\top}
+      \boldsymbol{\Sigma}^{-1}
+      (\mathbf{x} - \boldsymbol{\mu})
+\\
+   &= \sum_{i=1}^D
+          \frac{1}{\lambda_i}
+          (\mathbf{x} - \boldsymbol{\mu})^{\top}
+          \mathbf{u}_i \mathbf{u}_i^{\top}
+          (\mathbf{x} - \boldsymbol{\mu})
+\end{align*}
+
+
+　$(\mathbf{x} - \boldsymbol{\mu})^{\top} \mathbf{u}_i$は、スカラなので、転置できます。
+
+$$
+\{(\mathbf{x} - \boldsymbol{\mu})^{\top} \mathbf{u}_i\}^{\top}
+    = \mathbf{u}_i^{\top}
+      (\mathbf{x} - \boldsymbol{\mu})
+$$
+
+　これを、$y_i$とおきます。
+
+
+\begin{align*}
+y_i
+   &= \mathbf{u}_i^{\top}
+      (\mathbf{x} - \boldsymbol{\mu})
+\tag{2.51}\\
+   &= \begin{pmatrix}
+          u_{i,1} & u_{i,2} & \cdots & u_{i,D}
+      \end{pmatrix}
+      \begin{pmatrix}
+          x_1 - \mu_1 \\
+          x_2 - \mu_2 \\
+          \vdots \\
+          x_D - \mu_D
+      \end{pmatrix}
+\\
+   &= u_{i,1} (x_1 - \mu_1)
+      + u_{i,2} (x_2 - \mu_2)
+      + \cdots
+      + u_{i,D} (x_D - \mu_D)
+\\
+   &= \sum_{d=1}^D
+          u_{i,d} (x_d - \mu_d)
+\end{align*}
+
+
+　これを、式(2.44)を変形した式に代入します。
+
+
+\begin{align*}
+\Delta^2
+   &= \sum_{i=1}^D
+          \frac{1}{\lambda_i}
+          \mathbf{u}_i^{\top}
+          (\mathbf{x} - \boldsymbol{\mu})
+          \mathbf{u}_i^{\top}
+          (\mathbf{x} - \boldsymbol{\mu})
+\\
+   &= \sum_{i=1}^D
+          \frac{1}{\lambda_i}
+          y_i y_i
+\\
+   &= \sum_{i=1}^D
+          \frac{y_i^2}{\lambda_i}
+\tag{2.50}
+\end{align*}
+
+
+　$i = 1, 2, \dots, D$の$D$個の$y_i$は、次の式で計算できます。
+
+
+\begin{align*}
+\mathbf{y}
+   &= \mathbf{U}
+    (\mathbf{x} - \boldsymbol{\mu})
+\tag{2.52}\\
+   &= \begin{pmatrix}
+          u_{1,1} & u_{1,2} & \cdots & u_{1,D} \\
+          u_{2,1} & u_{2,2} & \cdots & u_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          u_{D,1} & u_{D,2} & \cdots & u_{D,D}
+      \end{pmatrix}
+      \begin{pmatrix}
+          x_1 - \mu_1 \\
+          x_2 - \mu_2 \\
+          \vdots \\
+          x_D - \mu_D
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          \sum_{d=1}^D u_{1,d} (x_d - \mu_d) \\
+          \sum_{d=1}^D u_{2,d} (x_d - \mu_d) \\
+          \vdots \\
+          \sum_{d=1}^D u_{D,d} (x_d - \mu_d)
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          y_1 \\
+          y_2 \\
+          \vdots \\
+          y_D
+      \end{pmatrix}
+\end{align*}
 
 
