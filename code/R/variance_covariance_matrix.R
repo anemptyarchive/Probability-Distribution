@@ -95,6 +95,37 @@ sigma_dd
 
 # マハラノビス距離との関係 ------------------------------------------------------------
 
+### ・距離の計算 -----
+
+# 次元数を指定
+D <- 3
+
+# 平均ベクトルを指定
+mu_d <- c(1, 2, 4)
+
+# 分散共分散行列を指定
+sigma_dd <- c(
+  4, 1.8, -0.1, 
+  1.8, 9, 2.4, 
+  -0.1, 2.4, 1
+) |> # 値を指定
+  matrix(nrow = D, ncol = D, byrow = TRUE) # マトリクスに変換
+
+# 変数の値を指定
+x_d <- c(3, 2, 1)
+
+# ユークリッド距離を計算
+delta_euclid <- sum((x_d - mu_d)^2) |> 
+  sqrt()
+delta_euclid
+
+# マハラノビス距離を計算
+delta_mahal <- t(x_d - mu_d) %*% solve(sigma_dd) %*% (x_d - mu_d) |> 
+  as.numeric() |> 
+  sqrt()
+delta_mahal
+
+
 ### ・生成分布(多次元ガウス分布)の設定 -----
 
 # 平均ベクトルを指定
@@ -505,13 +536,11 @@ gganimate::animate(anime_dist_graph, nframes = length(sigma_12_vals), fps = 10, 
 
 # 固有値・固有ベクトルとの関係 -------------------------------------------------------------
 
+
 ### ・パラメータの設定 -----
 
 # 次元数を指定
 D <- 3
-
-# 平均ベクトルを指定
-mu_d <- c(0, 0, 0)
 
 # 分散共分散行列を指定
 sigma_dd <- c(
@@ -521,9 +550,6 @@ sigma_dd <- c(
 ) |> # 値を指定
   matrix(nrow = D, ncol = D, byrow = TRUE) # マトリクスに変換
 
-# 確率変数の値を指定
-x_d <- c(2, 3, 1)
-
 
 # 固有値と固有ベクトルを計算
 res_eigen <- eigen(sigma_dd)
@@ -532,49 +558,78 @@ res_eigen
 # 固有値を取得
 lambda_d <- res_eigen[["values"]]
 
-# 固有行列(全ての固有ベクトル)を取得
+# 固有ベクトルを取得
 u_dd <- res_eigen[["vectors"]] |> 
   t()
 
 
-### ・固有値・固有ベクトルの計算 ----
+### ・固有ベクトルの性質の計算 ----
 
 # インデックスを指定
 i <- 1
 j <- 2
 
 
-# 二次形式(マハラノビス距離の2乗)を計算:式(2.44)
-delta2 <- t(x_d - mu_d) %*% solve(sigma_dd) %*% (x_d - mu_d) |> 
-  as.numeric()
-delta2
-
-
-# 分散共分散行列と固有ベクトルの行列の積:式(2.45)の左辺
-res1 <- sigma_dd %*% u_dd[i, ] |> 
-  as.numeric()
-
-# 固有値と固有ベクトルの積:式(2.45)の右辺
-res2 <- lambda_d[i] * u_dd[i, ]
-
-# 分散共分散行列の積と固有値の積の比較:式(2.45)
-dplyr::near(res1, res2)
-
-
 # 固有ベクトルを取得
 u_id <- u_dd[i, ]
 u_jd <- u_dd[j, ]
 
-# 固有ベクトルの積を計算:式(2.47)
-I_ij <- t(u_id) %*% u_jd |> 
-  as.numeric()
+
+# 固有ベクトルの内積を計算:式(2.47)
 I_ii <- t(u_id) %*% u_id |> 
   as.numeric()
-I_ij; I_ii
+I_ij <- t(u_id) %*% u_jd |> 
+  as.numeric()
+I_ji <- t(u_jd) %*% u_id |> 
+  as.numeric()
+I_jj <- t(u_jd) %*% u_jd |> 
+  as.numeric()
+I_ii; round(I_ij, 5); round(I_ji, 5); I_jj
 
-# 単位行列を計算
+
+# 固有ベクトルをまとめた行列の積を計算
+I <- u_dd %*% t(u_dd)
+round(I, 5)
+
+# 固有ベクトルをまとめた行列の積を計算
 I <- t(u_dd) %*% u_dd
 round(I, 5)
+
+# 固有ベクトルの積の総和を計算
+I <- matrix(rep(0, times = D*D), nrow = D, ncol = D)
+for(i in 1:D) {
+  # i番目の固有ベクトルを抽出
+  u_id <- u_dd[i, ]
+  
+  # 固有ベクトルの積を計算
+  tmp_uu_dd <- u_id %*% t(u_id)
+  
+  # D個の和を計算
+  I <- I + tmp_uu_dd
+}
+round(I, 5)
+
+
+# 転置行列を計算
+u_t_dd <- t(u_dd)
+u_t_dd
+
+# 逆行列を計算
+u_inv_dd <- solve(u_dd)
+u_inv_dd
+
+
+### ・分散共分散行列と固有値・固有ベクトルの関係の計算 ----
+
+# 分散共分散行列と固有ベクトルの行列の積:式(2.45)の左辺
+sigma_u_d <- sigma_dd %*% u_id |> 
+  as.numeric()
+
+# 固有値と固有ベクトルの積:式(2.45)の右辺
+lambda_u_d <- lambda_d[i] * u_id
+
+# 分散共分散行列の積と固有値の積の比較:式(2.45)
+dplyr::near(sigma_u_d, lambda_u_d)
 
 
 # 分散共分散を計算:式(2.48)
@@ -592,9 +647,18 @@ for(i in 1:D) {
 }
 res_sigma_dd
 
-# 分散共分散を計算:式(2.48)
-t(lambda_d * u_dd) %*% u_dd
+# 分散共分散を計算:式(2.48')
+res_sigma_dd <- t(u_dd) %*% diag(lambda_d) %*% u_dd
+res_sigma_dd
 
+# 分散共分散を計算:式(2.48')
+res_sigma_dd <- t(lambda_d * u_dd) %*% u_dd
+res_sigma_dd
+
+
+# 精度行列を計算
+sigma_inv_dd <- solve(sigma_dd)
+sigma_inv_dd
 
 # 精度行列を計算:式(2.49)
 res_sigma_inv_dd <- matrix(rep(0, times = D*D), nrow = D, ncol = D)
@@ -611,9 +675,54 @@ for(i in 1:D) {
 }
 res_sigma_inv_dd
 
-# 精度行列を計算:式(2.49)
-t(1/lambda_d * u_dd) %*% u_dd
+# 精度行列を計算:式(2.49')
+res_sigma_inv_dd <- t(u_dd) %*% diag(1/lambda_d) %*% u_dd
+res_sigma_inv_dd
 
+# 精度行列を計算:式(2.49')
+res_sigma_inv_dd <- t(1/lambda_d * u_dd) %*% u_dd
+res_sigma_inv_dd
+
+
+
+
+# 分散共分散行列の行列式の平方根を計算:式(2.55)の左辺
+res1 <- sqrt(det(sigma_dd))
+
+# 固有値の平方根の総乗を計算:式(2.55)の右辺
+res2 <- prod(sqrt(lambda_d))
+
+# 比較:式(2.55)
+dplyr::near(res1, res2)
+
+
+# 固有ベクトルによる軸の回転 --------------------------------------------------------------------
+
+### ・パラメータの設定 -----
+
+# 平均ベクトルを指定
+mu_d <- c(-4, 2)
+
+# 分散共分散行列を指定
+sigma_dd <- matrix(c(1, 0.6, 0.6, 1.5), nrow = 2, ncol = 2)
+
+# データ数(サンプルサイズ)を指定
+N <- 10
+
+
+# 固有値と固有ベクトルを計算
+res_eigen <- eigen(sigma_dd)
+res_eigen
+
+# 固有値を取得
+lambda_d <- res_eigen[["values"]]
+
+# 固有ベクトルを取得
+u_dd <- res_eigen[["vectors"]] |> 
+  t()
+
+
+### ・マハラノビス距離の計算 -----
 
 # マハラノビス距離の2乗を計算:式(2.50)
 delta2 <- 0 # 初期化
@@ -641,46 +750,6 @@ delta2 <- sum(y_d^2 / lambda_d)
 delta2
 
 
-# 分散共分散行列の行列式の平方根を計算:式(2.55)の左辺
-res1 <- sqrt(det(sigma_dd))
-
-# 固有値の平方根の総乗を計算:式(2.55)の右辺
-res2 <- prod(sqrt(lambda_d))
-
-# 比較:式(2.55)
-dplyr::near(res1, res2)
-
-
-# 固有ベクトルによる軸の回転 --------------------------------------------------------------------
-
-### ・パラメータの設定 -----
-
-# 平均ベクトルを指定
-mu_d <- c(6, 10)
-
-# 分散共分散行列を指定
-sigma_dd <- matrix(c(1, 0.6, 0.6, 1.5), nrow = 2, ncol = 2)
-
-# データ数(サンプルサイズ)を指定
-N <- 10
-
-
-# 固有値と固有ベクトルを計算
-res_eigen <- eigen(sigma_dd)
-res_eigen
-
-# 固有値を取得
-lambda_d <- res_eigen[["values"]]
-
-# 固有行列(全ての固有ベクトル)を取得
-u_dd <- res_eigen[["vectors"]] |> 
-  t()
-
-
-# 多次元ガウス分布に従う乱数を生成
-x_nd <- mvnfast::rmvn(n = N, mu = mu_d, sigma = sigma_dd)
-
-
 ### ・元の分布 -----
 
 # xの値を作成
@@ -699,7 +768,7 @@ x_2_vals <- seq(
 x_mat <- tidyr::expand_grid(
   x_1 = x_1_vals, 
   x_2 = x_2_vals
-) |> # 全ての組み合わせ(格子点)を作成
+) |> # 格子点を作成
   as.matrix() # マトリクスに変換
 
 # 多次元ガウス分布を計算
@@ -710,35 +779,28 @@ dens_x_df <- tibble::tibble(
 )
 
 
-
-# ユークリッド距離とマハラノビス距離を計算
-dist_x_df <- tibble::tibble(
-  x_1 = x_mat[, 1], # x軸の値
-  x_2 = x_mat[, 2], # y軸の値
-  euclidean = ((x_mat[, 1]-mu_d[1])^2 + (x_mat[, 2]-mu_d[2])^2) |> 
-    sqrt(), # ユークリッド距離
-  mahalanobis = (t(t(x_mat)-mu_d) %*% solve(sigma_dd) %*% (t(x_mat)-mu_d)) |> 
-    diag() |> 
-    sqrt() # マハラノビス距離
-)
+# 多次元ガウス分布に従う乱数を生成
+x_nd <- mvnfast::rmvn(n = N, mu = mu_d, sigma = sigma_dd)
 
 # サンプルを格納
 data_x_df <- tibble::tibble(
   n = factor(1:N), # データ番号
   x_1 = x_nd[, 1], # x軸の値
-  x_2 = x_nd[, 2], # y軸の値
-  euclidean = ((x_nd[, 1]-mu_d[1])^2 + (x_nd[, 2]-mu_d[2])^2) |> 
-    sqrt(), # ユークリッド距離
-  mahalanobis = t(t(x_nd)-mu_d) %*% solve(sigma_dd) %*% (t(x_nd)-mu_d) |> 
-    diag() |> 
-    sqrt(), # マハラノビス距離
-  coord_label = paste0("x=(", round(x_1, 1), ", ", round(x_2, 1), ")"), # 座標ラベル
-  dist_label = paste0("ED=", round(euclidean, 2), "\nMD=", round(mahalanobis, 2)) # 距離ラベル
+  x_2 = x_nd[, 2] # y軸の値
+)
+
+
+# 断面図の軸を計算
+axis_x_df <- tibble::tibble(
+  xstart = mu_d[1] - u_dd[, 1] * sqrt(lambda_d), 
+  ystart = mu_d[2] - u_dd[, 2] * sqrt(lambda_d), 
+  xend = mu_d[1] + u_dd[, 1] * sqrt(lambda_d), 
+  yend = mu_d[2] + u_dd[, 2] * sqrt(lambda_d)
 )
 
 
 # パラメータラベルを作成:(数式表記用)
-math_x_text <- paste0(
+param_x_text <- paste0(
   "list(", 
   "mu==group('(', list(", paste0(mu_d, collapse = ", "), "), ')')", 
   ", Sigma==group('(', list(", paste0(sigma_dd, collapse = ", "), "), ')')", 
@@ -748,26 +810,19 @@ math_x_text <- paste0(
 # 確率密度の最大値を計算
 max_dens <- mvnfast::dmvn(X = mu_d, mu = mu_d, sigma = sigma_dd)
 
-
-# 断面図の軸を計算
-eigen_x_df <- tibble::tibble(
-  x = mu_d[1] - u_dd[, 1] * sqrt(lambda_d), 
-  y = mu_d[2] - u_dd[, 2] * sqrt(lambda_d), 
-  xend = mu_d[1] + u_dd[, 1] * sqrt(lambda_d), 
-  yend = mu_d[2] + u_dd[, 2] * sqrt(lambda_d)
-)
-
 # 固有ベクトルを重ねた2次元ガウス分布のグラフを作成
 dens_x_graph <- ggplot() + 
   geom_contour_filled(data = dens_x_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), 
-                      alpha = 0.8, show.legend = FALSE) + # 塗りつぶし等高線
-  geom_contour(data = dens_x_df, mapping = aes(x = x_1, y = x_2, z = density), breaks = max_dens*exp(-0.5), 
-               color = "red", size = 1, linetype = "dashed") + # 分布の断面図
-  geom_segment(data = eigen_x_df, mapping = aes(x = x, y = y, xend = xend, yend = yend), color = "blue", size = 1, arrow = arrow()) + # 断面図の軸:サイズが固有値の倍の固有ベクトル
+                      alpha = 0.8, show.legend = FALSE) + # 分布
+  geom_contour(data = dens_x_df, mapping = aes(x = x_1, y = x_2, z = density), 
+               breaks = max_dens*exp(-0.5), color = "red", size = 1, linetype = "dashed") + # 分布の断面図
+  geom_segment(data = axis_x_df, mapping = aes(x = xstart, y = ystart, xend = xend, yend = yend), 
+               color = "blue", size = 1, arrow = arrow()) + # 断面図の軸
   geom_point(data = data_x_df, mapping = aes(x = x_1, y = x_2, color = n), 
-             size = 5, show.legend = FALSE) + # サンプル
+             alpha = 0.8, size = 5, show.legend = FALSE) + # サンプル
+  coord_fixed(ratio = 1) + # アスペクト比
   labs(title ="Maltivariate Gaussian Distribution", 
-       subtitle = parse(text = math_x_text), 
+       subtitle = parse(text = param_x_text), 
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
 dens_x_graph
@@ -776,9 +831,10 @@ dens_x_graph
 ### ・軸の回転 ----
 
 # xの点を回転
-x_to_y_mat <- x_mat %*% u_dd
+x_to_y_mat <- x_mat %*% t(u_dd)
+x_to_y_mat <- t(t(x_mat) - mu_d) %*% t(u_dd)
 
-# y軸の値を作成
+# yの値を作成
 y_1_vals <- seq(from = min(x_to_y_mat[, 1]), to = max(x_to_y_mat[, 1]), length.out = 100)
 y_2_vals <- seq(from = min(x_to_y_mat[, 2]), to = max(x_to_y_mat[, 2]), length.out = 100)
 
@@ -786,34 +842,23 @@ y_2_vals <- seq(from = min(x_to_y_mat[, 2]), to = max(x_to_y_mat[, 2]), length.o
 y_mat <- tidyr::expand_grid(
   y_1 = y_1_vals, 
   y_2 = y_2_vals
-) |> # 
-  as.matrix()
+) |> # 格子点を作成
+  as.matrix() # マトリクスに変換
 
 # yの点を回転
-y_to_x_mat = y_mat %*% solve(u_dd)
+y_to_x_mat = y_mat %*% solve(t(u_dd))
 
 # 多次元ガウス分布を計算
 dens_y_df <- tibble::tibble(
   y_1 = y_mat[, 1], # x軸の値
   y_2 = y_mat[, 2], # y軸の値
-  density = mvnfast::dmvn(X = y_to_x_mat, mu = mu_d, sigma = sigma_dd) # 確率密度
-)
-
-# ユークリッド距離とマハラノビス距離を計算
-dist_y_df <- tibble::tibble(
-  y_1 = y_mat[, 1], # x軸の値
-  y_2 = y_mat[, 2], # y軸の値
-  euclidean = ((y_mat[, 1]-mu_d[1])^2 + (y_mat[, 2]-mu_d[2])^2) |> 
-    sqrt(), # ユークリッド距離
-  mahalanobis = (t(t(y_mat)-mu_d) %*% solve(sigma_dd) %*% (t(y_mat)-mu_d)) |> 
-    diag() |> 
-    sqrt() # マハラノビス距離
+  density = mvnfast::dmvn(X = y_to_x_mat, mu = rep(0,2), sigma = sigma_dd) # 確率密度
 )
 
 
-# サンプルを開店
-y_nd <- x_nd %*% sigma_dd
-y_nd <- x_nd %*% u_dd
+# サンプルを回転
+y_nd <- x_nd %*% t(u_dd)
+y_nd <- t(t(x_nd) - mu_d) %*% t(u_dd)
 
 # 回転したサンプルを格納
 data_y_df <- tibble::tibble(
@@ -822,42 +867,47 @@ data_y_df <- tibble::tibble(
   y_2 = y_nd[, 2]
 )
 
-mu_y_d <- t(mu_d) %*% u_dd |> 
-  as.numeric()
-lambda_d <- rev(lambda_d)
 
-# 断面図の軸を計算
-eigen_y_df <- tibble::tibble(
-  x = c(mu_y_d[1]-sqrt(lambda_d[1]), mu_y_d[1]), 
-  y = c(mu_y_d[2], mu_y_d[2]-sqrt(lambda_d[2])), 
-  xend = c(mu_y_d[1]+sqrt(lambda_d[1]), mu_y_d[1]), 
-  yend = c(mu_y_d[2], mu_y_d[2]+sqrt(lambda_d[2]))
-)
-
+# 軸を計算
+axis_y_df <- dplyr::bind_cols(
+  value_1 = c(axis_x_df[["xstart"]], axis_x_df[["xend"]]) - mu_d[1], 
+  value_2 = c(axis_x_df[["ystart"]], axis_x_df[["yend"]]) - mu_d[2]
+) |> 
+  as.matrix() |> 
+  (\(.){. %*% t(u_dd)})() |> 
+  as.vector() |> 
+  tibble::as_tibble() |> 
+  tibble::add_column(
+    name = paste0(rep(c("x", "y"), each = 4), rep(c("start", "end"), each = 2, times = 2)), 
+    axis = rep(c("y_1", "y_2"), times = 4)
+  ) |> 
+  tidyr::pivot_wider(
+    id_cols = axis, 
+    names_from = name, 
+    values_from = value
+  ) # 軸の視点・終点の列を分割
 
 
 # パラメータラベルを作成:(数式表記用)
-math_y_text <- paste0(
+param_y_text <- paste0(
   "list(", 
   "lambda==group('(', list(", paste0(round(lambda_d, 2), collapse = ", "), "), ')')", 
   ", U==group('(', list(", paste0(round(u_dd, 2), collapse = ", "), "), ')')", 
   ")"
 )
 
-
-
 # 固有ベクトルを重ねた2次元ガウス分布のグラフを作成
 dens_y_graph <- ggplot() + 
   geom_contour_filled(data = dens_y_df, mapping = aes(x = y_1, y = y_2, z = density, fill = ..level..), 
                       alpha = 0.8) + # 塗りつぶし等高線
-  #geom_contour(data = dens_x_df, mapping = aes(x = x_1, y = x_2, z = density), breaks = max_dens*exp(-0.5), 
-  #             color = "red", size = 1, linetype = "dashed") + # 分布の断面図
-  #geom_segment(data = eigen_df, mapping = aes(x = mu_d[1], y = mu_d[2], xend = xend, yend = yend), 
-  #             color = "blue", size = 1, arrow = arrow()) + # 断面図の軸:サイズが固有値の固有ベクトル
-  geom_segment(data = eigen_y_df, mapping = aes(x = x, y = y, xend = xend, yend = yend), color = "blue", size = 1, arrow = arrow()) + # 断面図の軸:サイズが固有値の倍の固有ベクトル
-  geom_point(data = data_y_df, mapping = aes(x = y_1, y = y_2, color = n), size = 5, show.legend = FALSE) + 
+  geom_contour(data = dens_y_df, mapping = aes(x = y_1, y = y_2, z = density), 
+               breaks = max_dens*exp(-0.5), color = "red", size = 1, linetype = "dashed") + # 分布の断面図
+  geom_segment(data = axis_y_df, mapping = aes(x = xstart, y = ystart, xend = xend, yend = yend), color = "blue", size = 1, arrow = arrow()) + # 断面図の軸:サイズが固有値の倍の固有ベクトル
+  geom_point(data = data_y_df, mapping = aes(x = y_1, y = y_2, color = n), 
+             alpha = 0.8, size = 5, show.legend = FALSE) + 
+  coord_fixed(ratio = 1) + # アスペクト比
   labs(title ="Maltivariate Gaussian Distribution", 
-       subtitle = parse(text = math_y_text), 
+       subtitle = parse(text = param_y_text), 
        fill = "density", 
        x = expression(y[1]), y = expression(y[2]))
 dens_y_graph
