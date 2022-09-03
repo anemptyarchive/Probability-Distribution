@@ -34,6 +34,7 @@ knitr::opts_chunk$set(
 
 - 2022/08/27：「相関行列との関係」を追加
 - 2022/08/29：「マハラノビス距離との関係」を追加
+- 2022/09/03：「固有値・固有ベクトルとの関係」を追加
 
 ----
 
@@ -59,11 +60,11 @@ $$
           \sigma_1^2 & \sigma_{1,2} & \cdots & \sigma_{1,D} \\
           \sigma_{2,1} & \sigma_2^2 & \cdots & \sigma_{2,D} \\
           \vdots & \vdots & \ddots & \vdots \\
-          \sigma_{D,1} & \sigma_{D,2} & \cdots & \sigma_D^2 \\
+          \sigma_{D,1} & \sigma_{D,2} & \cdots & \sigma_D^2
       \end{pmatrix}
 $$
 
-　$D$次元ベクトルの変数を$\mathbf{x} = (x_1, x_2, \cdots, x_D)^{\top}$とすると、$\sigma_d$は$x_d$の標準偏差、$\sigma_d^2 = \sigma_{d,d}$は$x_d$の分散、$\sigma_{i,j}$は$x_i$と$x_j$の共分散です。
+　$D$次元ベクトルの変数を$\mathbf{x} = (x_1, x_2, \cdots, x_D)^{\top}$とすると、$\sigma_d$は$x_d$の標準偏差、$\sigma_d^2 = \sigma_{d,d}$は$x_d$の分散、$\sigma_{i,j} = \sigma_{j,i}$は$x_i, x_j$の共分散です。
 
 $$
 \begin{aligned}
@@ -265,7 +266,7 @@ $$
           \sigma_1^2 & \sigma_{1,2} & \cdots & \sigma_{1,D} \\
           \sigma_{2,1} & \sigma_2^2 & \cdots & \sigma_{2,D} \\
           \vdots & \vdots & \ddots & \vdots \\
-          \sigma_{D,1} & \sigma_{D,2} & \cdots & \sigma_D^2 \\
+          \sigma_{D,1} & \sigma_{D,2} & \cdots & \sigma_D^2
       \end{pmatrix}
     = \boldsymbol{\Sigma}
 \end{aligned}
@@ -300,7 +301,7 @@ $$
           \sigma_1^2 & \sigma_{1,2} & \cdots & \sigma_{1,D} \\
           \sigma_{2,1} & \sigma_2^2 & \cdots & \sigma_{2,D} \\
           \vdots & \vdots & \ddots & \vdots \\
-          \sigma_{D,1} & \sigma_{D,2} & \cdots & \sigma_D^2 \\
+          \sigma_{D,1} & \sigma_{D,2} & \cdots & \sigma_D^2
       \end{pmatrix}
       \begin{pmatrix}
           \frac{1}{\sigma_1} & 0 & \cdots & 0 \\
@@ -621,7 +622,7 @@ $$
 \
 
 
-# 分散共分散行列と固有値・固有ベクトルの関係
+# 分散共分散行列と固有値・固有ベクトルの関係の導出
 
 　分散共分散行列(Variance–Covariance Matrix)と固有値(Eigenvalue)・固有ベクトル(Eigenvector)の関係を導出します。\
 \
@@ -629,7 +630,7 @@ $$
 
 ## 固有ベクトル
 
-　まずは、分散共分散行列の固有値と固有ベクトルを確認します。固有値・固有ベクトルの求め方などについてはこの記事で扱いません。\
+　まずは、分散共分散行列の固有値と固有ベクトルを確認します。固有値・固有ベクトルの求め方などについては扱いません。\
 \
 
 　分散共分散行列は、$D \times D$の正定値行列で定義されます。
@@ -640,7 +641,7 @@ $$
           \sigma_1^2 & \sigma_{1,2} & \cdots & \sigma_{1,D} \\
           \sigma_{2,1} & \sigma_2^2 & \cdots & \sigma_{2,D} \\
           \vdots & \vdots & \ddots & \vdots \\
-          \sigma_{D,1} & \sigma_{D,2} & \cdots & \sigma_D^2 \\
+          \sigma_{D,1} & \sigma_{D,2} & \cdots & \sigma_D^2
       \end{pmatrix}
 $$
 
@@ -678,14 +679,14 @@ $$
       \end{pmatrix}
     = \begin{pmatrix}
           \begin{pmatrix}
-              u_{1,1} & u_{2,1} & \cdots & u_{D,1}
+              u_{1,1} & u_{1,2} & \cdots & u_{1,D}
           \end{pmatrix} \\
           \begin{pmatrix}
-              u_{1,2} & u_{2,2} & \cdots & u_{D,2}
+              u_{2,1} & u_{2,2} & \cdots & u_{2,D}
           \end{pmatrix} \\
           \vdots \\
           \begin{pmatrix}
-              u_{1,D} & u_{2,D} & \cdots & u_{D,D}
+              u_{D,1} & u_{D,2} & \cdots & u_{D,D}
           \end{pmatrix}
       \end{pmatrix}
     = \begin{pmatrix}
@@ -706,14 +707,14 @@ $$
       \end{pmatrix}
     = \begin{pmatrix}
           \begin{pmatrix}
-              u_{1,1} \\ u_{2,1} \\ \vdots \\ u_{D,1}
+              u_{1,1} \\ u_{1,2} \\ \vdots \\ u_{1,D}
           \end{pmatrix} &
           \begin{pmatrix}
-              u_{1,2} \\ u_{2,2} \\ \vdots \\ u_{D,2}
+              u_{2,1} \\ u_{2,2} \\ \vdots \\ u_{2,D}
           \end{pmatrix} &
           \cdots &
           \begin{pmatrix}
-              u_{1,D} \\ u_{2,D} \\ \vdots \\ u_{D,D}
+              u_{D,1} \\ u_{D,2} \\ \vdots \\ u_{D,D}
           \end{pmatrix}
       \end{pmatrix}
     = \begin{pmatrix}
@@ -728,12 +729,12 @@ $$
 \
 
 
-## 固有ベクトルの積
+## 固有ベクトルの性質
 
-　分散共分散行列と固有値・固有ベクトルの関係の前に、固有ベクトルを使った計算について確認します。\
+　次は、固有ベクトルの性質を導出します。\
 \
 
-　2つの固有ベクトル$\mathbf{u}_i, \mathbf{u}_j$の内積は、0か1の値をとります。
+　分散共分散行列は正定値行列なので、2つの固有ベクトル$\mathbf{u}_i, \mathbf{u}_j$の内積は、0か1の値をとります。(元の行列が実対称行列のとき、異なる($i \neq j$の)固有ベクトルの内積は1になります。)
 
 
 \begin{align*}
@@ -772,7 +773,7 @@ $$
 \tag{2.47}
 $$
 
-　$I_{i,j}$は、$i = j$のとき1、$i \neq j$のとき0になります。\
+　$I_{i,j}$は、$i = j$のとき1、$i \neq j$のとき0になります。よって、異なる($i \neq j$の)固有ベクトルは直交します(直角に交わります)。\
 
 　$\mathbf{U}, \mathbf{U}^{\top}$の行列の積は、単位行列$\mathbf{I}$になります。
 
@@ -825,8 +826,8 @@ $$
 \end{aligned}
 $$
 
-　対角成分は($i = j$のとき)1、それ以外の成分は($i \neq j$のとき)0になります。\
-　この計算を、$\mathbf{u}_i$を並べた表現の行列で行ってみます。
+　各成分の計算が式(2.46)に対応していて、対角成分が($i = j$のとき)1、それ以外の成分が($i \neq j$のとき)0になります。\
+　この計算を、$\mathbf{u}_i$を並べた表現の行列でも行ってみます。
 
 $$
 \begin{aligned}
@@ -874,9 +875,60 @@ $$
 \end{aligned}
 $$
 
-　各成分が式(2.46)に対応しているのが分かります。\
+　こちらも、各成分が式(2.46)に対応しているのが分かります。\
 
-　$\mathbf{U}^{\top}, \mathbf{U}$の行列の積も単位行列になります。
+　単位行列$\mathbf{I}$は対角行列なので、転置しても単位行列$\mathbf{I} = \mathbf{I}^{\top}$です。よって、$\mathbf{U}^{\top} \mathbf{U}$を転置しても単位行列になります。
+
+$$
+\mathbf{U} \mathbf{U}^{\top}
+    = (\mathbf{U} \mathbf{U}^{\top})^{\top}
+    = \mathbf{U}^{\top} \mathbf{U}
+    = \mathbf{I}
+$$
+
+　行列の性質$(\mathbf{A}^{\top} \mathbf{B})^{\top} = \mathbf{A} \mathbf{B}^{\top}$を使って変形しました。\
+　つまり、$\mathbf{U}$と$\mathbf{U}^{\top}$の積は掛ける順番に関わらず単位行列になります。
+
+$$
+\mathbf{U} \mathbf{U}^{\top}
+    = \mathbf{U}^{\top} \mathbf{U}
+    = \mathbf{I}
+$$
+
+　このような行列を直交行列と言います。\
+
+　2つ目の等式の両辺に右から$\mathbf{U}$の逆行列を掛けます。
+
+$$
+\begin{aligned}
+\mathbf{U}^{\top} \mathbf{U}
+   &= \mathbf{I}
+\\
+\Leftrightarrow
+\mathbf{U}^{\top} \mathbf{U} \mathbf{U}^{-1}
+   &= \mathbf{I} \mathbf{U}^{-1}
+\\
+\Leftrightarrow
+\mathbf{U}^{\top} \mathbf{I}
+   &= \mathbf{U}^{-1}
+\\
+\Leftrightarrow
+\mathbf{U}^{\top}
+   &= \mathbf{U}^{-1}
+\end{aligned}
+$$
+
+　逆行列の定義$\mathbf{A} \mathbf{A}^{-1} = \mathbf{I}$により変形しました。\
+　直交行列は転置行列と逆行列が等しくなります。
+
+$$
+\mathbf{U}^{\top}
+    = \mathbf{U}^{-1}
+$$
+
+\ 
+
+　$\mathbf{U}^{\top} \mathbf{U} = \mathbf{I}$の計算を確認します。
 
 $$
 \begin{aligned}
@@ -895,26 +947,33 @@ $$
       \end{pmatrix}
 \\
    &= \begin{pmatrix}
-          \sum_{d=1}^D u_{d,1} u_{d,1} & 
-          \sum_{d=1}^D u_{d,2} u_{d,1} & 
+          \sum_{i=1}^D u_{i,1}^2 & 
+          \sum_{i=1}^D u_{i,1} u_{i,2} & 
           \cdots & 
-          \sum_{d=1}^D u_{d,D} u_{d,1} \\
-          \sum_{d=1}^D u_{d,1} u_{d,2} & 
-          \sum_{d=1}^D u_{d,2} u_{d,2} & 
+          \sum_{i=1}^D u_{i,1} u_{i,D} \\
+          \sum_{i=1}^D u_{i,2} u_{i,1} & 
+          \sum_{i=1}^D u_{i,2}^2 & 
           \cdots & 
-          \sum_{d=1}^D u_{d,D} u_{d,2} \\
+          \sum_{i=1}^D u_{i,2} u_{i,D} \\
           \vdots & \vdots & \ddots & \vdots \\
-          \sum_{d=1}^D u_{d,1} u_{d,D} & 
-          \sum_{d=1}^D u_{d,2} u_{d,D} & 
+          \sum_{i=1}^D u_{i,D} u_{i,1} & 
+          \sum_{i=1}^D u_{i,D} u_{i,2} & 
           \cdots & 
-          \sum_{d=1}^D u_{d,D} u_{d,D}
+          \sum_{i=1}^D u_{i,D}^2
       \end{pmatrix}
-\\
+\end{aligned}
+$$
+
+　この行列が単位行列になるので
+
+$$
+\begin{aligned}
+\mathbf{U}^{\top} \mathbf{U}
    &= \begin{pmatrix}
-          I_{1,1} & I_{2,1} & \cdots & I_{D,1} \\
-          I_{1,2} & I_{2,2} & \cdots & I_{D,2} \\
+          I_{1,1} & I_{1,2} & \cdots & I_{1,D} \\
+          I_{2,2} & I_{2,2} & \cdots & I_{2,D} \\
           \vdots & \vdots & \ddots & \vdots \\
-          I_{1,D} & I_{2,D} & \cdots & I_{D,D}
+          I_{D,1} & I_{D,2} & \cdots & I_{D,D}
       \end{pmatrix}
 \\
    &= \begin{pmatrix}
@@ -927,6 +986,7 @@ $$
 \end{aligned}
 $$
 
+となります。($\sum_{i=1}^D u_{i,k} u_{i,l} = I_{k,l}$になる理由を知りたいけど分からなかった。)\
 　この計算も$\mathbf{u}_i$を並べた行列のまま計算してみます。
 
 $$
@@ -942,8 +1002,8 @@ $$
           \mathbf{u}_D^{\top}
       \end{pmatrix}
 \\
-   &= \sum_{d=1}^D
-          \mathbf{u}_d \mathbf{u}_d^{\top}
+   &= \sum_{i=1}^D
+          \mathbf{u}_i \mathbf{u}_i^{\top}
 \end{aligned}
 $$
 
@@ -966,7 +1026,7 @@ $$
           u_{i,1}^2 & u_{i,1} u_{i,2} & \cdots & u_{i,1} u_{i,D} \\
           u_{i,2} u_{i,1} & u_{i,2}^2 & \cdots & u_{i,2} u_{i,D} \\
           \vdots & \vdots & \ddots & \vdots \\
-          u_{i,D} u_{i,1} &  u_{i,D} u_{i,2} & \cdots & u_{i,D}^2
+          u_{i,D} u_{i,1} & u_{i,D} u_{i,2} & \cdots & u_{i,D}^2
       \end{pmatrix}
 \end{aligned}
 $$
@@ -976,25 +1036,25 @@ $$
 $$
 \begin{aligned}
 \mathbf{U}^{\top} \mathbf{U}
-   &= \sum_{d=1}^D
+   &= \sum_{i=1}^D
           \begin{pmatrix}
-              u_{d,1}^2 & u_{d,1} u_{d,2} & \cdots & u_{d,1} u_{d,D} \\
-              u_{d,2} u_{d,1} & u_{d,2}^2 & \cdots & u_{d,2} u_{d,D} \\
+              u_{i,1}^2 & u_{i,1} u_{i,2} & \cdots & u_{i,1} u_{i,D} \\
+              u_{i,2} u_{i,1} & u_{i,2}^2 & \cdots & u_{i,2} u_{i,D} \\
               \vdots & \vdots & \ddots & \vdots \\
-              u_{d,D} u_{d,1} &  u_{d,D} u_{d,2} & \cdots & u_{d,D}^2
+              u_{i,D} u_{i,1} & u_{i,D} u_{i,2} & \cdots & u_{i,D}^2
           \end{pmatrix}
 \\
    &= \begin{pmatrix}
           u_{1,1}^2 & u_{1,1} u_{1,2} & \cdots & u_{1,1} u_{1,D} \\
           u_{1,2} u_{1,1} & u_{1,2}^2 & \cdots & u_{1,2} u_{1,D} \\
           \vdots & \vdots & \ddots & \vdots \\
-          u_{1,D} u_{1,1} &  u_{1,D} u_{1,2} & \cdots & u_{1,D}^2
+          u_{1,D} u_{1,1} & u_{1,D} u_{1,2} & \cdots & u_{1,D}^2
       \end{pmatrix}
       + \begin{pmatrix}
           u_{2,1}^2 & u_{2,1} u_{2,2} & \cdots & u_{2,1} u_{2,D} \\
           u_{2,2} u_{2,1} & u_{2,2}^2 & \cdots & u_{2,2} u_{2,D} \\
           \vdots & \vdots & \ddots & \vdots \\
-          u_{2,D} u_{2,1} &  u_{2,D} u_{2,2} & \cdots & u_{2,D}^2
+          u_{2,D} u_{2,1} & u_{2,D} u_{2,2} & \cdots & u_{2,D}^2
         \end{pmatrix} \\
    &\qquad
       + \cdots
@@ -1002,30 +1062,30 @@ $$
           u_{D,1}^2 & u_{D,1} u_{D,2} & \cdots & u_{D,1} u_{D,D} \\
           u_{D,2} u_{D,1} & u_{D,2}^2 & \cdots & u_{D,2} u_{D,D} \\
           \vdots & \vdots & \ddots & \vdots \\
-          u_{D,D} u_{D,1} &  u_{D,D} u_{D,2} & \cdots & u_{D,D}^2
+          u_{D,D} u_{D,1} & u_{D,D} u_{D,2} & \cdots & u_{D,D}^2
         \end{pmatrix}
 \\
    &= \begin{pmatrix}
-          \sum_{d=1}^D u_{d,1}^2 & 
-          \sum_{d=1}^D u_{d,1} u_{d,2} & 
+          \sum_{i=1}^D u_{i,1}^2 & 
+          \sum_{i=1}^D u_{i,1} u_{i,2} & 
           \cdots & 
-          \sum_{d=1}^D u_{d,1} u_{d,D} \\
-          \sum_{d=1}^D u_{d,2} u_{d,1} & 
-          \sum_{d=1}^D u_{d,2}^2 & 
+          \sum_{i=1}^D u_{i,1} u_{i,D} \\
+          \sum_{i=1}^D u_{i,2} u_{i,1} & 
+          \sum_{i=1}^D u_{i,2}^2 & 
           \cdots & 
-          \sum_{d=1}^D u_{d,2} u_{d,D} \\
+          \sum_{i=1}^D u_{i,2} u_{i,D} \\
           \vdots & \vdots & \ddots & \vdots \\
-          \sum_{d=1}^D u_{d,D} u_{d,1} & 
-          \sum_{d=1}^D u_{d,D} u_{d,2} & 
+          \sum_{i=1}^D u_{i,D} u_{i,1} & 
+          \sum_{i=1}^D u_{i,D} u_{i,2} & 
           \cdots & 
-          \sum_{d=1}^D u_{d,D}^2
+          \sum_{i=1}^D u_{i,D}^2
       \end{pmatrix}
 \\
    &= \begin{pmatrix}
-          I_{1,1} & I_{2,1} & \cdots & I_{D,1} \\
-          I_{1,2} & I_{2,2} & \cdots & I_{D,2} \\
+          I_{1,1} & I_{1,2} & \cdots & I_{1,D} \\
+          I_{2,2} & I_{2,2} & \cdots & I_{2,D} \\
           \vdots & \vdots & \ddots & \vdots \\
-          I_{1,D} & I_{2,D} & \cdots & I_{D,D}
+          I_{D,1} & I_{D,2} & \cdots & I_{D,D}
       \end{pmatrix}
 \\
    &= \begin{pmatrix}
@@ -1038,43 +1098,25 @@ $$
 \end{aligned}
 $$
 
-
-　$\mathbf{U}, \mathbf{U}^{\top}$の積は掛ける順番に関わらず単位行列になりました。
-
-$$
-\mathbf{U}^{\top} \mathbf{U}
-    = \mathbf{U} \mathbf{U}^{\top}
-    = \mathbf{I}
-$$
-
-　この関係は、単位行列は$\mathbf{I} = \mathbf{I}^{\top}$なので、両辺を転置できることからも言えます。
+　式展開の途中に出てきた次の関係を次節で使います。
 
 $$
 \mathbf{U}^{\top} \mathbf{U}
-    = (\mathbf{U}^{\top} \mathbf{U})^{\top}
-    = \mathbf{U} \mathbf{U}^{\top}
+    = \sum_{i=1}^D
+          \mathbf{u}_i \mathbf{u}_i^{\top}
     = \mathbf{I}
-$$
+\tag{1}
+$$          
 
-　行列の性質$(\mathbf{A}^{\top} \mathbf{B})^{\top} = \mathbf{A} \mathbf{B}^{\top}$を使って変形しました。\
-
-　逆行列の定義$\mathbf{A} \mathbf{A}^{-1} = \mathbf{I}$より、$\mathbf{U}$の転置行列と逆行列が等しくなります。
-
-$$
-\mathbf{U}^{\top}
-    = \mathbf{U}^{-1}
-$$
-
-　直交行列と言います。\
-\
+\ 
 
 
 ## 分散共分散行列と固有値・固有ベクトル
 
-　次は、分散共分散行列と固有値・固有ベクトルの関係を導出します。\
+　固有ベクトルの性質を確認できたので、分散共分散行列と固有値・固有ベクトルの関係を導出します。\
 \
 
-　固有ベクトルの方程式を考えます。
+　固有ベクトルの方程式(2.45)を考えます。
 
 $$
 \boldsymbol{\Sigma} \mathbf{u}_i
@@ -1089,7 +1131,7 @@ $$
     = \lambda_i \mathbf{u}_i \mathbf{u}_i^{\top}
 $$
 
-　(見やすいように両辺を入れ替えて、)両辺で$i$について和をとります。
+　(見やすいように両辺を入れ替えて、)両辺で$i$について1から$D$まで和をとります。
 
 $$
 \begin{aligned}
@@ -1107,7 +1149,7 @@ $$
 $$
 
 　$\boldsymbol{\Sigma}$は$i$と無関係なので、$\sum_i$の外に出せます。\
-　先ほど確認した$\mathbf{U}^{\top} \mathbf{U} = \sum_{i=1}^D \mathbf{u}_i \mathbf{u}_i^{\top} = \mathbf{I}$より、右辺は$\boldsymbol{\Sigma}$になります。
+　先ほど確認した式(1)より、右辺は$\boldsymbol{\Sigma}$になります。
 
 $$
 \begin{aligned}
@@ -1121,7 +1163,7 @@ $$
 \end{aligned}
 $$
 
-　(両辺を再度入れ替えると、)次の式が成り立ちます。
+　よって、(両辺を再度入れ替えると)次の式が成り立ちます。
 
 $$
 \boldsymbol{\Sigma}
@@ -1131,7 +1173,87 @@ $$
 \tag{2.48}
 $$
 
-　固有値と固有ベクトルの積の和によって、分散共分散行列を表せるのが分かります。\
+　固有値と固有ベクトルの積の和によって、分散共分散行列を表せました。\
+
+　式(2.48)の右辺を展開して、行列の積に分解します。
+
+$$
+\begin{aligned}
+\boldsymbol{\Sigma}
+   &= \begin{pmatrix}
+          \sum_{i=1}^D \lambda_i u_{i,1}^2 & 
+          \sum_{i=1}^D \lambda_i u_{i,1} u_{i,2} & 
+          \cdots & 
+          \sum_{i=1}^D \lambda_i u_{i,1} u_{i,D} \\
+          \sum_{i=1}^D \lambda_i u_{i,2} u_{i,1} & 
+          \sum_{i=1}^D \lambda_i u_{i,2}^2 & \
+          \cdots & 
+          \sum_{i=1}^D \lambda_i u_{i,2} u_{i,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \sum_{i=1}^D \lambda_i u_{i,D} u_{i,1} & 
+          \sum_{i=1}^D \lambda_i u_{i,D} u_{i,2} & 
+          \cdots & 
+          \sum_{i=1}^D \lambda_i u_{i,D}^2
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          \lambda_1 u_{1,1} & 
+          \lambda_2 u_{2,1} & 
+          \cdots & 
+          \lambda_D u_{D,1} \\
+          \lambda_1 u_{1,2} & 
+          \lambda_2 u_{2,2} & 
+          \cdots & 
+          \lambda_D u_{D,2} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \lambda_1 u_{1,D} & 
+          \lambda_2 u_{2,D} & 
+          \cdots & 
+          \lambda_D u_{D,D}
+      \end{pmatrix}
+      \begin{pmatrix}
+          u_{1,1} & u_{1,2} & \cdots & u_{1,D} \\
+          u_{2,1} & u_{2,2} & \cdots & u_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          u_{D,1} & u_{D,2} & \cdots & u_{D,D}
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          u_{1,1} & u_{2,1} & \cdots & u_{D,1} \\
+          u_{1,2} & u_{2,2} & \cdots & u_{D,2} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          u_{1,D} & u_{2,D} & \cdots & u_{D,D}
+      \end{pmatrix}
+      \begin{pmatrix}
+          \lambda_1 & 0 & \cdots & 0 \\
+          0 & \lambda_2 & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & \lambda_D
+      \end{pmatrix}
+      \begin{pmatrix}
+          u_{1,1} & u_{1,2} & \cdots & u_{1,D} \\
+          u_{2,1} & u_{2,2} & \cdots & u_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          u_{D,1} & u_{D,2} & \cdots & u_{D,D}
+      \end{pmatrix}
+\\
+   &= \mathbf{U}^{\top} \boldsymbol{\Lambda} \mathbf{U}
+\end{aligned}
+$$
+
+　$D$個の固有値$\lambda_i$を対角成分とする対角行列を$\boldsymbol{\Lambda}$とおきました(精度行列ではありません)。
+
+$$
+\boldsymbol{\Lambda}
+    = \begin{pmatrix}
+          \lambda_1 & 0 & \cdots & 0 \\
+          0 & \lambda_2 & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & \lambda_D
+      \end{pmatrix}
+$$
+
+　固有値による行列と固有ベクトルによる行列の積によって、分散共分散行列を表せました。\
 \
 
 　もう一度、固有ベクトルの方程式を考えます。
@@ -1171,7 +1293,7 @@ $$
       \mathbf{u}_i \mathbf{u}_i^{\top}
 $$
 
-　両辺で、$i$について和をとります。
+　両辺で$i$について1から$D$まで和をとると、式(1)より右辺は$\boldsymbol{\Sigma}$の逆行列になります。
 
 $$
 \begin{aligned}
@@ -1189,18 +1311,101 @@ $$
 \end{aligned}
 $$
 
-
-　(両辺を入れ替えると、)次の式が成り立ちます。
+　よって、(両辺を入れ替えると)次の式が成り立ちます。
 
 $$
 \boldsymbol{\Sigma}^{-1}
     = \sum_{i=1}^D
-        \frac{1}{\lambda_i}
-        \mathbf{u}_i \mathbf{u}_i^{\top}
+          \frac{1}{\lambda_i}
+          \mathbf{u}_i \mathbf{u}_i^{\top}
 \tag{2.49}
 $$
 
-　分散共分散行列の逆行列も、固有値と固有ベクトルで表せるのが分かります。\
+　分散共分散行列の逆行列も、固有値と固有ベクトルで表せました。\
+
+　式(2.49)の右辺を展開して、行列の積に分解します。
+
+$$
+\begin{aligned}
+\boldsymbol{\Sigma}^{-1}
+   &= \begin{pmatrix}
+          \sum_{i=1}^D \frac{1}{\lambda_i} u_{i,1}^2 & 
+          \sum_{i=1}^D \frac{1}{\lambda_i} u_{i,1} u_{i,2} & 
+          \cdots & 
+          \sum_{i=1}^D \frac{1}{\lambda_i} u_{i,1} u_{i,D} \\
+          \sum_{i=1}^D \frac{1}{\lambda_i} u_{i,2} u_{i,1} & 
+          \sum_{i=1}^D \frac{1}{\lambda_i} u_{i,2}^2 & \
+          \cdots & 
+          \sum_{i=1}^D \frac{1}{\lambda_i} u_{i,2} u_{i,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \sum_{i=1}^D \frac{1}{\lambda_i} u_{i,D} u_{i,1} & 
+          \sum_{i=1}^D \frac{1}{\lambda_i} u_{i,D} u_{i,2} & 
+          \cdots & 
+          \sum_{i=1}^D \frac{1}{\lambda_i} u_{i,D}^2
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          \frac{1}{\lambda_1} u_{1,1} & 
+          \frac{1}{\lambda_2} u_{2,1} & 
+          \cdots & 
+          \frac{1}{\lambda_D} u_{D,1} \\
+          \frac{1}{\lambda_1} u_{1,2} & 
+          \frac{1}{\lambda_2} u_{2,2} & 
+          \cdots & 
+          \frac{1}{\lambda_D} u_{D,2} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \frac{1}{\lambda_1} u_{1,D} & 
+          \frac{1}{\lambda_2} u_{2,D} & 
+          \cdots & 
+          \frac{1}{\lambda_D} u_{D,D}
+      \end{pmatrix}
+      \begin{pmatrix}
+          u_{1,1} & u_{1,2} & \cdots & u_{1,D} \\
+          u_{2,1} & u_{2,2} & \cdots & u_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          u_{D,1} & u_{D,2} & \cdots & u_{D,D}
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          u_{1,1} & u_{2,1} & \cdots & u_{D,1} \\
+          u_{1,2} & u_{2,2} & \cdots & u_{D,2} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          u_{1,D} & u_{2,D} & \cdots & u_{D,D}
+      \end{pmatrix}
+      \begin{pmatrix}
+          \frac{1}{\lambda_1} & 0 & \cdots & 0 \\
+          0 & \frac{1}{\lambda_2} & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & \frac{1}{\lambda_D}
+      \end{pmatrix}
+      \begin{pmatrix}
+          u_{1,1} & u_{1,2} & \cdots & u_{1,D} \\
+          u_{2,1} & u_{2,2} & \cdots & u_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          u_{D,1} & u_{D,2} & \cdots & u_{D,D}
+      \end{pmatrix}
+\\
+   &= \mathbf{U}^{\top} \boldsymbol{\Lambda}^{-1} \mathbf{U}
+\end{aligned}
+$$
+
+　$D$個の固有値の逆数$\frac{1}{\lambda_i}$を対角成分とする対角行列は、$\boldsymbol{\Lambda}$の逆行列です。
+
+$$
+\boldsymbol{\Lambda}^{-1}
+    = \begin{pmatrix}
+          \frac{1}{\lambda_1} & 0 & \cdots & 0 \\
+          0 & \frac{1}{\lambda_2} & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & \frac{1}{\lambda_D}
+      \end{pmatrix}
+$$
+
+　対角行列の逆行列は、対角成分の逆数を対角成分とする対角行列になります。\
+　固有値(の逆数)による行列と固有ベクトルによる行列の積によって、分散共分散行列の逆行列を表せました。\
+\
+
+　この記事では、分散共分散行列と固有値・固有ベクトルの関係を導出しました。次は、固有ベクトルによる回転を導出します。\
 \
 
 
