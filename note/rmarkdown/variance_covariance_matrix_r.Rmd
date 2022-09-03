@@ -22,13 +22,14 @@ knitr::opts_chunk$set(
 
 - 2022/08/27：「相関行列との関係」を追加
 - 2022/08/29：「マハラノビス距離との関係」を追加
+- 2022/09/03：「固有値・固有ベクトルとの関係」を追加
 
 ----
 
 
-# 分散共分散行列と相関行列の関係の計算
+# 分散共分散行列と相関行列の変換
 
-　分散共分散行列(Variance–Covariance Matrix)と相関行列(Correlation Matrix)の関係を計算で確認します。計算式については「分散共分散行列と相関行列の関係の導出」を参照してください。\
+　分散共分散行列(Variance–Covariance Matrix)と相関行列(Correlation Matrix)の関係を計算して確認します。計算式については「分散共分散行列と相関行列の関係の導出」を参照してください。\
 \
 
 　この記事では、`magrittr`パッケージのパイプ演算子`%>%`ではなく、ベースパイプ(ネイティブパイプ)演算子`|>`を使っています。`%>%`に置き換えても処理できます。  
@@ -68,7 +69,7 @@ $$
       \end{pmatrix}
 $$
 
-　$D$次元ベクトルの変数を$\mathbf{x} = (x_1, x_2, \cdots, x_D)^{\top}$とすると、$\sigma_d$は$x_d$の標準偏差、$\sigma_d^2 = \sigma_{d,d}$は$x_d$の分散、$\sigma_{i,j}$は$x_i$と$x_j$の共分散です。
+　$D$次元ベクトルの変数を$\mathbf{x} = (x_1, x_2, \cdots, x_D)^{\top}$とすると、$\sigma_d$は$x_d$の標準偏差、$\sigma_d^2 = \sigma_{d,d}$は$x_d$の分散、$\sigma_{i,j} = \sigma_{j,i}$は$x_i, x_j$の共分散です。
 　$\sigma_d^2$は正の実数、$\sigma_{i,j}\ (i \neq j)$は実数を満たす必要があります。設定した値に従う相関係数などを計算します。\
 \
 
@@ -314,6 +315,11 @@ library(ggplot2)
 　この記事では、基本的に`パッケージ名::関数名()`の記法を使うので、パッケージを読み込む必要はありません。ただし、作図コードがごちゃごちゃしないようにパッケージ名を省略しているため、`ggplot2`は読み込む必要があります。\
 　`magrittr`パッケージのパイプ演算子`%>%`ではなく、ベースパイプ(ネイティブパイプ)演算子`|>`を使っています。`%>%`に置き換えても処理できます。\
 \
+
+
+## 距離の計算
+
+
 
 
 ## サンプルの距離の可視化
@@ -1052,4 +1058,458 @@ gganimate::animate(anime_dist_graph, nframes = length(sigma_12_vals), fps = 10, 
 
 　$\sigma_{1,2}$の値に応じて、マハラノビス距離の楕円の向きが変化しています。\
 \
+
+　この記事では、分散共分散行列とユークリッド距離・マハラノビス距離の関係を確認しました。次は、固有値・固有ベクトルとの関係を確認します。\
+\
+
+
+# 分散共分散行列と固有値・固有ベクトルの関係の計算
+
+　分散共分散行列(Variance–Covariance Matrix)と固有値(Eigenvalue)・固有ベクトル(Eigenvector)の関係を計算して確認します。計算式については「分散共分散行列と固有値・固有ベクトルの関係の導出」を参照してください。\
+\
+
+　この記事では、`magrittr`パッケージのパイプ演算子`%>%`ではなく、ベースパイプ(ネイティブパイプ)演算子`|>`を使っています。`%>%`に置き換えても処理できます。  
+\
+
+
+## 分散共分散行列の設定
+
+　まずは、分散共分散行列を設定します。\
+\
+
+　分散共分散行列$\boldsymbol{\Sigma}$を作成します。
+
+```{r}
+# 次元数を指定
+D <- 3
+
+# 分散共分散行列を指定
+sigma_dd <- c(
+  4, 1.8, -0.1, 
+  1.8, 9, 2.4, 
+  -0.1, 2.4, 1
+) |> # 値を指定
+  matrix(nrow = D, ncol = D, byrow = TRUE) # マトリクスに変換
+sigma_dd
+```
+
+　$D \times D$の正定値行列を指定します。
+
+$$
+\boldsymbol{\Sigma}
+    = \begin{pmatrix}
+          \sigma_1^2 & \sigma_{1,2} & \cdots & \sigma_{1,D} \\
+          \sigma_{2,1} & \sigma_2^2 & \cdots & \sigma_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \sigma_{D,1} & \sigma_{D,2} & \cdots & \sigma_D^2
+      \end{pmatrix}
+$$
+
+　$D$次元ベクトルの変数を$\mathbf{x} = (x_1, x_2, \cdots, x_D)^{\top}$とすると、$\sigma_d$は$x_d$の標準偏差、$\sigma_d^2 = \sigma_{d,d}$は$x_d$の分散、$\sigma_{i,j} = \sigma_{j,i}$は$x_i, x_j$の共分散です。\
+　$\sigma_d^2$は正の実数、$\sigma_{i,j}\ (i \neq j)$は実数を満たす必要があります。設定した値に従うっ固有値・固有ベクトルなどを計算します。\
+\
+
+
+## 固有値・固有ベクトルの計算
+
+　次に、設定した分散共分散行列の固有値と固有ベクトルを計算します。\
+\
+
+　固有値と固有ベクトルを計算します。
+
+```{r}
+# 固有値と固有ベクトルを計算
+res_eigen <- eigen(sigma_dd)
+res_eigen
+```
+
+　$i = 1, 2, \dots, D$の$D$個の固有値$\lambda_i$と固有ベクトル$\mathbf{u}_i = (u_{i,1}, \cdots, u_{i,D})^{\top}$は、`eigen()`で計算します。D個の固有値をまとめたベクトルと、D個の固有ベクトルをそれぞれ列とするマトリクスを格納したリストが出力されます。\
+
+　固有値と固有ベクトルを取り出します。
+
+```{r}
+# 固有値を取得
+lambda_d <- res_eigen[["values"]]
+
+# 固有ベクトルを取得
+u_dd <- res_eigen[["vectors"]] |> 
+  t()
+lambda_d; u_dd
+```
+
+　`"values"`で固有値(をまとめたベクトル)、`"vectors"`で固有ベクトル(をまとめたマトリクス)を取り出せます。数式での成分と合わせるために転置しておきます。\
+
+　$D$個の固有ベクトル$\mathbf{u}_i^{\top}$を行とする(行方向に並べた)$D \times D$の行列を$\mathbf{U}$で表します。
+
+$$
+\mathbf{U}
+    = \begin{pmatrix}
+          \mathbf{u}_1^{\top} \\
+          \mathbf{u}_2^{\top} \\
+          \vdots \\
+          \mathbf{u}_D^{\top}
+      \end{pmatrix}
+    = \begin{pmatrix}
+          u_{1,1} & u_{1,2} & \cdots & u_{1,D} \\
+          u_{2,1} & u_{2,2} & \cdots & u_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          u_{D,1} & u_{D,2} & \cdots & u_{D,D}
+      \end{pmatrix}
+$$
+
+　$\mathbf{U}$の$i$行目が$\mathbf{u}_i$に対応します。\
+\
+
+
+## 固有ベクトルの性質の計算
+
+　固有ベクトルの性質を実際に計算して確認します。\
+\
+
+　計算に使う2つの固有ベクトル$\mathbf{u}_i, \mathbf{u}_j$を抽出します。
+
+```{r}
+# インデックスを指定
+i <- 1
+j <- 2
+
+# 固有ベクトルを取得
+u_id <- u_dd[i, ]
+u_jd <- u_dd[j, ]
+```
+
+　インデックスを指定して`u_dd`の要素を抽出します。\
+
+　固有ベクトルの内積を計算します。
+
+```{r}
+# 固有ベクトルの内積を計算:式(2.47)
+I_ii <- t(u_id) %*% u_id |> 
+  as.numeric()
+I_ij <- t(u_id) %*% u_jd |> 
+  as.numeric()
+I_ji <- t(u_jd) %*% u_id |> 
+  as.numeric()
+I_jj <- t(u_jd) %*% u_jd |> 
+  as.numeric()
+I_ii; round(I_ij, 5); round(I_ji, 5); I_jj
+```
+
+　固有ベクトルの内積は、同じベクトル($i = j$)のとき1、異なるベクトル($i \neq j$)のとき0になります。
+
+$$
+\mathbf{u}_i^{\top} \mathbf{u}_j
+    = \sum_{d=1}^D
+          u_{i,d} u_{j,d}
+    = \begin{cases}
+          1 &\quad (i = j) \\
+          0 &\quad (i \neq j)
+      \end{cases}
+\tag{2.47}
+$$
+
+　ただし、プログラム上の誤差を含みます。\
+
+　固有ベクトルをまとめた行列の積を計算します。
+
+```{r}
+# 固有ベクトルをまとめた行列の積を計算
+I <- u_dd %*% t(u_dd)
+round(I, 5)
+```
+
+　$\mathbf{U}$の積は単位行列になります。
+
+$$
+\begin{aligned}
+\mathbf{U} \mathbf{U}^{\top}
+   &= \begin{pmatrix}
+          \sum_{d=1}^D u_{1,d} u_{1,d} & 
+          \sum_{d=1}^D u_{1,d} u_{2,d} & 
+          \cdots & 
+          \sum_{d=1}^D u_{1,d} u_{D,d} \\
+          \sum_{d=1}^D u_{2,d} u_{1,d} & 
+          \sum_{d=1}^D u_{2,d} u_{2,d} & 
+          \cdots & 
+          \sum_{d=1}^D u_{2,d} u_{D,d} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \sum_{d=1}^D u_{D,d} u_{1,d} & 
+          \sum_{d=1}^D u_{D,d} u_{2,d} & 
+          \cdots & 
+          \sum_{d=1}^D u_{D,d} u_{D,d}
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          1 & 0 & \cdots & 0 \\
+          0 & 1 & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & 1
+      \end{pmatrix}
+    = \mathbf{I}
+\end{aligned}
+$$ 
+
+　掛ける順番を入れ替えて計算します。
+
+```{r}
+# 固有ベクトルをまとめた行列の積を計算
+I <- t(u_dd) %*% u_dd
+round(I, 5)
+```
+
+　転置しても(積の順番を入れ替えても)単位行列になります。
+
+$$
+\mathbf{U} \mathbf{U}^{\top}
+    = \mathbf{I}
+$$
+
+　同じ固有ベクトルの積の総和も単位行列になります。
+
+```{r}
+# 固有ベクトルの積の総和を計算
+I <- matrix(rep(0, times = D*D), nrow = D, ncol = D)
+for(i in 1:D) {
+  # i番目の固有ベクトルを抽出
+  u_id <- u_dd[i, ]
+  
+  # 固有ベクトルの積を計算
+  tmp_uu_dd <- u_id %*% t(u_id)
+  
+  # D個の和を計算
+  I <- I + tmp_uu_dd
+}
+round(I, 5)
+```
+
+　次の式は、$\mathbf{U} \mathbf{U}^{\top}$を展開した式で、この式も単位行列になります。
+
+$$
+\sum_{i=1}^D
+    \mathbf{u}_i \mathbf{u}_i^{\top}
+    = \mathbf{I}
+$$ 
+
+　$\mathbf{u}_i \mathbf{u}_i^{\top}$を`tmp_uu_dd`として、`D`回計算して`I`に加えます。\
+\
+
+　$\mathbf{U}$は直交行列なので、転置行列と逆行列が一致します。
+
+$$
+\mathbf{U}^{\top}
+    = \mathbf{U}^{-1}
+$$
+
+　$\mathbf{U}$の転置行列を確認します。
+
+```{r}
+# 転置行列を計算
+u_t_dd <- t(u_dd)
+u_t_dd
+```
+
+　`t()`で転置できます。\
+
+　$\mathbf{U}$の逆行列を計算します。
+
+```{r}
+# 逆行列を計算
+u_inv_dd <- solve(u_dd)
+u_inv_dd
+```
+
+　`solve()`で逆行列を計算できます。\
+
+　両辺の計算結果が一致するのを確認できます。\
+\
+
+
+## 分散共分散行列と固有値・固有ベクトルの関係の計算
+
+　固有ベクトルの性質を確認できたので、分散共分散行列と固有値・固有ベクトルの関係を実際に計算して確認します。\
+\
+
+　固有ベクトルの方程式(2.45)が成り立つのを確認します。
+
+$$
+\boldsymbol{\Sigma} \mathbf{u}_i
+    = \lambda_i \mathbf{u}_i
+\tag{2.45}
+$$
+
+　分散共分散行列$\boldsymbol{\Sigma}$と固有ベクトル$\mathbf{u}_i$の積を計算します。
+
+```{r}
+# 分散共分散行列と固有ベクトルの行列の積:式(2.45)の左辺
+sigma_u_d <- sigma_dd %*% u_id |> 
+  as.numeric()
+sigma_u_d
+```
+
+　計算結果は`D`行`1`列のマトリクスになるので、`as.numeric()`でベクトルにします。\
+
+　固有値$\lambda_i$と固有ベクトル$\mathbf{u}_i$の積を計算します。
+
+```{r}
+# 固有値と固有ベクトルの積:式(2.45)の右辺
+lambda_u_d <- lambda_d[i] * u_id
+lambda_u_d
+```
+
+　`lambda_i`から`i`番目の要素を取り出して計算します。\
+
+　両辺の計算結果が一致するのを確認できます。\
+\
+
+　続いて、$D$個の固有値$\lambda_i$と固有ベクトル$\mathbf{u}_i$を用いて、分散共分散行列$\boldsymbol{\Sigma}$を計算します。
+
+```{r}
+# 分散共分散を計算:式(2.48)
+res_sigma_dd <- matrix(rep(0, times = D*D), nrow = D, ncol = D)
+for(i in 1:D) {
+  # i番目の固有値・固有ベクトルを抽出
+  lambda_i <- lambda_d[i]
+  u_id     <- u_dd[i, ]
+  
+  # 固有値と2つの固有ベクトルの積を計算
+  tmp_sigma_dd <- lambda_i * u_id %*% t(u_id)
+  
+  # D個の和を計算
+  res_sigma_dd <- res_sigma_dd + tmp_sigma_dd
+}
+res_sigma_dd
+```
+
+　次の式で分散共分散行列を計算できます。
+
+$$
+\boldsymbol{\Sigma}
+    = \sum_{i=1}^D
+        \lambda_i
+        \mathbf{u}_i \mathbf{u}_i^{\top}
+\tag{2.48}
+$$
+
+　$\lambda_i \mathbf{u}_i \mathbf{u}_i^{\top}$を`tmp_sigma_dd`として、`D`回計算して`res_sigma_dd`に加えます。\
+
+　$D$個の和をとる計算は、固有値による行列$\boldsymbol{\Lambda}$と固有ベクトルによる行列$\mathbf{U}$を用いても行えます。
+
+```{r}
+# 分散共分散を計算:式(2.48')
+res_sigma_dd <- t(u_dd) %*% diag(lambda_d) %*% u_dd
+res_sigma_dd
+```
+
+　$D$個の固有値$\lambda_i$を対角成分とする対角行列
+
+$$
+\boldsymbol{\Lambda}
+    = \begin{pmatrix}
+          \lambda_1 & 0 & \cdots & 0 \\
+          0 & \lambda_2 & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & \lambda_D
+      \end{pmatrix}
+$$
+
+を使って、次の式でも計算できます。($\boldsymbol{\Lambda}$は精度行列ではありません。)
+
+$$
+\boldsymbol{\Sigma}
+    = \mathbf{U}^{\top} \boldsymbol{\Lambda} \mathbf{U}
+$$
+
+　または、ブロードキャストを利用して次のようにも計算できます。
+
+```{r}
+# 分散共分散を計算:式(2.48')
+res_sigma_dd <- t(lambda_d * u_dd) %*% u_dd
+res_sigma_dd
+```
+
+　`lambda_d`の各要素をそれぞれ`u_dd`の各行の全ての要素に掛けてから行列の積を計算します。\
+\
+
+　分散共分散行列の逆行列$\boldsymbol{\Sigma}^{-1}$を計算します。
+
+```{r}
+# 精度行列を計算
+sigma_inv_dd <- solve(sigma_dd)
+sigma_inv_dd
+```
+
+　この値になるのを確認します。\
+
+　固有値と固有ベクトルを用いて、分散共分散行列の逆行列$\boldsymbol{\Sigma}^{-1}$を計算します。
+
+```{r}
+# 精度行列を計算:式(2.49)
+res_sigma_inv_dd <- matrix(rep(0, times = D*D), nrow = D, ncol = D)
+for(i in 1:D) {
+  # i番目の固有値・固有ベクトルを抽出
+  lambda_i <- lambda_d[i]
+  u_id     <- u_dd[i, ]
+  
+  # 固有値と2つの固有ベクトルの積を計算
+  tmp_sigma_inv_dd <- 1/lambda_i * u_id %*% t(u_id)
+  
+  # D個の和を計算
+  res_sigma_inv_dd <- res_sigma_inv_dd + tmp_sigma_inv_dd
+}
+res_sigma_inv_dd
+```
+
+　次の式で分散共分散行列の逆行列を計算できます。
+
+$$
+\boldsymbol{\Sigma}^{-1}
+    = \sum_{i=1}^D
+        \frac{1}{\lambda_i}
+        \mathbf{u}_i \mathbf{u}_i^{\top}
+\tag{2.49}
+$$
+
+　$\frac{1}{\lambda_i} \mathbf{u}_i \mathbf{u}_i^{\top}$を`tmp_sigma_inv_dd`として、`D`回計算して`res_sigma_inv_dd`に加えます。\
+
+　この計算も、$\boldsymbol{\Lambda}$と$\mathbf{U}$を用いて行えます。
+
+```{r}
+# 精度行列を計算:式(2.49')
+res_sigma_inv_dd <- t(u_dd) %*% diag(1/lambda_d) %*% u_dd
+res_sigma_inv_dd
+```
+
+　$D$個の固有値の逆数$\frac{1}{\lambda_i}$を対角成分とする対角行列($\boldsymbol{\Lambda}$の逆行列)
+
+$$
+\boldsymbol{\Lambda}^{-1}
+    = \begin{pmatrix}
+          \frac{1}{\lambda_1} & 0 & \cdots & 0 \\
+          0 & \frac{1}{\lambda_2} & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & \frac{1}{\lambda_D}
+      \end{pmatrix}
+$$
+
+を使って、次の式でも計算できます。
+
+$$
+\boldsymbol{\Sigma}^{-1}
+    = \mathbf{U}^{\top} \boldsymbol{\Lambda}^{-1} \mathbf{U}
+$$
+
+　または、ブロードキャストによっても計算できます。
+
+```{r}
+# 精度行列を計算:式(2.49')
+res_sigma_inv_dd <- t(1/lambda_d * u_dd) %*% u_dd
+res_sigma_inv_dd
+```
+
+　`1/lambda_d`の各要素をそれぞれ`u_dd`の各行の全ての要素に掛けてから行列の積を計算します。\
+\
+
+　この記事では、分散共分散行列と固有値・固有ベクトルの関係を確認しました。次は、分散共分散行列の固有ベクトルによる分布の座標変換を確認します。\
+\
+
 
