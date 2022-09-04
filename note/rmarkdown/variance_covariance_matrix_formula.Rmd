@@ -35,6 +35,7 @@ knitr::opts_chunk$set(
 - 2022/08/27：「相関行列との関係」を追加
 - 2022/08/29：「マハラノビス距離との関係」を追加
 - 2022/09/03：「固有値・固有ベクトルとの関係」を追加
+- 2022/09/04：「固有ベクトルによる分布の回転」を追加
 
 ----
 
@@ -1405,22 +1406,22 @@ $$
 　固有値(の逆数)による行列と固有ベクトルによる行列の積によって、分散共分散行列の逆行列を表せました。\
 \
 
-　この記事では、分散共分散行列と固有値・固有ベクトルの関係を導出しました。次は、固有ベクトルによる回転を導出します。\
+　この記事では、分散共分散行列と固有値・固有ベクトルの関係を導出しました。次は、固有ベクトルによるガウス分布の回転を導出します。\
 \
 
 
-# 分散共分散行列の固有ベクトルによる回転
+# 分散共分散行列の固有ベクトルによるガウス分布の回転の導出
 
-　。\
+　分散共分散行列(Variance–Covariance Matrix)の固有ベクトル(Eigenvector)による多次元ガウス分布(Maltivariate Gaussian Distribution)・多変量正規分布(Maltivariate Normal Distribution)の回転を導出します。\
 \
 
 
-## 多次元ガウス分布とマハラノビス距離の関係
+## 式の確認
 
-　まずは、この記事で利用する多次元ガウス分布と定義式を確認します。\
+　まずは、これまでに扱った式を確認します。\
 \
 
-　多次元ガウス分布は、次の式で定義されます。
+　多次元ガウス分布は、次の式で定義されます。詳しくは「多次元ガウス分布の定義式」を参照してください。
 
 $$
 \mathcal{N}(\mathbf{x} | \boldsymbol{\mu}, \boldsymbol{\Sigma})
@@ -1433,18 +1434,99 @@ $$
       \right\}
 $$
 
-　マハラノビス距離は、次の式で定義されます。
+　ここで、$\boldsymbol{\mu}$は平均ベクトル、$\boldsymbol{\Sigma}$は分散共分散行列、$\pi$は円周率です。また、$\mathbf{A}^{\top}$は転置行列、$\mathbf{A}^{-1}$は逆行列、$|\mathbf{A}|$は行列式です。\
+　$\mathbf{x}, \boldsymbol{\mu}$は$D$次元ベクトル、$\boldsymbol{\Sigma}$は$D \times D$の行列です。
 
 $$
-\Delta
-    = \sqrt{
-          (\mathbf{x} - \boldsymbol{\mu})^{\top}
-          \boldsymbol{\Sigma}^{-1}
-          (\mathbf{x} - \boldsymbol{\mu})
-      }
+\mathbf{x}
+    = \begin{pmatrix}
+          x_1 \\
+          x_2 \\
+          \vdots \\
+          x_D
+      \end{pmatrix}
+,\ 
+\boldsymbol{\mu}
+    = \begin{pmatrix}
+          \mu_1 \\
+          \mu_2 \\
+          \vdots \\
+          \mu_D
+      \end{pmatrix}
+,\ 
+\boldsymbol{\Sigma}
+    = \begin{pmatrix}
+          \sigma_1^2 & \sigma_{1,2} & \cdots & \sigma_{1,D} \\
+          \sigma_{2,1} & \sigma_2^2 & \cdots & \sigma_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \sigma_{D,1} & \sigma_{D,2} & \cdots & \sigma_D^2
+      \end{pmatrix}
 $$
 
-　多次元ガウス分布の指数部分の二次形式が、マハラノビス距離の2乗(マハラノビス距離のルートの中)になっています。
+　$\sigma_d$は$x_d$の標準偏差、$\sigma_d^2 = \sigma_{d,d}$は$x_d$の分散、$\sigma_{i,j} = \sigma_{j,i}$は$x_i, x_j$の共分散です。$\boldsymbol{\Sigma}$は正定値行列を満たす必要があります。\
+\
+
+　分散共分散行列$\boldsymbol{\Sigma}$は、$i = 1, 2, \dots, D$の$D$個の固有値$\lambda_i$と固有ベクトル$\mathbf{u}_i = (u_{i,1}, u_{i,2}, \cdots, u_{i,D})^{\top}$を持ちます。詳しくは「分散共分散行列と固有値・固有ベクトルの関係の導出」を参照してください。\
+　$D$個の固有値を対角要素とする行列を$\boldsymbol{\Lambda}$、固有ベクトルを行とする行列を$\mathbf{U}$で表します。($\boldsymbol{\Lambda}$は精度行列ではありません。)
+
+$$
+\boldsymbol{\Lambda}
+    = \begin{pmatrix}
+          \lambda_1 & 0 & \cdots & 0 \\
+          0 & \lambda_2 & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & \lambda_D
+      \end{pmatrix}
+,\ 
+\mathbf{U}
+    = \begin{pmatrix}
+          u_{1,1} & u_{1,2} & \cdots & u_{1,D} \\
+          u_{2,1} & u_{2,2} & \cdots & u_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          u_{D,1} & u_{D,2} & \cdots & u_{D,D}
+      \end{pmatrix}
+$$
+
+　$D$個の固有値の逆数$\frac{1}{\lambda_i}$を対角成分とする対角行列は、$\boldsymbol{\Lambda}$の逆行列です。
+
+$$
+\boldsymbol{\Lambda}^{-1}
+    = \begin{pmatrix}
+          \frac{1}{\lambda_1} & 0 & \cdots & 0 \\
+          0 & \frac{1}{\lambda_2} & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & \frac{1}{\lambda_D}
+      \end{pmatrix}
+$$
+
+　対角行列の逆行列は、対角成分の逆数を対角成分とする対角行列になります。\
+　$\mathbf{U}$は直交行列なので、転置行列$\mathbf{U}^{\top}$と逆行列$\mathbf{U}^{-1}$が一致します。
+
+$$
+\mathbf{U}^{\top}
+    = \mathbf{U}^{-1}
+$$
+
+　また、$\mathbf{U}$と転置行列の積は単位行列$\mathbf{I}$になります。
+
+$$
+\mathbf{U} \mathbf{U}^{\top}
+    = \mathbf{U}^{\top} \mathbf{U}
+    = \mathbf{I}
+$$
+
+\ 
+
+　以降は、固有値・固有ベクトルを用いて、ガウス分布の定義式を変形して、回転後のガウス分布の式を求めます。\
+\
+
+
+## 二次形式の変換
+
+　次は、ガウス分布の指数部分を考えます。\
+\
+
+　指数部分の二次形式を$\Delta^2$とおきます。(この記事の内容との関係は薄いですが、マハラノビス距離については「マハラノビス距離との関係」を参照してください。)
 
 $$
 \Delta^2
@@ -1454,14 +1536,7 @@ $$
 \tag{2.44}
 $$
 
-　マハラノビス距離を$\Delta$、マハラノビス距離の2乗を$\Delta^2$で表すことにします。\
-\
-
-
-## 二次形式の変換
-
-
-　マハラノビス距離の2乗の式に、前回求めた
+　この式の$\boldsymbol{\Sigma}$の逆行列に、前回求めた
 
 $$
 \boldsymbol{\Sigma}^{-1}
@@ -1473,30 +1548,26 @@ $$
 
 を代入します。
 
-
-\begin{align*}
+$$
 \Delta^2
-   &= (\mathbf{x} - \boldsymbol{\mu})^{\top}
-      \boldsymbol{\Sigma}^{-1}
-      (\mathbf{x} - \boldsymbol{\mu})
-\\
-   &= \sum_{i=1}^D
+    = \sum_{i=1}^D
           \frac{1}{\lambda_i}
           (\mathbf{x} - \boldsymbol{\mu})^{\top}
           \mathbf{u}_i \mathbf{u}_i^{\top}
           (\mathbf{x} - \boldsymbol{\mu})
-\end{align*}
+$$
 
 
-　$(\mathbf{x} - \boldsymbol{\mu})^{\top} \mathbf{u}_i$は、スカラなので、転置できます。
+　$(\mathbf{x} - \boldsymbol{\mu})^{\top} \mathbf{u}_i$は、スカラになるので転置しても影響しません。
 
 $$
-\{(\mathbf{x} - \boldsymbol{\mu})^{\top} \mathbf{u}_i\}^{\top}
+(\mathbf{x} - \boldsymbol{\mu})^{\top} \mathbf{u}_i
+    = \{(\mathbf{x} - \boldsymbol{\mu})^{\top} \mathbf{u}_i\}^{\top}
     = \mathbf{u}_i^{\top}
       (\mathbf{x} - \boldsymbol{\mu})
 $$
 
-　これを、$y_i$とおきます。
+　この因子を
 
 
 \begin{align*}
@@ -1524,7 +1595,7 @@ y_i
 \end{align*}
 
 
-　これを、式(2.44)を変形した式に代入します。
+とおき、式(2.44)を変形した式に代入します。
 
 
 \begin{align*}
@@ -1546,7 +1617,7 @@ y_i
 \end{align*}
 
 
-　$i = 1, 2, \dots, D$の$D$個の$y_i$は、次の式で計算できます。
+　$i = 1, 2, \dots, D$の$D$個の$y_i$は、$\mathbf{U}$を用いて計算できます。
 
 
 \begin{align*}
@@ -1583,3 +1654,141 @@ y_i
 \end{align*}
 
 
+　二次形式(2.50)を$\mathbf{y}$を用いた式に変形します。
+
+
+\begin{align*}
+\Delta^2
+   &= \sum_{i=1}^D
+          \frac{y_i^2}{\lambda_i}
+\tag{2.50}\\
+   &= \begin{pmatrix}
+          \frac{y_1}{\lambda_1} & \frac{y_2}{\lambda_2} & \cdots & \frac{y_D}{\lambda_D}
+      \end{pmatrix}
+      \begin{pmatrix}
+          y_1 \\
+          y_2 \\
+          \vdots \\
+          y_D
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          y_1 & y_2 & \cdots & y_D
+      \end{pmatrix}
+      \begin{pmatrix}
+          \frac{1}{\lambda_1} & 0 & \cdots & 0 \\
+          0 & \frac{1}{\lambda_2} & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & \frac{1}{\lambda_D}
+      \end{pmatrix}
+      \begin{pmatrix}
+          y_1 \\
+          y_2 \\
+          \vdots \\
+          y_D
+      \end{pmatrix}
+\\
+   &= \mathbf{y}^{\top} \boldsymbol{\Lambda}^{-1} \mathbf{y}
+\tag{1}
+\end{align*}
+
+
+　元の分布の二次形式が、$\mathbf{y}$と$\boldsymbol{\Lambda}$による二次形式になりました。\
+\
+
+
+## 分散共分散行列の変換
+
+　続いて、分散共分散行列の行列式を考えます。\
+\
+
+　$\mathbf{U}$と$\boldsymbol{\Lambda}$による$\boldsymbol{\Sigma}$の計算式(2.48)を考えます。
+
+$$
+\boldsymbol{\Sigma}
+    = \sum_{i=1}^D
+          \lambda_i \mathbf{u}_i \mathbf{u}_i^{\top}
+    = \mathbf{U}^{\top} \boldsymbol{\Lambda} \mathbf{U}
+\tag{2.48}
+$$
+
+　両辺の行列式をとります。
+
+$$
+\begin{aligned}
+|\boldsymbol{\Sigma}|
+   &= |\mathbf{U}^{-1} \boldsymbol{\Lambda} \mathbf{U}|
+\\
+   &= |\mathbf{U}^{-1}| |\boldsymbol{\Lambda}| |\mathbf{U}|
+\\
+   &= |\mathbf{U}|^{-1} |\boldsymbol{\Lambda}| |\mathbf{U}|
+\\
+   &= |\boldsymbol{\Lambda}|
+\end{aligned}
+$$
+
+　行列式の性質$|\mathbf{A} \mathbf{B}| = |\mathbf{A}| |\mathbf{B}|$、$|\mathbf{A}^{-1}| = |\mathbf{A}|^{-1}$、$|\mathbf{A}|^{-1} = \frac{1}{|\mathbf{A}|}$より、変形しました。行列式はスカラなので掛ける順番を入れ替えられます。\
+　また、対角行列の行列式は対角成分の総乗になります。
+
+$$
+|\boldsymbol{\Sigma}|
+    =|\boldsymbol{\Lambda}|
+    = \prod_{i=1}^D
+          \lambda_i
+\tag{2}
+$$
+
+　分散共分散行列の行列式は、$D$個の固有値の積で計算できるのが分かりました。\
+\
+
+
+## ガウス分布の変換
+
+　必要な因子を変形できたので、次は定義式全体を変形します。\
+\
+
+　ガウス分布の定義式に式(1,2)を代入して、$\mathbf{y}$の分布$p(\mathbf{y})$とおきます。
+
+$$
+p(\mathbf{y})
+    = \frac{1}{\sqrt{(2 \pi)^D |\boldsymbol{\Lambda}|}}
+      \exp \left\{
+          - \frac{1}{2}
+            \mathbf{y} \boldsymbol{\Lambda}^{-1} \mathbf{y}
+      \right\}
+    = \mathcal{N}(\mathbf{y} | \mathbf{0}, \boldsymbol{\Lambda})
+$$
+
+　$p(\mathbf{y})$は、平均ベクトルが$\mathbf{0} = (0, \cdots, 0)^{\top}$、分散共分散行列が$\boldsymbol{\Lambda}$の$D$次元ガウス分布で表せます。\
+
+　さらに、行列の項をスカラの項に置き換えます。
+
+
+\begin{align*}
+p(\mathbf{y})
+   &= \frac{1}{\sqrt{(2 \pi)^D \prod_{i'=1}^D \lambda_{i'}}}
+      \exp \left(
+          - \frac{1}{2}
+            \sum_{i=1}^D
+          \frac{y_i^2}{\lambda_i}
+      \right)
+\tag{2.56}\\
+   &= \prod_{i'=1}^D
+          \frac{1}{\sqrt{2 \pi \lambda_i}}
+          \exp \left(
+              - \frac{y_i^2}{2 \lambda_i}
+          \right)
+\\
+   &= \sum_{i=1}^D
+          \mathcal{N}(y_i | 0, \lambda_i)
+\tag{2.56}
+\end{align*}
+
+
+　$p(\mathbf{y})$は、平均が0、分散が$\lambda_i$の$D$個の1次元ガウス分布の積で表せます。この式変形については「多次元ガウス分布の定義式」の「変数間に依存関係がない場合」を参照してください。\
+
+　以上で、固有ベクトルにより並行移動して回転した分布が得られました。\
+\
+
+　この記事では、分散共分散行列の固有ベクトルによるガウス分布の回転を導出しました。\
+\
