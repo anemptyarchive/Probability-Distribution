@@ -696,15 +696,18 @@ res2 <- prod(sqrt(lambda_d))
 dplyr::near(res1, res2)
 
 
-# 固有ベクトルによる軸の回転 --------------------------------------------------------------------
+# 分散共分散行列の固有ベクトルによるガウス分布の回転 --------------------------------------------------------------------
 
 ### ・パラメータの設定 -----
+
+# 次元数を指定
+D <- 2
 
 # 平均ベクトルを指定
 mu_d <- c(-4, 2)
 
 # 分散共分散行列を指定
-sigma_dd <- matrix(c(1, 0.6, 0.6, 1.5), nrow = 2, ncol = 2)
+sigma_dd <- matrix(c(2, -0.6, -0.6, 1.5), nrow = D, ncol = D)
 
 # データ数(サンプルサイズ)を指定
 N <- 10
@@ -722,35 +725,7 @@ u_dd <- res_eigen[["vectors"]] |>
   t()
 
 
-### ・マハラノビス距離の計算 -----
-
-# マハラノビス距離の2乗を計算:式(2.50)
-delta2 <- 0 # 初期化
-for(i in 1:D) {
-  # i番目の固有値・固有ベクトルを抽出
-  lambda_i <- lambda_d[i]
-  u_id     <- u_dd[i, ]
-  
-  # 2次形式の一部を計算
-  y_i <- t(u_id) %*% (x_d - mu_d) |> 
-    as.numeric()
-  
-  # 
-  tmp_delta2 <- y_i^2 / lambda_i
-  
-  # D個の和を計算
-  delta2 <- delta2 + tmp_delta2
-}
-delta2
-
-# マハラノビス距離の2乗を計算:式(2.51)
-y_d <- u_dd %*% (x_d - mu_d) |> 
-  as.numeric()
-delta2 <- sum(y_d^2 / lambda_d)
-delta2
-
-
-### ・元の分布 -----
+### ・分布の計算 -----
 
 # xの値を作成
 x_1_vals <- seq(
@@ -810,14 +785,14 @@ param_x_text <- paste0(
 # 確率密度の最大値を計算
 max_dens <- mvnfast::dmvn(X = mu_d, mu = mu_d, sigma = sigma_dd)
 
-# 固有ベクトルを重ねた2次元ガウス分布のグラフを作成
+# 2次元ガウス分布のグラフを作成
 dens_x_graph <- ggplot() + 
   geom_contour_filled(data = dens_x_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), 
-                      alpha = 0.8, show.legend = FALSE) + # 分布
+                      alpha = 0.8) + # 分布
   geom_contour(data = dens_x_df, mapping = aes(x = x_1, y = x_2, z = density), 
                breaks = max_dens*exp(-0.5), color = "red", size = 1, linetype = "dashed") + # 分布の断面図
   geom_segment(data = axis_x_df, mapping = aes(x = xstart, y = ystart, xend = xend, yend = yend), 
-               color = "blue", size = 1, arrow = arrow()) + # 断面図の軸
+               color = "blue", size = 1, arrow = arrow(length = unit(10, "pt"))) + # 断面図の軸
   geom_point(data = data_x_df, mapping = aes(x = x_1, y = x_2, color = n), 
              alpha = 0.8, size = 5, show.legend = FALSE) + # サンプル
   coord_fixed(ratio = 1) + # アスペクト比
@@ -828,10 +803,96 @@ dens_x_graph <- ggplot() +
 dens_x_graph
 
 
-### ・軸の回転 ----
+### ・回転後の分布の計算 -----
+
+# 平均ベクトルを作成
+mu_y_d <- rep(0, times = D)
+
+# 分散共分散行列を計算
+lambda_dd <- diag(lambda_d)
+
+# yの値を作成
+y_1_vals <- seq(
+  from = -sqrt(lambda_dd[1, 1]) * 3, 
+  to = sqrt(lambda_dd[1, 1]) * 3, 
+  length.out = 100
+)
+y_2_vals <- seq(
+  from = -sqrt(lambda_dd[2, 2]) * 3, 
+  to = sqrt(lambda_dd[2, 2]) * 3, 
+  length.out = 100
+)
+
+# yの点を作成
+y_mat <- tidyr::expand_grid(
+  y_1 = y_1_vals, 
+  y_2 = y_2_vals
+) |> # 格子点を作成
+  as.matrix() # マトリクスに変換
+
+# 多次元ガウス分布を計算
+dens_y_df <- tibble::tibble(
+  y_1 = y_mat[, 1], # x軸の値
+  y_2 = y_mat[, 2], # y軸の値
+  density = mvnfast::dmvn(X = y_mat, mu = mu_y_d, sigma = lambda_dd) # 確率密度
+)
+
+
+# サンプルを回転
+y_nd <- t(t(x_nd) - mu_d) %*% t(u_dd)
+
+# 回転したサンプルを格納
+data_y_df <- tibble::tibble(
+  n = factor(1:N), 
+  y_1 = y_nd[, 1], 
+  y_2 = y_nd[, 2]
+)
+
+
+# 固有ベクトルを回転
+u_y_dd <- u_dd %*% t(u_dd)
+
+# 断面図の軸を計算
+axis_y_df <- tibble::tibble(
+  xstart = - u_y_dd[, 1] * sqrt(lambda_d), 
+  ystart = - u_y_dd[, 2] * sqrt(lambda_d), 
+  xend = u_y_dd[, 1] * sqrt(lambda_d), 
+  yend = u_y_dd[, 2] * sqrt(lambda_d)
+)
+
+
+# パラメータラベルを作成:(数式表記用)
+param_y_text <- paste0(
+  "list(", 
+  "mu[y]==group('(', list(", paste0(round(mu_y_d, 2), collapse = ", "), "), ')')", 
+  ", Lambda[y]==group('(', list(", paste0(round(lambda_dd, 2), collapse = ", "), "), ')')", 
+  ")"
+)
+
+# 回転後の2次元ガウス分布のグラフを作成
+dens_y_graph <- ggplot() + 
+  geom_contour_filled(data = dens_y_df, mapping = aes(x = y_1, y = y_2, z = density, fill = ..level..), 
+                      alpha = 0.8) + # 塗りつぶし等高線
+  geom_contour(data = dens_y_df, mapping = aes(x = y_1, y = y_2, z = density), 
+               breaks = max_dens*exp(-0.5), color = "red", size = 1, linetype = "dashed") + # 分布の断面図
+  geom_segment(data = axis_y_df, mapping = aes(x = xstart, y = ystart, xend = xend, yend = yend), 
+               color = "blue", size = 1, arrow = arrow(length = unit(10, "pt"))) + # 断面図の軸
+  geom_point(data = data_y_df, mapping = aes(x = y_1, y = y_2, color = n), 
+             alpha = 0.8, size = 5, show.legend = FALSE) + 
+  coord_fixed(ratio = 1) + # アスペクト比
+  labs(title ="Maltivariate Gaussian Distribution", 
+       subtitle = parse(text = param_y_text), 
+       fill = "density", 
+       x = expression(y[1]), y = expression(y[2]))
+dens_y_graph
+
+# グラフを並べて描画
+dens_x_graph + dens_y_graph
+
+
+### ・固有ベクトルによる分布の回転 ----
 
 # xの点を回転
-x_to_y_mat <- x_mat %*% t(u_dd)
 x_to_y_mat <- t(t(x_mat) - mu_d) %*% t(u_dd)
 
 # yの値を作成
@@ -857,7 +918,6 @@ dens_y_df <- tibble::tibble(
 
 
 # サンプルを回転
-y_nd <- x_nd %*% t(u_dd)
 y_nd <- t(t(x_nd) - mu_d) %*% t(u_dd)
 
 # 回転したサンプルを格納
@@ -902,7 +962,8 @@ dens_y_graph <- ggplot() +
                       alpha = 0.8) + # 塗りつぶし等高線
   geom_contour(data = dens_y_df, mapping = aes(x = y_1, y = y_2, z = density), 
                breaks = max_dens*exp(-0.5), color = "red", size = 1, linetype = "dashed") + # 分布の断面図
-  geom_segment(data = axis_y_df, mapping = aes(x = xstart, y = ystart, xend = xend, yend = yend), color = "blue", size = 1, arrow = arrow()) + # 断面図の軸:サイズが固有値の倍の固有ベクトル
+  geom_segment(data = axis_y_df, mapping = aes(x = xstart, y = ystart, xend = xend, yend = yend), 
+               color = "blue", size = 1, arrow = arrow(length = unit(10, "pt"))) + # 断面図の軸
   geom_point(data = data_y_df, mapping = aes(x = y_1, y = y_2, color = n), 
              alpha = 0.8, size = 5, show.legend = FALSE) + 
   coord_fixed(ratio = 1) + # アスペクト比
@@ -914,4 +975,5 @@ dens_y_graph
 
 # グラフを並べて描画
 dens_x_graph + dens_y_graph
+
 
