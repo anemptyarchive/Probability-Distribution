@@ -176,7 +176,7 @@ ggplot() +
   labs(
     title ="Maltivariate Gaussian Distribution", 
     #subtitle = paste0("mu=(", paste0(mu_d, collapse = ', '), "), Sigma=(", paste0(sigma_dd, collapse = ', '), ")"), # (文字列表記用)
-    subtitle = parse(text = math_text), # (数式表記用)
+    subtitle = parse(text = math_text), # (数式表示用)
     fill = "density", color = "density", 
     x = expression(x[1]), y = expression(x[2])
   )
@@ -622,7 +622,7 @@ anime_dens_graph <- ggplot() +
 gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 10, width = 800, height = 600)
 
 
-# パラメータと統計量の関係をアニメーションで可視化 -----------------------------------------------------------------
+# パラメータと軸の関係をアニメーションで可視化 -----------------------------------------------------------------
 
 ## 「パラメータと分布の関係」のanime_dens_dfを利用
 
@@ -863,13 +863,14 @@ sigma_dd <- matrix(c(1, 0.6, 0.6, 1.5), nrow = 2, ncol = 2)
 N <- 10000
 N <- 20
 
+
 # 多次元ガウス分布に従う乱数を生成
 x_nd <- mvnfast::rmvn(n = N, mu = mu_d, sigma = sigma_dd)
 
 # サンプルを格納
 data_df <- tibble::tibble(
-  x_1 = x_nd[, 1], 
-  x_2 = x_nd[, 2]
+  x_1 = x_nd[, 1], # x軸の値
+  x_2 = x_nd[, 2] # y軸の値
 )
 
 
@@ -891,31 +892,18 @@ x_2_vals <- seq(
 x_mat <- tidyr::expand_grid(
   x_1 = x_1_vals, 
   x_2 = x_2_vals
-) |> # 全ての組み合わせ(格子点)を作成
+) |> # 格子点を作成
   as.matrix() # マトリクスに変換
 
 # 多次元ガウス分布を計算
 dens_df <- tibble::tibble(
-  x_1 = x_mat[, 1], 
-  x_2 = x_mat[, 2], 
+  x_1 = x_mat[, 1], # x軸の値
+  x_2 = x_mat[, 2], # y軸の値
   density = mvnfast::dmvn(X = x_mat, mu = mu_d, sigma = sigma_dd) # 確率密度
 )
 
-# 多次元ガウス分布を計算
-dens_df <- tidyr::expand_grid(
-  x_1 = x_1_vals, 
-  x_2 = x_2_vals
-) |> # xの点(格子点)を作成
-  dplyr::mutate(
-    density = mvnfast::dmvn(
-      X = as.matrix(cbind(x_1, x_2)), 
-      mu = mu_d, 
-      sigma = sigma_dd
-    ) # 確率密度
-  )
 
-
-# パラメータラベルを作成:(数式表記用)
+# パラメータラベルを作成:(数式表示用)
 math_text <- paste0(
   "list(", 
   "mu==group('(', list(", paste0(mu_d, collapse = ", "), "), ')')", 
@@ -926,7 +914,7 @@ math_text <- paste0(
 # サンプルの散布図を作成
 ggplot() + 
   geom_point(data = data_df, mapping = aes(x = x_1, y = x_2), 
-             color = "orange", alpha = 0.5) + # サンプル
+             color = "orange", alpha = 0.3) + # サンプル
   geom_contour(data = dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 元の分布
   labs(title ="Maltivariate Gaussian Distribution", 
        subtitle = parse(text = math_text), 
@@ -980,18 +968,19 @@ x_2_vals <- seq(
   length.out = 101
 )
 
-# 多次元ガウス分布を計算
-dens_df <- tidyr::expand_grid(
+# xの点を作成
+x_mat <- tidyr::expand_grid(
   x_1 = x_1_vals, 
   x_2 = x_2_vals
-) |> # xの点(格子点)を作成
-  dplyr::mutate(
-    density = mvnfast::dmvn(
-      X = as.matrix(cbind(x_1, x_2)), 
-      mu = mu_d, 
-      sigma = sigma_dd
-    ) # 確率密度
-  )
+) |> # 格子点を作成
+  as.matrix() # マトリクスに変換
+
+# 多次元ガウス分布を計算
+dens_df <- tibble::tibble(
+  x_1 = x_mat[, 1], # x軸の値
+  x_2 = x_mat[, 2], # y軸の値
+  density = mvnfast::dmvn(X = x_mat, mu = mu_d, sigma = sigma_dd) # 確率密度
+)
 
 
 ### ・1データずつ可視化 -----
@@ -1006,10 +995,10 @@ x_nd <- mvnfast::rmvn(n = N, mu = mu_d, sigma = sigma_dd)
 # サンプルを格納
 anime_data_df <- tibble::tibble(
   n = 1:N, # データ番号
-  x_1 = x_nd[, 1], 
-  x_2 = x_nd[, 2], 
-  parameter = paste0("mu=(", paste0(mu_d, collapse = ", "), "), Sigma=(", paste0(sigma_dd, collapse = ", "), "), n=", n) |> 
-    factor(levels = paste0("mu=(", paste0(mu_d, collapse = ", "), "), Sigma=(", paste0(sigma_dd, collapse = ", "), "), n=", 1:N)) # フレーム切替用ラベル
+  x_1 = x_nd[, 1], # x軸の値
+  x_2 = x_nd[, 2], # y軸の値
+  parameter = paste0("mu=(", paste0(mu_d, collapse = ", "), "), Sigma=(", paste0(sigma_dd, collapse = ", "), "), N=", n) |> 
+    factor(levels = paste0("mu=(", paste0(mu_d, collapse = ", "), "), Sigma=(", paste0(sigma_dd, collapse = ", "), "), N=", 1:N)) # フレーム切替用ラベル
 )
 
 # サンプルを複製して格納
@@ -1021,8 +1010,8 @@ anime_freq_df <- tidyr::expand_grid(
   dplyr::mutate(
     x_1 = x_nd[n, 1], 
     x_2 = x_nd[n, 2], 
-    parameter = paste0("mu=(", paste0(mu_d, collapse = ", "), "), Sigma=(", paste0(sigma_dd, collapse = ", "), "), n=", frame) |> 
-      factor(levels = paste0("mu=(", paste0(mu_d, collapse = ", "), "), Sigma=(", paste0(sigma_dd, collapse = ", "), "), n=", 1:N)) # フレーム切替用ラベル
+    parameter = paste0("mu=(", paste0(mu_d, collapse = ", "), "), Sigma=(", paste0(sigma_dd, collapse = ", "), "), N=", frame) |> 
+      factor(levels = paste0("mu=(", paste0(mu_d, collapse = ", "), "), Sigma=(", paste0(sigma_dd, collapse = ", "), "), N=", 1:N)) # フレーム切替用ラベル
   )
 
 
@@ -1040,7 +1029,7 @@ anime_freq_graph <- ggplot() +
        x = expression(x[1]), y = expression(x[2]))
 
 # gif画像を作成
-gganimate::animate(anime_freq_graph, nframes = N, fps = 10, width = 800, height = 600)
+gganimate::animate(anime_freq_graph, nframes = N+10, end_pause = 10, fps = 10, width = 800, height = 600)
 
 
 # メッシュ用の値を設定
@@ -1064,11 +1053,13 @@ anime_freq_graph <- ggplot() +
        x = expression(x[1]), y = expression(x[2]))
 
 # gif画像を作成
-gganimate::animate(anime_freq_graph, nframes = N, fps = 10, width = 800, height = 600)
+gganimate::animate(anime_freq_graph, nframes = N+10, end_pause = 10, fps = 10, width = 800, height = 600)
 
+
+# 除去するフレーム数を指定
+n_min <- 10
 
 # (データが少ないと密度を計算できないため)最初のフレームを除去
-n_min <- 10
 tmp_data_df <- anime_data_df|> 
   dplyr::filter(n > n_min) |> # 始めのデータを削除
   dplyr::mutate(
@@ -1099,7 +1090,7 @@ anime_freq_graph <- ggplot() +
        x = expression(x[1]), y = expression(x[2]))
 
 # gif画像を作成
-gganimate::animate(anime_freq_graph, nframes = N-n_min, fps = 10, width = 800, height = 600)
+gganimate::animate(anime_freq_graph, nframes = N-n_min+10, end_pause = 10, fps = 10, width = 800, height = 600)
 
 
 ### ・複数データずつ可視化 -----
@@ -1126,15 +1117,15 @@ anime_freq_df <- tidyr::expand_grid(
   dplyr::mutate(
     x_1 = x_nd[n, 1], 
     x_2 = x_nd[n, 2], 
-    parameter = paste0("mu=(", paste0(mu_d, collapse = ", "), "), Sigma=(", paste0(sigma_dd, collapse = ", "), "), n=", frame*n_per_frame) |> 
-      factor(levels = paste0("mu=(", paste0(mu_d, collapse = ", "), "), Sigma=(", paste0(sigma_dd, collapse = ", "), "), n=", 1:frame_num*n_per_frame)) # フレーム切替用ラベル
+    parameter = paste0("mu=(", paste0(mu_d, collapse = ", "), "), Sigma=(", paste0(sigma_dd, collapse = ", "), "), N=", frame*n_per_frame) |> 
+      factor(levels = paste0("mu=(", paste0(mu_d, collapse = ", "), "), Sigma=(", paste0(sigma_dd, collapse = ", "), "), N=", 1:frame_num*n_per_frame)) # フレーム切替用ラベル
   )
 
 
 # 散布図のアニメーションを作図
 anime_freq_graph <- ggplot() + 
   geom_point(data = anime_freq_df, mapping = aes(x = x_1, y = x_2), 
-             color = "orange", alpha = 0.5, size = 3) + # サンプル
+             color = "orange", alpha = 0.3, size = 3) + # サンプル
   geom_contour(data = dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 元の分布
   gganimate::transition_manual(parameter) + # フレーム
   labs(title ="Maltivariate Gaussian Distribution", 
@@ -1192,7 +1183,7 @@ gganimate::animate(anime_freq_graph, nframes = frame_num+10, end_pause = 10, fps
 mu_gen_d <- c(6, 10)
 
 # (生成分布の)分散共分散行列を指定
-sigma_gen_dd <- matrix(c(1, 0.6, 0.6, 4), nrow = 2, ncol = 2, byrow = TRUE)
+sigma_gen_dd <- matrix(c(1, 0.6, 0.6, 4), nrow = 2, ncol = 2)
 
 # 分布の数(サンプルサイズ)を指定
 N <- 9
@@ -1203,10 +1194,10 @@ mu_nd <- mvnfast::rmvn(n = N, mu = mu_gen_d, sigma = sigma_gen_dd)
 
 # パラメータを格納
 param_df <- tibble::tibble(
-  mu_1 = mu_nd[, 1], 
-  mu_2 = mu_nd[, 2], 
-) |> # 確率変数(格子点)μを作成
-  dplyr::arrange(mu_1, mu_2) |> # 作図時の調整用に並べ替え
+  mu_1 = mu_nd[, 1], # x軸の値
+  mu_2 = mu_nd[, 2] # y軸の値
+) |> # 値を格納
+  dplyr::arrange(mu_1, mu_2) |> # 作図時の配置調整用に並べ替え
   dplyr::mutate(
     parameter = paste0("(", round(mu_1, 2), ", ", round(mu_2, 2), ")") |> 
       factor() # 色分け用ラベル
@@ -1225,25 +1216,26 @@ mu_2_vals <- seq(
   length.out = 101
 )
 
-# 多次元ガウス分布を計算
-gaussian_generator_df <- tidyr::expand_grid(
+# 確率変数μの点を作成
+mu_mat <- tidyr::expand_grid(
   mu_1 = mu_1_vals, 
   mu_2 = mu_2_vals
-) |> # 確率変数(格子点)μを作成
-  dplyr::mutate(
-    density = mvnfast::dmvn(
-      X = as.matrix(cbind(mu_1, mu_2)), 
-      mu = mu_gen_d, 
-      sigma = sigma_gen_dd
-    ) # 確率密度
-  )
+) |> # 格子点を作成
+  as.matrix() # マトリクスに変換
+
+# 多次元ガウス分布を計算
+gaussian_generator_df <- tibble::tibble(
+  mu_1 = mu_mat[, 1], # x軸の値
+  mu_2 = mu_mat[, 2], # y軸の値
+  density = mvnfast::dmvn(X = mu_mat, mu = mu_gen_d, sigma = sigma_gen_dd) # 確率密度
+)
 
 # パラメータの期待値を計算
 E_mu_d <- mu_gen_d
 
 
-# パラメータラベルを作成:(数式表記用)
-generator_math_text <- paste0(
+# パラメータラベルを作成:(数式表示用)
+generator_param_text <- paste0(
   "list(", 
   "mu[paste(g,e,n)]==group('(', list(", paste0(mu_gen_d, collapse = ", "), "), ')')", 
   ", Sigma[paste(g,e,n)]==group('(', list(", paste0(sigma_gen_dd, collapse = ", "), "), ')')", 
@@ -1259,7 +1251,7 @@ gaussian_generator_graph <- ggplot() +
   geom_point(data = param_df, mapping = aes(x = mu_1, y = mu_2, color = parameter), 
              alpha = 0.8, size = 6) + # パラメータのサンプル
   labs(title ="Maltivariate Gaussian Distribution", 
-       subtitle = parse(text = generator_math_text), 
+       subtitle = parse(text = generator_param_text), 
        color = expression(mu), fill = "density", 
        x = expression(mu[1]), y = expression(mu[2]))
 gaussian_generator_graph
@@ -1275,34 +1267,32 @@ sigma_dd <- matrix(c(1, 0, 0, 1), nrow = 2, ncol = 2)
 x_1_vals <- mu_1_vals
 x_2_vals <- mu_2_vals
 
+# 確率変数xの点を作成
+x_mat <- mu_mat
+
+
 # パラメータの期待値による多次元ガウス分布を計算
-E_gaussian_df <-  tidyr::expand_grid(
-  x_1 = x_1_vals, 
-  x_2 = x_2_vals
-) |> # 確率変数(格子点)xを作成
-  dplyr::mutate(
-    density = mvnfast::dmvn(
-      X = as.matrix(cbind(x_1, x_2)), 
-      mu = E_mu_d, 
-      sigma = sigma_dd
-    ) # 確率密度
-  )
+E_gaussian_df <- tibble::tibble(
+  x_1 = x_mat[, 1], # x軸の値
+  x_2 = x_mat[, 2], # y軸の値
+  density = mvnfast::dmvn(X = x_mat, mu = E_mu_d, sigma = sigma_dd) # 確率密度
+)
 
 # パラメータのサンプルごとに多次元ガウス分布を計算
 gaussian_sample_df <- tidyr::expand_grid(
+  n = 1:N, # データ番号
   x_1 = x_1_vals, 
-  x_2 = x_2_vals, 
-  n = 1:N # データ番号
-) |> # 確率変数xをパラメータ数分に複製
+  x_2 = x_2_vals
+) |> # パラメータごとに確率変数xを複製
   dplyr::mutate(
     mu_1 = mu_nd[n, 1], 
     mu_2 = mu_nd[n, 2], 
   ) |> # パラメータのサンプルを抽出
-  dplyr::arrange(mu_1, mu_2, x_1, x_2) |> # 作図時の色付け調整用に並べ替え
-  dplyr::group_by(n) |> # 各分布の計算用にグループ化
+  dplyr::arrange(mu_1, mu_2, x_1, x_2) |> # 作図時の配置調整用に並べ替え
+  dplyr::group_by(n) |> # 分布の計算用にグループ化
   dplyr::mutate(
     density = mvnfast::dmvn(
-      X = as.matrix(cbind(x_1, x_2)), 
+      X = x_mat, 
       mu = unique(cbind(mu_1, mu_2)), 
       sigma = sigma_dd
     ) # 確率密度
@@ -1314,8 +1304,8 @@ gaussian_sample_df <- tidyr::expand_grid(
   )
 
 
-# パラメータラベルを作成:(数式表記用)
-sample_math_text <- paste0(
+# パラメータラベルを作成:(数式表示用)
+sample_param_text <- paste0(
   "list(", 
   "Sigma==group('(', list(", paste0(sigma_dd, collapse = ", "), "), ')')", 
   ")"
@@ -1330,8 +1320,8 @@ gaussian_sample_graph <- ggplot() +
   facet_wrap(. ~ parameter, dir = "v", labeller = label_bquote(mu==.((as.character(parameter))))) + # グラフの分割
   coord_cartesian(xlim = c(min(mu_1_vals), max(mu_1_vals)), ylim = c(min(mu_2_vals), max(mu_2_vals))) + # 軸の表示範囲
   labs(title ="Maltivariate Gaussian Distribution", 
-       subtitle = parse(text = sample_math_text), 
-       fill = "density", 
+       subtitle = parse(text = sample_param_text), 
+       color = expression(mu), fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
 gaussian_sample_graph
 
@@ -1342,10 +1332,10 @@ gaussian_generator_graph + gaussian_sample_graph
 # 確率密度の最大値を計算
 max_dens <- mvnfast::dmvn(X = E_mu_d, mu = E_mu_d, sigma = sigma_dd)
 
-# パラメータラベルを作成:(数式表記用)
-sample_math_text <- paste0(
+# パラメータラベルを作成:(数式表示用)
+sample_param_text <- paste0(
   "list(", 
-  "E(mu)==group('(', list(", paste0(mu_d, collapse = ", "), "), ')')", 
+  "E(mu)==group('(', list(", paste0(E_mu_d, collapse = ", "), "), ')')", 
   ", Sigma==group('(', list(", paste0(sigma_dd, collapse = ", "), "), ')')", 
   ")"
 )
@@ -1362,8 +1352,8 @@ gaussian_sample_graph <- ggplot() +
              size = 6, shape = 4, show.legend = FALSE) + # サンプルによる分布の期待値
   coord_cartesian(xlim = c(min(mu_1_vals), max(mu_1_vals)), ylim = c(min(mu_2_vals), max(mu_2_vals))) + # 軸の表示範囲
   labs(title ="Maltivariate Gaussian Distribution", 
-       subtitle = parse(text = sample_math_text), 
-       color = "density", fill = "density", 
+       subtitle = parse(text = sample_param_text), 
+       color = expression(mu), 
        x = expression(x[1]), y = expression(x[2]))
 gaussian_sample_graph
 

@@ -550,7 +550,7 @@ ggplot() +
   geom_contour(data = dens_df, mapping = aes(x = mu, y = lambda, z = density, color = ..level..)) + # 元の分布
   scale_color_viridis_c(option = "D") + # 等高線の色
   labs(title = "Gaussian-Gamma Distribution", 
-       subtitle = paste0("m=", m, ", beta=", beta, ", a=", a, ", b=", b, ", N=", N), 
+       subtitle = parse(text = paste0("list(m==", m, ", beta==", beta, ", a==", a, ", b==", b, ", N==", N, ")")), 
        fill = "density", color = "density", 
        x = expression(mu), y = expression(lambda)) # ラベル
 
