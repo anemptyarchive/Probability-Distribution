@@ -1,0 +1,347 @@
+---
+title: "ウィシャート分布"
+author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M:%S')`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_section: true
+    toc: true
+    toc_depth: 4
+    keep_tex: false
+header-includes:
+  - \usepackage{bookmark}
+  - \usepackage{xltxtra}
+  - \usepackage{zxjatype}
+  - \usepackage[ipa]{zxjafont}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, error = FALSE, warning = FALSE, # メッセージを非表示
+  fig.align = "center", # 画像を中央揃え
+  fig.width = 5, fig.height = 4, # 画像のサイズ
+  dev = "cairo_pdf", dev.args = list(family = "ipaexg"), # {ggplot2}に日本語を組み込む場合の対処
+  class.source = "numberLines lineAnchors", # ソースを番号付けする
+  class.output = "numberLines lineAnchors chunkout" # 出力を番号付けする
+)
+```
+
+----
+
+【編集履歴】
+
+- 2022/09/06：「定義式」を追加
+
+----
+
+\newpage
+
+
+# ウィシャート分布の定義式
+
+　ウィシャート分布(Wishart Distribution)の定義式を確認します。\
+\
+
+
+## 定義式
+
+　ウィシャート分布は、ガンマ分布またはカイ二乗分布を多次元に拡張(一般化)した分布です。\
+\
+
+　ウィシャート分布は、パラメータ$\nu, \mathbf{W}$を用いて、次の式で定義されます。
+
+$$
+\begin{aligned}
+C_{\mathcal{W}}
+   &= \left(
+          |\mathbf{W}|^{\frac{\nu}{2}}
+          2^{\frac{\nu D}{2}}
+          \pi^{\frac{D(D-1)}{4}}
+          \prod_{d=1}^D
+              \Gamma \Bigl(
+                  \frac{\nu + 1 - d}{2}
+              \Bigr)
+      \right)^{-1}
+\\
+\mathcal{W}(\boldsymbol{\Lambda} | \nu, \mathbf{W})
+   &= C_{\mathcal{W}}
+      |\boldsymbol{\Lambda}|^{\frac{\nu-D-1}{2}}
+      \exp \Bigl(
+          - \frac{1}{2}
+            \mathrm{Tr}(\mathbf{W}^{-1} \boldsymbol{\Lambda})
+      \Bigr)
+\\
+   &= \frac{
+          |\boldsymbol{\Lambda}|^{\frac{\nu-D-1}{2}}
+          \exp \Bigl(
+              - \frac{1}{2}
+                \mathrm{Tr}(\mathbf{W}^{-1} \boldsymbol{\Lambda})
+          \Bigr)
+      }{
+          |\mathbf{W}|^{\frac{\nu}{2}}
+          2^{\frac{\nu D}{2}}
+          \pi^{\frac{D(D-1)}{4}}
+          \prod_{d=1}^D
+              \Gamma \Bigl(
+                  \frac{\nu + 1 - d}{2}
+              \Bigr)
+      }
+\end{aligned}
+$$
+
+　ここで、$C_{\mathcal{W}}$はウィシャート分布の正規化係数を表し、$D$は次元数、$\nu$は自由度パラメータ、$\mathbf{W}$は逆スケールパラメータ、$\pi$は円周率です。また、$\mathbf{A}^{-1}$は逆行列、$|\mathbf{A}|$は行列式、$\mathrm{Tr}(\mathbf{A})$はトレース、$\Gamma(x)$はガンマ関数、ネイピア数$e$による指数関数$e^x = \exp(x)$、平方根$\sqrt{a} = a^{\frac{1}{2}}$です。\
+　$\boldsymbol{\Lambda}$は$D \times D$の正定値行列をとり、自由度は$\nu > D - 1$、$\mathbf{W}$は$D \times D$の正定値行列を満たす必要があります。\
+\
+
+　ウィシャート分布の対数をとると、次の式になります。
+
+$$
+\begin{aligned}
+\log C_{\mathcal{W}}
+   &= - \frac{\nu}{2} \log |\mathbf{W}|
+      - \frac{\nu D}{2} \log 2
+      - \frac{D(D-1)}{4} \log \pi
+      - \sum_{d=1}^D
+          \log \Gamma \Bigl(
+              \frac{\nu + 1 - d}{2}
+          \Bigr)
+\\
+\log \mathcal{W}(\boldsymbol{\Lambda} | \nu, \mathbf{W})
+   &= \log C_{\mathcal{W}}
+      + \frac{\nu - D - 1}{2} \log |\boldsymbol{\Lambda}|
+      - \frac{1}{2}
+        \mathrm{Tr}(\mathbf{W}^{-1} \boldsymbol{\Lambda})
+\\
+   &= \frac{1}{2} \left\{
+          (\nu - D - 1) \log |\boldsymbol{\Lambda}|
+          - \mathrm{Tr}(\mathbf{W}^{-1} \boldsymbol{\Lambda})
+          - \nu \log |\mathbf{W}|
+          - \nu D \log 2
+          - \frac{D (D - 1)}{2} \log \pi
+      \right\} \\
+   &\quad
+      - \sum_{d=1}^D
+          \log \Gamma \Bigl(
+              \frac{\nu + 1 - d}{2}
+          \Bigr)
+\end{aligned}
+$$
+
+\ 
+
+
+## 他の分布との関係
+
+　ウィシャート分布とガンマ分布・カイ二乗分布の関係を導出します。\
+\
+
+
+### ガンマ分布との関係
+
+　1次元のウィシャート分布を考えます。\
+\
+
+　1次元$D = 1$のとき、$\boldsymbol{\Lambda}, \mathbf{W}$はそれぞれスカラ$\lambda_{1,1}, w_{1,1}$になります。
+
+
+\begin{align*}
+\mathcal{W}(\boldsymbol{\Lambda} = \lambda_{1,1} | \nu, \mathbf{W} = w_{1,1})
+   &= \frac{
+          |\lambda_{1,1}|^{\frac{\nu-1-1}{2}}
+          \exp \left(
+              - \frac{1}{2}
+                \mathrm{Tr}(w_{1,1}^{-1} \lambda_{1,1})
+          \right)
+      }{
+          |w_{1,1}|^{\frac{\nu}{2}}
+          2^{\frac{\nu 1}{2}}
+          \pi^{\frac{1(1-1)}{4}}
+          \prod_{d=1}^1
+              \Gamma \Bigl(
+                  \frac{\nu + 1 - d}{2}
+              \Bigr)
+      }
+\\
+   &= \frac{
+          \lambda_{1,1}^{\frac{\nu-2}{2}}
+          \exp(
+              - \frac{\lambda_{1,1}}{2 w_{1,1}}
+          )
+      }{
+          w_{1,1}^{\frac{\nu}{2}}
+          2^{\frac{\nu}{2}}
+          \Gamma(\frac{\nu}{2})
+      }
+\tag{1}
+\end{align*}
+
+
+　スカラなので、行列式とトレースはそのまま$|x| = x, \mathrm{Tr}(x) = x$、逆行列は逆数$x^{-1} = \frac{1}{x}$になります。また、$x^0 = 1$です。\
+　ガンマ分布との対応が分かりやすいように、式を整理します。
+
+$$
+\mathcal{W}(\boldsymbol{\Lambda} = \lambda_{1,1} | \nu, \mathbf{W} = w_{1,1})
+    = \frac{
+          1
+      }{
+          (2 w_{1,1})^{\frac{\nu}{2}}
+          \Gamma(\frac{\nu}{2})
+      }
+      \lambda_{1,1}^{\frac{\nu}{2}-1}
+      \exp \Bigl(
+          - \frac{\lambda_{1,1}}{2 w_{1,1}}
+      \Bigr)
+$$
+
+　指数の性質$x^a y^a = (x y)^a$より、項をまとめました。\
+　$\nu, w_{1,1}$について
+
+$$
+a = \frac{\nu}{2}
+,\ 
+b = \frac{1}{2 w_{1,1}}
+$$
+
+とおきます。
+
+$$
+\begin{aligned}
+\mathcal{W}(\boldsymbol{\Lambda} = \lambda_{1,1} | \nu, \mathbf{W} = w_{1,1})
+   &= \frac{b^a}{\Gamma(a)}
+      \lambda_{1,1}^{a-1}
+      \exp(- b \lambda_{1,1})
+\\
+   &= \mathrm{Gam} \Bigl(
+          \lambda = \lambda_{1,1}
+      \Bigm|
+          a = \frac{\nu}{2}, b = \frac{1}{2 w_{1,1}}
+      \Bigr)
+\end{aligned}
+$$
+
+　形状パラメータが$\frac{\nu}{2}$で尺度パラメータが$\frac{1}{2 w_{1,1}}$のガンマ分布の定義式が得られました。\
+\
+
+
+
+### カイ二乗分布との関係
+
+　再度、1次元の場合のウィシャート分布を考えます。\
+\
+
+　カイ二乗分布との対応が分かりやすいように、式(1)を整理します。
+
+$$
+\begin{aligned}
+\mathcal{W}(\boldsymbol{\Lambda} = \lambda_{1,1} | \nu, \mathbf{W} = w_{1,1})
+   &= \frac{
+          1
+      }{
+          2^{\frac{\nu}{2}}
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          \lambda_{1,1}^{\frac{\nu}{2}-1}
+      }{
+          w_{1,1}^{\frac{\nu}{2}}
+      }
+      \exp \Bigl(
+          - \frac{\lambda_{1,1}}{2 w_{1,1}}
+      \Bigr)
+\\
+   &= \frac{
+          1
+      }{
+          2^{\frac{\nu}{2}}
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{1}{w_{1,1}}
+      \frac{
+          \lambda_{1,1}^{\frac{\nu}{2}-1}
+      }{
+          w_{1,1}^{\frac{\nu}{2}-1}
+      }
+      \exp \Bigl(
+          - \frac{\lambda_{1,1}}{2 w_{1,1}}
+      \Bigr)
+\\
+   &= \frac{
+          1
+      }{
+          2^{\frac{\nu}{2}}
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{1}{w_{1,1}}
+      \Bigl(
+          \frac{\lambda_{1,1}}{w_{1,1}}
+      \Bigr)^{\frac{\nu}{2}-1}
+      \exp \Bigl(
+          - \frac{\lambda_{1,1}}{2 w_{1,1}}
+      \Bigr)
+\end{aligned}
+$$
+
+　指数の性質$\frac{x^a}{y^a} = (\frac{x}{y})^a$より、項をまとめました。\
+　$\lambda_{1,1}, w_{1,1}$について
+
+$$
+x = \frac{\lambda_{1,1}}{w_{1,1}}
+$$
+
+とおきます。
+
+$$
+\begin{aligned}
+\mathcal{W}(\boldsymbol{\Lambda} = \lambda_{1,1} | \nu, \mathbf{W} = w_{1,1})
+   &= \frac{1}{w_{1,1}}
+      \frac{
+          1
+      }{
+          2^{\frac{\nu}{2}}
+          \Gamma(\frac{\nu}{2})
+      }
+      x^{\frac{\nu}{2}-1}
+      \exp \Bigl(
+          - \frac{x}{2}
+      \Bigr)
+\\
+   &= \frac{1}{w_{1,1}}
+      \chi^2 \Bigl(
+          x = \frac{\lambda_{1,1}}{w_{1,1}}
+      \Bigm|
+          \nu
+      \Bigr)
+\end{aligned}
+$$
+
+　自由度が$\nu$のカイ二乗分布の定義式を$w_{1,1}$で割った式が得られました。(表記が分かりにくいですが、$p(x) = \chi^2(x | \nu)$でカイ二乗分布を表しています。)\
+\
+
+　ここまでで、ガウス分布の定義式を確認しました。\
+\
+
+
+## 統計量の計算式
+
+　ウィシャート分布の期待値・分散・最頻値は、それぞれ次の式で計算できます。
+
+$$
+\begin{aligned}
+\mathbb{E}[\boldsymbol{\Lambda}]
+   &= \nu \mathbf{W}
+\\
+\mathbb{V}[\lambda_{i,j}]
+   &= \nu (w_{i,j}^2 + w_{i,i} w_{j,j})
+\\
+\mathrm{mode}[\boldsymbol{\Lambda}]
+   &= (\nu - D - 1) \mathbf{W}
+    \quad
+      (\nu > D + 1)
+\end{aligned}
+$$
+
+\ 
+
+
