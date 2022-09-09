@@ -21,6 +21,7 @@ knitr::opts_chunk$set(
 【編集履歴】
 
 - 2022/09/06：「分布の計算」を追加
+- 2022/09/09：「乱数の生成」と「確率分布の生成」を追加
 
 ----
 
@@ -77,7 +78,7 @@ lambda_dd <- c(
 ```
 
 　自由度$\nu$と逆スケール行列$\mathbf{W}$を指定します。\
-　$\nu > D - 1$、$\mathbf{W}$は$D \times D$の正定値行列を満たす必要があります。設定した値に従う確率密度を計算します。\
+　自由度は$\nu > D - 1$、逆スケール行列は$D \times D$の正定値行列を満たす必要があります。設定した値に従う確率密度を計算します。\
 \
 
 
@@ -262,7 +263,7 @@ $$
 
 # ウィシャート分布の乱数生成
 
-　ウィシャート分布(Wishart Distribution)の乱数を生成します。ウィシャートス分布については「分布の定義式」を参照してください。\
+　ウィシャート分布(Wishart Distribution)の乱数を生成します。ウィシャート分布については「分布の定義式」を参照してください。\
 \
 
 　利用するパッケージを読み込みます。
@@ -270,7 +271,6 @@ $$
 ```{r, eval=FALSE}
 # 利用パッケージ
 library(tidyverse)
-library(mvnfast)
 library(gganimate)
 ```
 
@@ -292,7 +292,7 @@ library(ggplot2)
 　まずは、ウィシャート分布の乱数を生成します。\
 \
 
-　ウィシャートパラメータ$\nu, \mathbf{W}$とデータ数$N$を設定します。
+　ウィシャート分布のパラメータ$\nu, \mathbf{W}$とデータ数$N$を設定します。
 
 ```{r}
 # 次元数を指定
@@ -317,19 +317,30 @@ w_dd <- c(
 N <- 5000
 ```
 
+　自由度$\nu$と逆スケール行列$\mathbf{W}$とデータ数(サンプルサイズ)$N$を指定します。\
+　自由度は$\nu > D - 1$、逆スケール行列は$D \times D$の正定値行列を満たす必要があります。設定した値に従う確率密度を計算します。\
+\
 
-
+　ウィシャート分布に従う乱数を生成します。
 
 ```{r}
 # ウィシャート分布に従う乱数を生成
 lambda_ddn <- rWishart(n = N, df = nu, Sigma = w_dd)
+lambda_ddn[, , 1:3]
+```
 
+　ウィシャート分布の乱数は、`rWishart()`で生成できます。データ数の引数`n`に`N`、自由度の引数`df`に`nu`、逆スケール行列の引数`Sigma`に`w_dd`を指定します。\
+　生成した値をサンプル$\boldsymbol{\Lambda}_n = (\lambda_{1,1,n}, \cdots, \lambda_{D,D, n})$とします。\
+
+　N個のサンプルをデータフレームに格納します。
+
+```{r}
 # サンプルを格納
 data_df <- tidyr::expand_grid(
   n = 1:N, # データ番号
   i = 1:D, # 行インデックス
   j = 1:D  # 列インデックス
-) |> # 全ての組み合わせを作成
+) |> # サンプルごとに成分番号を複製
   #dplyr::filter(i <= j) |> # 重複を削除
   dplyr::group_by(n, i, j) |> # 値の抽出用にグループ化
   dplyr::mutate(
@@ -339,14 +350,24 @@ data_df <- tidyr::expand_grid(
 data_df
 ```
 
+　データ番号(`1`から`N`の整数)と行番号と列番号(それぞれ`1`から`D`の整数)の全ての組み合わせを`expand_grid()`で作成します。これにより、サンプルごとに全ての要素のインデックス(成分番号)を複製できます。\
+　作成したインデックスを使って、`lambda_ddn`から各要素(成分)の値を抽出します。\
+\
 
+
+## 乱数の可視化
+
+　続いて、生成した乱数のグラフを作成します。\
+\
+
+　ウィシャート分布の確率変数$\boldsymbol{\Lambda}$の各成分$\lambda_{i,j}$の期待値と最頻値を計算します。
 
 ```{r}
 # 統計量を計算
 stat_df <- tidyr::expand_grid(
   i = 1:D, # 行インデックス
   j = 1:D  # 列インデックス
-) |> # 全ての組み合わせを作成
+) |> # 成分番号を作成
   #dplyr::filter(i <= j) |> # 重複を削除
   dplyr::group_by(i, j) |> # 値の抽出用にグループ化
   dplyr::mutate(
@@ -366,13 +387,17 @@ stat_df <- tidyr::expand_grid(
 stat_df
 ```
 
+　要素番号(行番号と列番号の全ての組み合わせ)を作成して、要素ごとに期待値$\mathbb{E}[\lambda_{i,j}] = \nu w_{i,j}$と最頻値$\mathrm{mode}[\lambda_{i,j}] = (\nu - D - 1) w_{i,j}$を計算します。ただし、最頻値は$\nu > D + 1$の場合に定義されます。\
+　期待値の列と最頻値の列を`pivot_longer()`でまとめます。\
+
+　逆スケール行列の各成分$w_{i,j}$の値を表示するためのデータフレームを作成します。
 
 ```{r}
 # 逆スケール行列ラベルを作成
 label_df <- tidyr::expand_grid(
   i = 1:D, # 行インデックス
   j = 1:D  # 列インデックス
-) |> # 全ての組み合わせを作成
+) |> # 成分番号を作成
   #dplyr::filter(i <= j) |> # 重複を削除
   dplyr::group_by(i, j) |> # 値の抽出用にグループ化
   dplyr::mutate(
@@ -382,7 +407,9 @@ label_df <- tidyr::expand_grid(
 label_df
 ```
 
+　要素番号(成分番号)を作成して、`w_dd`の各要素の値を抽出し、`expression()`の記法の文字列を作成します。\
 
+　パラメータの値を数式で表示するための文字列を作成します。
 
 ```{r}
 # 凡例用の設定を作成:(数式表示用)
@@ -390,6 +417,9 @@ color_vec <- c(mean = "blue", mode = "chocolate")
 label_vec <- c(mean = expression(E(lambda[ij])), mode = expression(mode(lambda[ij])))
 ```
 
+　ギリシャ文字などの記号を使った数式を表示する場合は、`expression()`の記法を使います。等号は`"=="`、複数の(数式上の)変数を並べるには`"list(変数1, 変数2)"`とします。(プログラム上の)変数の値を使う場合は、`parse()`の`text`引数に指定します。\
+
+　サンプルの成分ごとのヒストグラムを作成します。
 
 ```{r, fig.width=12, fig.height=9}
 # サンプルのヒストグラムを作成
@@ -399,7 +429,7 @@ ggplot() +
   geom_vline(data = stat_df, mapping = aes(xintercept = statistic, color = type), 
              linetype = "dashed") + # 統計量
   geom_label(data = label_df, mapping = aes(x = max(lambda_ddn), y = N*0.01, label = label), 
-             parse = TRUE, vjust = "inward", hjust = "inward", alpha = 0.5) + # パラメータラベル
+             parse = TRUE, hjust = "inward", vjust = "inward", alpha = 0.5) + # パラメータラベル
   facet_grid(i ~ j, labeller = label_bquote(rows = i==.(i), cols = j==.(j))) + # グラフの分割
   scale_color_manual(values = color_vec, labels = label_vec, name = "statistic") + # 線の色:(数式表示用)
   theme(legend.text.align = 0) + # 図の体裁:凡例
@@ -408,4 +438,423 @@ ggplot() +
        x = expression(lambda[ij]), y = "frequency")
 ```
 
+　ヒストグラムは`geom_histgram()`でを描画できます。デフォルト(`y = ..count..`)では、度数のヒストグラムを作成します。集計の範囲については、バーの数の引数`bins`またはバーのサイズの引数`binwidth`を指定します。\
+　`facet_grid()`に`列1 ~ 列2`を指定すると、列1の値に応じて縦方向に、列2の値に応じて横方向にグラフを分割して描画します。\
+
+　($w_{i,j}$が0以外だと最頻値とヒストグラムにズレがあるのですが理由が分かりません。それと、各成分のヒストグラムの形が特徴的ですが、何かの分布だったりするのでしょうか。ガンマ分布っぽい気もしますが、負の値もあるのでそのものではないですね。)\
+\
+
+
+## 乱数と分布の関係をアニメーションで可視化
+
+　次は、サンプルサイズとヒストグラムの形状の関係をアニメーションで確認します。\
+\
+
+　データ数を指定して、サンプルを生成します。
+
+```{r}
+# データ数(フレーム数)を指定
+N <- 150
+
+# ウィシャート分布に従う乱数を生成
+lambda_ddn <- rWishart(n = N, df = nu, Sigma = w_dd)
+lambda_ddn[, , 1:3]
+```
+
+　`lambda_ddn`の`n`番目のマトリクスを、`n`番目のデータ(`n`回目にサンプリングされた値)とみなします。アニメーションの`n`番目のフレームでは、`n`個のサンプル`lambda_ddn[, , 1:n]`のグラフを描画します。\
+
+　サンプルをデータフレームに格納します。
+
+```{r}
+# サンプルを格納
+anime_data_df <- tidyr::expand_grid(
+  n = 1:N, # データ番号
+  i = 1:D, # 行インデックス
+  j = 1:D  # 列インデックス
+) |> # サンプルごとに成分番号を複製
+  dplyr::group_by(n, i, j) |> # 値の抽出用にグループ化
+  dplyr::mutate(
+    frame = n, # フレーム番号
+    lambda = lambda_ddn[i, j, n], # サンプルの値
+    parameter = paste0("D=", D, ", nu=", nu, ", W=(w_11, ..., w_DD)", ", n=", n) |> 
+      factor(levels = paste0("D=", D, ", nu=", nu, ", W=(w_11, ..., w_DD)", ", n=", 1:N)) # フレーム切替用ラベル
+  ) |> # 次元ごとに値を抽出
+  dplyr::ungroup() # グループ化を解除
+anime_data_df
+```
+
+　サンプル`lambda_ddn`の各要素をデータフレームに格納して、フレーム切替用のラベルを作成します。ラベルが文字列型だと文字列の基準で順序が決まるので、因子型にしてサンプリング回数に応じたレベル(順序)を設定します。\
+　このデータフレームは、各試行におけるサンプルを描画するのに使います。\
+
+　サンプリング回数ごとに、それまでのサンプルを持つデータフレームを作成します。
+
+```{r}
+# サンプルを複製して格納
+anime_freq_df <- tidyr::expand_grid(
+  frame = 1:N, # フレーム番号
+  n = 1:N, # データ番号
+  i = 1:D, # 行インデックス
+  j = 1:D  # 列インデックス
+) |> # フレームとサンプルごとに成分番号を複製
+  dplyr::filter(n <= frame) |> # 各試行までのサンプルを抽出
+  dplyr::group_by(frame, n, i, j) |> # 値の抽出用にグループ化
+  dplyr::mutate(
+    lambda = lambda_ddn[i, j, n], # サンプルの値
+    parameter = paste0("D=", D, ", nu=", nu, ", W=(w_11, ..., w_DD)", ", n=", frame) |> 
+      factor(levels = paste0("D=", D, ", nu=", nu, ", W=(w_11, ..., w_DD)", ", n=", 1:N)) # フレーム切替用ラベル
+  ) |> # 次元ごとに値を抽出
+  dplyr::ungroup() # グループ化を解除
+anime_freq_df
+```
+
+　フレーム番号とデータ番号(それぞれ`1`から`N`の整数)また行番号と列番号(それぞれ`1`から`D`の整数)の全ての組み合わせを`expand_grid()`で作成して、フレーム番号以下のデータ番号を抽出します。\
+　データ番号と成分番号をインデックスとして使って、`lambda_ddn`から対応するサンプルの要素を抽出します。\
+　フレーム番号をデータ番号として、フレーム切替用のラベルを作成します。\
+　このデータフレームは、ヒストグラムを描画するのに使います。\
+\
+
+　サンプルの散布図のアニメーション(gif画像)を作成します。
+
+```{r}
+# ヒストグラムのアニメーションを作図
+anime_freq_graph <- ggplot() + 
+  geom_label(data = label_df, mapping = aes(x = max(lambda_ddn), y = N*0.01, label = label), 
+             parse = TRUE, hjust = "inward", vjust = "inward", alpha = 0.5) + # 逆スケール行列ラベル
+  geom_histogram(data = anime_freq_df, mapping = aes(x = lambda, y = ..count..), 
+                 bins = 30, fill = "#00A968") + # n個のサンプル
+  geom_vline(data = stat_df, mapping = aes(xintercept = statistic, color = type), 
+             linetype = "dashed") + # 統計量
+  geom_point(data = anime_data_df, mapping = aes(x = lambda, y = 0), 
+             color = "orange", size = 3) + # n番目のサンプル
+  gganimate::transition_manual(parameter) + # フレーム
+  facet_grid(i ~ j, labeller = label_bquote(rows = i==.(i), cols = j==.(j))) + # グラフの分割
+  scale_color_manual(values = color_vec, labels = label_vec, name = "statistic") + # 線の色:(数式表示用)
+  theme(legend.text.align = 0) + # 図の体裁:凡例
+  labs(title = "Wishart Distribution", 
+       subtitle = "{current_frame}", 
+       x = expression(lambda[ij]), y = "frequency")
+
+# gif画像を作成
+gganimate::animate(anime_freq_graph, nframes = N+10, end_pause = 10, fps = 10, width = 1000, height = 750)
+```
+
+　`transition_manual()`にフレームの順序を表す列を指定します。この例では、因子型のラベルのレベルの順に描画されます。\
+　`animate()`のフレーム数の引数`nframes`にデータ数(サンプルサイズ)、フレームレートの引数`fps`に1秒当たりのフレーム数を指定します。`fps`引数の値が大きいほどフレームが早く切り替わります。ただし、値が大きいと指定した通りに動作しません。\
+\
+
+
+# ウィシャート分布から確率分布の生成
+
+　ウィシャート分布(Wishart Distribution)から多次元ガウス分布(Multivariate Gaussian Distribution)を生成します。多次元ガウス分布・多変量正規分布(Multivariate Normal Distribution)については「分布の定義式」を参照してください。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r, eval=FALSE}
+# 利用パッケージ
+library(tidyverse)
+```
+
+```{r, echo=FALSE}
+### 資料作成用
+
+# チェック用
+library(ggplot2)
+```
+
+　この記事では、基本的に`パッケージ名::関数名()`の記法を使うので、パッケージを読み込む必要はありません。ただし、作図コードがごちゃごちゃしないようにパッケージ名を省略しているため、`ggplot2`は読み込む必要があります。\
+　`magrittr`パッケージのパイプ演算子`%>%`ではなく、ベースパイプ(ネイティブパイプ)演算子`|>`を使っています。`%>%`に置き換えても処理できます。\
+\
+
+
+## 生成分布の設定
+
+　まずは、パラメータの生成分布としてウィシャート分布を設定して、ガウス分布の精度行列(分散共分散行列の逆行列)を生成(サンプリング)します。生成分布を$\mathcal{W}(\boldsymbol{\Lambda}_n | \nu, \mathbf{W})$、生成された分布を$\mathcal{N}(\mathbf{x} | \boldsymbol{\mu}, \boldsymbol{\Lambda}_n^{-1})$で表すことにします。\
+\
+
+　ウィシャート分布(生成分布)のパラメータ$\nu, \mathbf{W}$とサンプルサイズ$N$を設定します。この例では、2次元のグラフで可視化するため、次元数を$D = 2$とします。分布の生成自体は次元数に関わらず行えます。
+
+```{r}
+# 次元数を指定
+D <- 2
+
+# 自由度を指定
+nu <- D + 8
+
+# パラメータを指定
+w_dd <- matrix(c(6, 0.4, 0.4, 11), nrow = D, ncol = D)
+
+# 分布の数(サンプルサイズ)を指定
+N <- 9
+```
+
+　自由度$\nu$、逆スケール行列$\mathbf{W}$とサンプルサイズ$N$を指定します。\
+　自由度は$\nu > D - 1$、逆スケール行列は$D \times D$の正定値行列を満たす必要があります。\
+
+　ウィシャート分布に従う乱数を生成します。
+
+```{r}
+# 多次元ガウス分布の分散共分散行列を生成
+lambda_ddn <- rWishart(n = N, df = nu, Sigma = w_dd)
+lambda_ddn[, , 1:3]
+```
+
+　ウィシャート分布の乱数は、`rWishart()`で生成できます。データ数の引数`n`に`N`、自由度の引数`df`に`nu`、逆スケール行列の引数`Sigma`に`w_dd`を指定します。\
+　生成した値をガウス分布の精度行列$\boldsymbol{\Lambda}_n = (\lambda_{1,1,n}, \cdots, \lambda_{D,D, n})$のN個のサンプル`lambda_ddn`とします。\
+\
+
+
+## 分布の作図：多次元ガウス分布
+
+　次に、生成した値をガウス分布の精度行列として利用します。ガウス分布のグラフ作成については「2次元ガウス分布の作図」、分散共分散行列の固有ベクトルによる軸については「分散共分散行列と固有値・固有ベクトルの関係」や「2次元ガウス分布の作図」の「パラメータと断面図の軸の関係」を参照してください。を参照してください。\
+\
+
+　ガウス分布の平均ベクトル$\boldsymbol{\mu}$を設定します。
+
+```{r}
+# 平均ベクトルを指定
+mu_d <- c(0, 0)
+```
+
+　平均ベクトル$\boldsymbol{\mu} = (\mu_1, \mu_2)$を指定します。全てのサンプルで共通の値とします。\
+
+　ウィシャート分布の期待値の逆行列$\mathbb{E}[\boldsymbol{\Sigma}]$を計算します。
+
+```{r}
+# 分散共分散行列の期待値を計算
+E_sigma_dd <- solve(nu * w_dd)
+E_sigma_dd
+```
+
+　ウィシャート分布の期待値(精度行列$\boldsymbol{\Lambda}$の期待値)$\mathbb{E}[\boldsymbol{\Lambda}] = \nu \mathbf{W}$の逆行列をとり、分散共分散行列の期待値$\mathbb{E}[\boldsymbol{\Sigma}] = (\nu \mathbf{W})^{-1}$を`E_sigma_d`とします。\
+
+　生成された分布の確率変数の値$\mathbf{x}$を作成します。
+
+```{r}
+# xの値を作成
+x_1_vals <- seq(
+  from = mu_d[1] - sqrt(E_sigma_dd[1, 1]) * 3, 
+  to = mu_d[1] + sqrt(E_sigma_dd[1, 1]) * 3, 
+  length.out = 100
+)
+x_2_vals <- seq(
+  from = mu_d[2] - sqrt(E_sigma_dd[2, 2]) * 3, 
+  to = mu_d[2] + sqrt(E_sigma_dd[2, 2]) * 3, 
+  length.out = 100
+)
+
+# xの点を作成
+x_mat <- tidyr::expand_grid(
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # 格子点を作成
+  as.matrix() # マトリクスに変換
+head(x_mat)
+```
+
+　$x_1$(x軸)の値を`x_1_vals`、$x_2$(y軸)の値を`x_2_vals`とします。この例では、それぞれ平均を中心に標準偏差の期待値の3倍を範囲とします。\
+　`x_1_vals`と`x_2_vals`の要素の全ての組み合わせ(格子状の点)を`expand_grid()`で作成します。データフレームが出力されるので、`as.matrix()`でマトリクスに変換して`x_mat`とします。`x_mat`の各行が点$\mathbf{x} = (x_1, x_2)$に対応します。\
+
+　生成分布の期待値(精度行列の期待値)の逆行列$\mathbb{E}[\boldsymbol{\Sigma}]$を用いて、ガウス分布を計算します。
+
+```{r}
+# パラメータの期待値によるガウス分布を計算
+E_gaussian_df <- tibble::tibble(
+  x_1 = x_mat[, 1], # x軸の値
+  x_2 = x_mat[, 2], # y軸の値
+  density = mvnfast::dmvn(X = x_mat, mu = mu_d, sigma = E_sigma_dd) # 確率密度
+)
+E_gaussian_df
+```
+
+　多次元ガウス分布の確率密度は、`mvnfast`パッケージの`dmvn()`で計算できます。確率変数の引数`X`に`x_mat`、平均の引数`mu`に`mu_d`、共分散の引数`sigma`に`E_sigma_dd`を指定します。\
+
+　分散共分散行列の期待値$\mathbb{E}[\boldsymbol{\Sigma}]$の固有値と固有ベクトルを計算します。
+
+```{r}
+# 分散共分散行列の期待値の固有値・固有ベクトルを計算
+res_eigen  <- eigen(E_sigma_dd)
+E_lambda_d <- res_eigen[["values"]]
+E_u_dd     <- res_eigen[["vectors"]] |> 
+  t()
+E_lambda_d; E_u_dd
+```
+
+　固有値$\lambda_1, \lambda_2$と固有ベクトル$\mathbf{u}_1 = (u_{1,1}, u_{1,2}), \mathbf{u}_2 = (u_{2,1}, u_{2,2})$を`eigen()`で計算します。リストが出力されるので、`"values"`で固有値(をまとめたベクトル)、`"vectors"`で固有ベクトル(をまとめたマトリクス)を取り出します。数式での成分と合わせるために転置しておきます。\
+
+　固有値と固有ベクトルを用いて、ガウス分布の断面の軸を計算します。
+
+```{r}
+# パラメータの期待値によるガウス分布の長軸を計算
+E_axis_df <- tibble::tibble(
+  xend = mu_d[1] + E_u_dd[1, 1] * sqrt(E_lambda_d[1]), 
+  yend = mu_d[2] + E_u_dd[1, 2] * sqrt(E_lambda_d[1])
+)
+E_axis_df
+```
+
+　軸番号を$i$、次元を$j$として、軸の先端の点を$\mu_i + u_{j,i} \sqrt{\lambda_j}$で計算します。ここでは、長い方の軸($i = 1$)のデータフレームに格納します。\
+\
+
+　ここまでは、パラメータの期待値による分布に関して計算しました。続いて、パラメータのサンプルごとの分布に関して計算します。\
+
+　パラメータのサンプルごとにガウス分布を計算します。
+
+```{r}
+# パラメータごとにガウス分布を計算
+gaussian_df <- tidyr::expand_grid(
+  n = 1:N, # データ番号
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals 
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(n) |> # 分布の計算用にグループ化
+  dplyr::mutate(
+    density = mvnfast::dmvn(
+      X = x_mat, 
+      mu = mu_d, 
+      sigma = solve(lambda_ddn[, , unique(n)])
+    ), # 確率密度
+    parameter = paste0("(", paste0(round(lambda_ddn[, , unique(n)], 2), collapse = ", "), ")") |> 
+      as.factor() # 色分け用ラべル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+gaussian_df
+```
+
+　パラメータ番号とする`1`から`N`の整数と確率変数`x_1_vals, x_2_vals`の要素の全ての組み合わせを`expand_grid()`を作成します。これにより、サンプルごとに`x_mat`を複製できます。\
+　パラメータ列`n`でグループ化することで、`x_mat`ごとに確率密度を計算できます。\
+　`dmvn()`の`X`引数に`x_mat`、`mu`引数に`mu_d`、`sigma`引数に`lambda_ddn`の値(マトリクス)の逆行列を指定します。\
+
+　パラメータのサンプルごとにガウス分布の断面の軸を計算します。
+
+```{r}
+# パラメータごとに断面図の軸を計算
+axis_df <- tidyr::expand_grid(
+  n = 1:N, # データ番号
+  name = paste0(rep(c("x", "y"), each = 2, times = 2), rep(c("start", "end"), each = 4)) # 列名
+) |> # パラメータごとに受け皿を複製
+  dplyr::group_by(n) |> # 軸の計算用にグループ化
+  dplyr::mutate(
+    axis = rep(c("y_1", "y_2"), times = 4), # pivot_wider用の列
+    mu = rep(mu_d, each = 2, times = 2), # 平均値
+    sign = rep(c(-1, 1), each = 4), # 始点・終点の計算用の符号
+    u = lambda_ddn[, , unique(n)] |> 
+      solve() |> 
+      (\(.){eigen(.)[["vectors"]]})() |> 
+      t() |> 
+      (\(.){rep(as.vector(.), times = 2)})(), # 固有ベクトル
+    lambda = lambda_ddn[, , unique(n)] |> 
+      solve() |> 
+      (\(.){eigen(.)[["values"]]})() |> 
+      (\(.){rep(sqrt(.), times = 4)})(), # 固有値の平方根
+    value = mu + sign * u * lambda, # 軸の始点・終点を計算
+    parameter = paste0("(", paste0(round(lambda_ddn[, , unique(n)], 2), collapse = ", "), ")") |> 
+      as.factor() # 色分け用ラベル
+  ) |> 
+  dplyr::ungroup() |> # グループ化を解除
+  dplyr::select(n, axis, name, value, parameter) |> 
+  tidyr::pivot_wider(
+    id_cols = c(n, axis, parameter), 
+    names_from = name, 
+    values_from = value
+  ) # 軸の視点・終点の列を分割
+axis_df
+```
+
+　上手いことして(もっとスマートな方法を教えて下さい)固有値と固有ベクトルを作成して、断面図の軸を格納したデータフレームを作成します。\
+　先ほどの式で、長軸($i = 1$)と短軸($i = 2$)を計算して、x軸の値の列とy軸の値の列に`pivot_wider()`で分割します。\
+
+　N個のガウス分布のグラフを分割して描画します。
+
+```{r, fig.width=9, fig.height=9}
+# N個のガウス分布を分割して作図
+ggplot() + 
+  geom_contour_filled(data = gaussian_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), 
+                      alpha = 0.8) + # サンプルによる分布
+  geom_segment(data = axis_df, mapping = aes(x = mu_d[1], y = mu_d[2], xend = xend, yend = yend), 
+               color = "pink", size = 1, arrow = arrow(length = unit(10, "pt"))) + # サンプルによる分布の軸
+  facet_wrap(. ~ parameter, labeller = label_bquote(Lambda==.((as.character(parameter))))) + # グラフの分割
+  coord_fixed(ratio = 1) + # アスペクト比
+  labs(title = "Maltivariate Gaussian Distribution", 
+       subtitle = parse(text = paste0("list(nu==", nu, ", W==(list(", paste0(round(w_dd, 2), collapse = ", "), ")))")), 
+       fill = "density", 
+       x = expression(x[1]), y = expression(x[2]))
+```
+
+　`geom_segment()`で断面図の軸(線分)を描画します。線分の始点の引数`x, y`に軸の平均ベクトルの値、終点の引数`xend, yend`に`axis_df`の値を指定すると、期待値の点から伸びる長さ$\sqrt{\lambda_d}$の固有ベクトルを描画します。\
+　`facet_wrap()`に列を指定すると、その列の値ごとにグラフを分割して描画できます。\
+
+　N+1個のガウス分布の楕円を重ねて描画します。
+
+```{r, fig.width=8, fig.height=6}
+# 期待値による分布の確率密度の最大値を計算
+max_dens <- mvnfast::dmvn(X = mu_d, mu = mu_d, sigma = E_sigma_dd)
+
+# N+1個のガウス分布の楕円を作図
+ggplot() + 
+  geom_contour(data = E_gaussian_df, mapping = aes(x = x_1, y = x_2, z = density), 
+               breaks = max_dens*exp(-0.5), color ="red", size = 1, linetype = "dashed") + # 期待値による分布
+  geom_contour(data = gaussian_df, mapping = aes(x = x_1, y = x_2, z = density, color = parameter), 
+               breaks = max_dens*exp(-0.5), alpha = 1) + # サンプルによる分布
+  coord_cartesian(xlim = c(min(x_1_vals), max(x_1_vals)), ylim = c(min(x_2_vals), max(x_2_vals))) + # 描画範囲
+  labs(title = "Maltivariate Gaussian Distribution", 
+       subtitle = parse(text = paste0("list(nu==", nu, ", W==(list(", paste0(round(w_dd, 2), collapse = ", "), ")))")), 
+       color = expression(Lambda), 
+       x = expression(x[1]), y = expression(x[2]))
+```
+
+　`geom_contour()`の`breaks`引数に値を指定すると、その値で等高線を引きます。この例では目安として、期待値による分布の確率密度の最大値の$\exp(-\frac{1}{2})$倍を指定します。z軸(確率密度)がこの値の面で切断すると断面図(等高線)が軸の先端になります。\
+
+　パラメータのサンプルごとにガウス分布の断面の長軸を計算します。
+
+```{r}
+# パラメータごとに断面図の長軸を計算
+axis_df <- tibble::tibble(
+  n = 1:N # データ番号
+) |> 
+  dplyr::group_by(n) |> # 軸の計算用にグループ化
+  dplyr::mutate(
+    lambda_1 = lambda_ddn[, , n] |> 
+      solve() |> 
+      eigen() |> 
+      (\(.){.[["values"]][1]})(), # 固有値
+    u_11 = lambda_ddn[, , n] |> 
+      solve() |> 
+      eigen() |> 
+      (\(.){t(.[["vectors"]])[1, 1]})(), # 固有ベクトルの成分
+    u_12 = lambda_ddn[, , n] |> 
+      solve() |> 
+      eigen() |> 
+      (\(.){t(.[["vectors"]])[1, 2]})(), # 固有ベクトルの成分
+    xend = mu_d[1] + u_11 * sqrt(lambda_1), # 終点のx軸の値
+    yend = mu_d[2] + u_12 * sqrt(lambda_1), # 終点のy軸の値
+    parameter = paste0("(", paste0(round(lambda_ddn[, , n], 2), collapse = ", "), ")") |> 
+      as.factor() # 色分け用ラべル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+axis_df
+```
+
+　重ねて描画すると分かりにくくなるので、こちらは長軸のみを計算します。\
+
+　N+1個のガウス分布の楕円の長軸を重ねて描画します。
+
+```{r, fig.width=8, fig.height=6}
+# N+1個のガウス分布の長軸を作図
+ggplot() + 
+  geom_contour(data = E_gaussian_df, mapping = aes(x = x_1, y = x_2, z = density), 
+               breaks = max_dens*exp(-0.5), color ="red", size = 1, linetype = "dashed") + # 期待値による分布
+  geom_segment(data = E_axis_df, mapping = aes(x = mu_d[1], y = mu_d[2], xend = xend, yend = yend), 
+               color = "red", size = 1, linetype = "dashed", arrow = arrow(length = unit(10, "pt"))) + # 期待値による分布の長軸
+  geom_segment(data = axis_df, mapping = aes(x = mu_d[1], y = mu_d[2], xend = xend, yend = yend, color = parameter), 
+               alpha = 1, arrow = arrow(length = unit(10, "pt"))) + # サンプルによる分布の長軸
+  coord_fixed(ratio = 1, xlim = c(min(x_1_vals), max(x_1_vals)), ylim = c(min(x_2_vals), max(x_2_vals))) + # アスペクト比
+  labs(title = "Maltivariate Gaussian Distribution", 
+       subtitle = parse(text = paste0("list(nu==", nu, ", W==(list(", paste0(round(w_dd, 2), collapse = ", "), ")))")), 
+       color = expression(Lambda), 
+       x = expression(x[1]), y = expression(x[2]))
+```
+
+　概ね、期待値による分布の軸(赤色の破線の線分)と同じ方向を向いているのが分かります。\
+\
 
