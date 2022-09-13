@@ -41,13 +41,13 @@ knitr::opts_chunk$set(
 
 # 多次元ガウス分布の定義式
 
-　多次元ガウス分布(Maltivariate Gaussian Distribution)・多変量正規分布(Maltivariate Normal Distribution)の定義を確認します。\
+　多次元ガウス分布(Multivariate Gaussian Distribution)・多変量正規分布(Multivariate Normal Distribution)の定義を確認します。\
 \
 
 
 ## 定義式
 
-　多次元ガウス分布は、1次元ガウス分布を$D$次元に拡張(一般化)した分布です。2種類のパラメータによる定義式を確認します。\
+　多次元ガウス分布は、1次元ガウス分布を多次元に拡張(一般化)した分布です。2種類のパラメータによる定義式を確認します。1次元ガウス分布については「1次元ガウス分布の定義式」を参照してください。\
 \
 
 　ガウス分布は、パラメータ$\boldsymbol{\mu}, \boldsymbol{\Sigma}$を用いて、次の式で定義されます。
@@ -80,7 +80,7 @@ $$
 \tag{2}
 $$
 
-　ここで、$\boldsymbol{\mu}$は平均ベクトル、$\boldsymbol{\Sigma}$は分散共分散行列、$\boldsymbol{\Lambda}$は精度行列、$\pi$は円周率です。また、$\mathbf{A}^{\top}$は行列$\mathbf{A}$の転置行列、$\mathbf{A}^{-1}$は逆行列、$|\mathbf{A}|$は行列式、ネイピア数$e$による指数関数$e^x = \exp(x)$、平方根$\sqrt{a} = a^{\frac{1}{2}}$です。\
+　ここで、$D$は次元数、$\boldsymbol{\mu}$は平均ベクトル、$\boldsymbol{\Sigma}$は分散共分散行列、$\boldsymbol{\Lambda}$は精度行列、$\pi$は円周率です。また、$\mathbf{A}^{\top}$は行列$\mathbf{A}$の転置行列、$\mathbf{A}^{-1}$は逆行列、$|\mathbf{A}|$は行列式、ネイピア数$e$による指数関数$e^x = \exp(x)$、平方根$\sqrt{a} = a^{\frac{1}{2}}$です。\
 　$\mathbf{x}, \boldsymbol{\mu}$は$D$次元ベクトル、$\boldsymbol{\Sigma}$は$D \times D$の行列です。
 
 $$

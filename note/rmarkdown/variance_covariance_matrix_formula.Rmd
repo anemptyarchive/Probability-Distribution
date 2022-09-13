@@ -1412,7 +1412,7 @@ $$
 
 # 分散共分散行列の固有ベクトルによるガウス分布の回転の導出
 
-　分散共分散行列(Variance–Covariance Matrix)の固有ベクトル(Eigenvector)による多次元ガウス分布(Maltivariate Gaussian Distribution)・多変量正規分布(Maltivariate Normal Distribution)の回転を導出します。\
+　分散共分散行列(Variance–Covariance Matrix)の固有ベクトル(Eigenvector)による多次元ガウス分布(Multivariate Gaussian Distribution)・多変量正規分布(Multivariate Normal Distribution)の回転を導出します。\
 \
 
 

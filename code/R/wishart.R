@@ -327,12 +327,12 @@ gganimate::animate(anime_freq_graph, nframes = N+10, end_pause = 10, fps = 10, w
 D <- 2
 
 # 自由度を指定
-nu <- D + 9
+nu <- D + 8
 
 # パラメータを指定
 w_dd <- diag(D) # 単位行列
 w_dd <- diag(c(10, 11)) # 対角行列
-w_dd <- matrix(c(6, 0.5, 0.5, 10), nrow = D, ncol = D)
+w_dd <- matrix(c(6, 0.4, 0.4, 11), nrow = D, ncol = D)
 
 # 分布の数(サンプルサイズ)を指定
 N <- 9
@@ -380,7 +380,7 @@ E_gaussian_df <- tibble::tibble(
 
 
 # 分散共分散行列の期待値の固有値・固有ベクトルを計算
-res_eigen    <- eigen(E_sigma_dd)
+res_eigen  <- eigen(E_sigma_dd)
 E_lambda_d <- res_eigen[["values"]]
 E_u_dd     <- res_eigen[["vectors"]] |> 
   t()
@@ -452,24 +452,25 @@ ggplot() +
                color = "pink", size = 1, arrow = arrow(length = unit(10, "pt"))) + # サンプルによる分布の軸
   facet_wrap(. ~ parameter, labeller = label_bquote(Lambda==.((as.character(parameter))))) + # グラフの分割
   coord_fixed(ratio = 1) + # アスペクト比
-  labs(title = "Maltivariate Gaussian Distribution", 
-       subtitle = parse(text = paste0("list(nu==", nu, ", W==(list(", paste0(round(w_dd, 2), collapse = ", "), ")))")), 
+  labs(title = "Multivariate Gaussian Distribution", 
+       subtitle = parse(text = paste0("list(nu==", nu, ", W==(list(", paste0(round(w_dd, 2), collapse = ", "), ")), N==", N, ")")), 
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
 
 
 # 期待値による分布の確率密度の最大値を計算
 max_dens <- mvnfast::dmvn(X = mu_d, mu = mu_d, sigma = E_sigma_dd)
-max_dens <- 30
+
 # N+1個のガウス分布の楕円を作図
 ggplot() + 
   geom_contour(data = E_gaussian_df, mapping = aes(x = x_1, y = x_2, z = density), 
-               breaks = max_dens*exp(-0.5), color ="red", linetype = "dashed") + # 期待値による分布
+               breaks = max_dens*exp(-0.5), color ="red", size = 1, linetype = "dashed") + # 期待値による分布
   geom_contour(data = gaussian_df, mapping = aes(x = x_1, y = x_2, z = density, color = parameter), 
                breaks = max_dens*exp(-0.5), alpha = 1) + # サンプルによる分布
   coord_cartesian(xlim = c(min(x_1_vals), max(x_1_vals)), ylim = c(min(x_2_vals), max(x_2_vals))) + # 描画範囲
-  labs(title = "Maltivariate Gaussian Distribution", 
-       subtitle = parse(text = paste0("list(nu==", nu, ", W==(list(", paste0(round(w_dd, 2), collapse = ", "), ")))")), 
+  labs(title = "Multivariate Gaussian Distribution", 
+       subtitle = parse(text = paste0("list(nu==", nu, ", W==(list(", paste0(round(w_dd, 2), collapse = ", "), "))", 
+                                      ", N==", N, ", dens==", round(max_dens*exp(-0.5), 2), ")")), 
        color = expression(Lambda), 
        x = expression(x[1]), y = expression(x[2]))
 
@@ -508,8 +509,8 @@ ggplot() +
   geom_segment(data = axis_df, mapping = aes(x = mu_d[1], y = mu_d[2], xend = xend, yend = yend, color = parameter), 
                alpha = 1, arrow = arrow(length = unit(10, "pt"))) + # サンプルによる分布の長軸
   coord_fixed(ratio = 1, xlim = c(min(x_1_vals), max(x_1_vals)), ylim = c(min(x_2_vals), max(x_2_vals))) + # アスペクト比
-  labs(title = "Maltivariate Gaussian Distribution", 
-       subtitle = parse(text = paste0("list(nu==", nu, ", W==(list(", paste0(round(w_dd, 2), collapse = ", "), ")))")), 
+  labs(title = "Multivariate Gaussian Distribution", 
+       subtitle = parse(text = paste0("list(nu==", nu, ", W==(list(", paste0(round(w_dd, 2), collapse = ", "), ")), N==", N, ")")), 
        color = expression(Lambda), 
        x = expression(x[1]), y = expression(x[2]))
 

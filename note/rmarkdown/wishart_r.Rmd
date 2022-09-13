@@ -543,6 +543,9 @@ gganimate::animate(anime_freq_graph, nframes = N+10, end_pause = 10, fps = 10, w
 　`animate()`のフレーム数の引数`nframes`にデータ数(サンプルサイズ)、フレームレートの引数`fps`に1秒当たりのフレーム数を指定します。`fps`引数の値が大きいほどフレームが早く切り替わります。ただし、値が大きいと指定した通りに動作しません。\
 \
 
+　この記事では、ウィシャート分布の乱数を生成しました。次は、多次元ガウス分布を生成しました。\
+\
+
 
 # ウィシャート分布から確率分布の生成
 
@@ -776,8 +779,8 @@ ggplot() +
                color = "pink", size = 1, arrow = arrow(length = unit(10, "pt"))) + # サンプルによる分布の軸
   facet_wrap(. ~ parameter, labeller = label_bquote(Lambda==.((as.character(parameter))))) + # グラフの分割
   coord_fixed(ratio = 1) + # アスペクト比
-  labs(title = "Maltivariate Gaussian Distribution", 
-       subtitle = parse(text = paste0("list(nu==", nu, ", W==(list(", paste0(round(w_dd, 2), collapse = ", "), ")))")), 
+  labs(title = "Multivariate Gaussian Distribution", 
+       subtitle = parse(text = paste0("list(nu==", nu, ", W==(list(", paste0(round(w_dd, 2), collapse = ", "), ")), N==", N, ")")), 
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
 ```
@@ -798,13 +801,14 @@ ggplot() +
   geom_contour(data = gaussian_df, mapping = aes(x = x_1, y = x_2, z = density, color = parameter), 
                breaks = max_dens*exp(-0.5), alpha = 1) + # サンプルによる分布
   coord_cartesian(xlim = c(min(x_1_vals), max(x_1_vals)), ylim = c(min(x_2_vals), max(x_2_vals))) + # 描画範囲
-  labs(title = "Maltivariate Gaussian Distribution", 
-       subtitle = parse(text = paste0("list(nu==", nu, ", W==(list(", paste0(round(w_dd, 2), collapse = ", "), ")))")), 
+  labs(title = "Multivariate Gaussian Distribution", 
+       subtitle = parse(text = paste0("list(nu==", nu, ", W==(list(", paste0(round(w_dd, 2), collapse = ", "), "))", 
+                                      ", N==", N, ", dens==", round(max_dens*exp(-0.5), 2), ")")), 
        color = expression(Lambda), 
        x = expression(x[1]), y = expression(x[2]))
 ```
 
-　`geom_contour()`の`breaks`引数に値を指定すると、その値で等高線を引きます。この例では目安として、期待値による分布の確率密度の最大値の$\exp(-\frac{1}{2})$倍を指定します。z軸(確率密度)がこの値の面で切断すると断面図(等高線)が軸の先端になります。\
+　`geom_contour()`の`breaks`引数に値を指定すると、その値で等高線を引きます。この例では目安として、期待値による分布の確率密度の最大値の$\exp(-\frac{1}{2})$倍を指定します。z軸(確率密度)がこの値の面で切断すると断面図(等高線)が軸の先端になります。指定した値を含まない分布の場合は描画されません。\
 
 　パラメータのサンプルごとにガウス分布の断面の長軸を計算します。
 
@@ -850,13 +854,16 @@ ggplot() +
   geom_segment(data = axis_df, mapping = aes(x = mu_d[1], y = mu_d[2], xend = xend, yend = yend, color = parameter), 
                alpha = 1, arrow = arrow(length = unit(10, "pt"))) + # サンプルによる分布の長軸
   coord_fixed(ratio = 1, xlim = c(min(x_1_vals), max(x_1_vals)), ylim = c(min(x_2_vals), max(x_2_vals))) + # アスペクト比
-  labs(title = "Maltivariate Gaussian Distribution", 
-       subtitle = parse(text = paste0("list(nu==", nu, ", W==(list(", paste0(round(w_dd, 2), collapse = ", "), ")))")), 
+  labs(title = "Multivariate Gaussian Distribution", 
+       subtitle = parse(text = paste0("list(nu==", nu, ", W==(list(", paste0(round(w_dd, 2), collapse = ", "), ")), N==", N, ")")), 
        color = expression(Lambda), 
        x = expression(x[1]), y = expression(x[2]))
 ```
 
-　概ね、期待値による分布の軸(赤色の破線の線分)と同じ方向を向いているのが分かります。\
+　概ね、期待値による分布の軸(赤色の破線の線分)と同じ方向を指しているのが分かります。\
+\
+
+　この記事では、ウィシャート分布から多次元ガウス分布を生成しました。次は、乱数を用いたマハラノビス距離により可視化します。\
 \
 
 

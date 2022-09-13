@@ -29,7 +29,7 @@ knitr::opts_chunk$set(
 
 # 多次元ガウス分布の計算
 
-　多次元ガウス分布(Maltivariate Gaussian Distribution)・多変量正規分布(Maltivariate Normal Distribution)の確率密度を計算します。多次元ガウス分布については「分布の定義式」を参照してください。\
+　多次元ガウス分布(Multivariate Gaussian Distribution)・多変量正規分布(Multivariate Normal Distribution)の確率密度を計算します。多次元ガウス分布については「分布の定義式」を参照してください。\
 \
 
 　利用するパッケージを読み込みます。
@@ -189,7 +189,7 @@ $$
 \
 
 
-#### ガウス分布の関数による計算
+#### 関数で計算
 
 　`mvnfast`パッケージの多次元ガウス分布の確率密度関数`dmvn()`で計算します。
 
@@ -324,7 +324,7 @@ $$
 \
 
 
-#### ガウス分布の関数による計算
+#### 関数で計算
 
 　ガウス分布の確率密度関数`dmvn()`で計算します。
 
@@ -522,7 +522,7 @@ ggplot() +
   geom_contour(data = dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 等高線
   #geom_contour_filled(data = dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), alpha = 0.8) + # 塗りつぶし等高線
   labs(
-    title ="Maltivariate Gaussian Distribution", 
+    title ="Bivariate Gaussian Distribution", 
     subtitle = paste0("mu=(", paste0(mu_d, collapse = ', '), "), Sigma=(", paste0(sigma_dd, collapse = ', '), ")"), # (文字列表記用)
     #subtitle = parse(text = formula_text), # (数式表示用)
     color = "density", # (等高線用)
@@ -539,7 +539,7 @@ ggplot() +
   #geom_contour(data = dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 等高線
   geom_contour_filled(data = dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), alpha = 0.8) + # 塗りつぶし等高線
   labs(
-    title ="Maltivariate Gaussian Distribution", 
+    title ="Bivariate Gaussian Distribution", 
     subtitle = paste0("mu=(", paste0(mu_d, collapse = ', '), "), Sigma=(", paste0(sigma_dd, collapse = ', '), ")"), # (文字列表記用)
     #subtitle = parse(text = formula_text), # (数式表示用)
     color = "density", # (等高線用)
@@ -561,7 +561,7 @@ ggplot() +
   #scale_fill_gradientn(colors = c("blue", "green", "yellow", "red")) + # タイルの色
   #scale_color_gradientn(colors = c("blue", "green", "yellow", "red")) + # 枠線の色
   labs(
-    title ="Maltivariate Gaussian Distribution", 
+    title ="Bivariate Gaussian Distribution", 
     #subtitle = paste0("mu=(", paste0(mu_d, collapse = ', '), "), Sigma=(", paste0(sigma_dd, collapse = ', '), ")"), # (文字列表記用)
     subtitle = parse(text = formula_text), # (数式表記用)
     fill = "density", color = "density", 
@@ -580,7 +580,7 @@ ggplot() +
   scale_fill_gradientn(colors = c("blue", "green", "yellow", "red")) + # タイルの色
   scale_color_gradientn(colors = c("blue", "green", "yellow", "red")) + # 枠線の色
   labs(
-    title ="Maltivariate Gaussian Distribution", 
+    title ="Bivariate Gaussian Distribution", 
     #subtitle = paste0("mu=(", paste0(mu_d, collapse = ', '), "), Sigma=(", paste0(sigma_dd, collapse = ', '), ")"), # (文字列表記用)
     subtitle = parse(text = formula_text), # (数式表記用)
     fill = "density", color = "density", 
@@ -708,7 +708,7 @@ ggplot() +
   #geom_label(mapping = aes(x = min(x_1_vals), y = max(x_2_vals), label = eigen_text), 
   #           parse = TRUE, hjust = 0, vjust = 0) + # 固有値・固有ベクトルラベル:(塗りつぶし等高線用)
   coord_fixed(ratio = 1) + # アスペクト比
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = parse(text = formula_text), 
        color = "density", fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -733,7 +733,7 @@ ggplot() +
   geom_label(mapping = aes(x = min(x_1_vals), y = max(x_2_vals), label = eigen_text), 
              parse = TRUE, hjust = 0, vjust = 0) + # 固有値・固有ベクトルラベル:(塗りつぶし等高線用)
   coord_fixed(ratio = 1) + # アスペクト比
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = parse(text = formula_text), 
        color = "density", fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -820,7 +820,7 @@ anime_dens_graph <- ggplot() +
   #geom_contour(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 等高線
   geom_contour_filled(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), alpha = 0.8) + # 塗りつぶし等高線
   gganimate::transition_manual(parameter) + # フレーム
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        color = "density", fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -840,7 +840,7 @@ anime_dens_graph <- ggplot() +
   geom_tile(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, fill = density), alpha = 0.8) + # ヒートマップ
   gganimate::transition_manual(parameter) + # フレーム
   scale_fill_viridis_c(option = "D") + # 等高線の色
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -922,7 +922,7 @@ anime_dens_graph <- ggplot() +
   #geom_contour(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 等高線
   geom_contour_filled(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), alpha = 0.8) + # 塗りつぶし等高線
   gganimate::transition_manual(parameter) + # フレーム
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        color = "density", fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -939,7 +939,7 @@ anime_dens_graph <- ggplot() +
   geom_tile(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, fill = density), alpha = 0.8) + # ヒートマップ
   gganimate::transition_manual(parameter) + # フレーム
   scale_fill_viridis_c(option = "D") + # 等高線の色
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -1023,7 +1023,7 @@ anime_dens_graph <- ggplot() +
   #geom_contour(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 等高線
   geom_contour_filled(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), alpha = 0.8) + # 塗りつぶし等高線
   gganimate::transition_manual(parameter) + # フレーム
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        color = "density", fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -1040,7 +1040,7 @@ anime_dens_graph <- ggplot() +
   geom_tile(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, fill = density), alpha = 0.8) + # ヒートマップ
   gganimate::transition_manual(parameter) + # フレーム
   scale_fill_viridis_c(option = "D") + # 等高線の色
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -1125,7 +1125,7 @@ anime_dens_graph <- ggplot() +
   #geom_contour(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 等高線
   geom_contour_filled(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), alpha = 0.8) + # 塗りつぶし等高線
   gganimate::transition_manual(parameter) + # フレーム
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        color = "density", fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -1142,7 +1142,7 @@ anime_dens_graph <- ggplot() +
   geom_tile(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, fill = density), alpha = 0.8) + # ヒートマップ
   gganimate::transition_manual(parameter) + # フレーム
   scale_fill_viridis_c(option = "D") + # 等高線の色
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -1227,7 +1227,7 @@ anime_dens_graph <- ggplot() +
   #geom_contour(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 等高線
   geom_contour_filled(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), alpha = 0.8) + # 塗りつぶし等高線
   gganimate::transition_manual(parameter) + # フレーム
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        color = "density", fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -1244,7 +1244,7 @@ anime_dens_graph <- ggplot() +
   geom_tile(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, fill = density), alpha = 0.8) + # ヒートマップ
   gganimate::transition_manual(parameter) + # フレーム
   scale_fill_viridis_c(option = "D") + # 等高線の色
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -1330,7 +1330,7 @@ anime_dens_graph <- ggplot() +
   #geom_contour(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 等高線
   geom_contour_filled(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), alpha = 0.8) + # 塗りつぶし等高線
   gganimate::transition_manual(parameter) + # フレーム
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        color = "density", fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -1347,7 +1347,7 @@ anime_dens_graph <- ggplot() +
   geom_tile(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, fill = density), alpha = 0.8) + # ヒートマップ
   gganimate::transition_manual(parameter) + # フレーム
   scale_fill_viridis_c(option = "D") + # 等高線の色
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -1429,7 +1429,7 @@ anime_dens_graph <- ggplot() +
   #geom_contour(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 等高線
   geom_contour_filled(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), alpha = 0.8) + # 塗りつぶし等高線
   gganimate::transition_manual(parameter) + # フレーム
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        color = "density", fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -1446,7 +1446,7 @@ anime_dens_graph <- ggplot() +
   geom_tile(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, fill = density), alpha = 0.8) + # ヒートマップ
   gganimate::transition_manual(parameter) + # フレーム
   scale_fill_viridis_c(option = "D") + # 等高線の色
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -1597,7 +1597,7 @@ anime_eigen_graph <- ggplot() +
   #             color = "blue", size = 1, arrow = arrow()) + # 断面の軸:サイズが固有値の倍の固有ベクトル
   gganimate::transition_manual(parameter) + # フレーム
   coord_fixed(ratio = 1) + # アスペクト比
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -1621,7 +1621,7 @@ anime_eigen_graph <- ggplot() +
                color = "blue", size = 1, arrow = arrow()) + # 断面の軸:サイズが固有値の倍の固有ベクトル
   gganimate::transition_manual(parameter) + # フレーム
   coord_fixed(ratio = 1) + # アスペクト比
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -1765,7 +1765,7 @@ anime_eigen_graph <- ggplot() +
   #             color = "blue", size = 1, arrow = arrow()) + # 断面の軸:サイズが固有値の倍の固有ベクトル
   gganimate::transition_manual(parameter) + # フレーム
   coord_fixed(ratio = 1) + # アスペクト比
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -1789,7 +1789,7 @@ anime_eigen_graph <- ggplot() +
                color = "blue", size = 1, arrow = arrow()) + # 断面の軸:サイズが固有値の倍の固有ベクトル
   gganimate::transition_manual(parameter) + # フレーム
   coord_fixed(ratio = 1) + # アスペクト比
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -1937,7 +1937,7 @@ anime_eigen_graph <- ggplot() +
   #             color = "blue", size = 1, arrow = arrow()) + # 断面の軸:サイズが固有値の倍の固有ベクトル
   gganimate::transition_manual(parameter) + # フレーム
   coord_fixed(ratio = 1) + # アスペクト比
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -1961,7 +1961,7 @@ anime_eigen_graph <- ggplot() +
                color = "blue", size = 1, arrow = arrow()) + # 断面の軸:サイズが固有値の倍の固有ベクトル
   gganimate::transition_manual(parameter) + # フレーム
   coord_fixed(ratio = 1) + # アスペクト比
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -2102,7 +2102,7 @@ anime_eigen_graph <- ggplot() +
   #             color = "blue", size = 1, arrow = arrow()) + # 断面の軸:サイズが固有値の倍の固有ベクトル
   gganimate::transition_manual(parameter) + # フレーム
   coord_fixed(ratio = 1) + # アスペクト比
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -2126,7 +2126,7 @@ anime_eigen_graph <- ggplot() +
                color = "blue", size = 1, arrow = arrow()) + # 断面の軸:サイズが固有値の倍の固有ベクトル
   gganimate::transition_manual(parameter) + # フレーム
   coord_fixed(ratio = 1) + # アスペクト比
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Bivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -2140,7 +2140,7 @@ gganimate::animate(anime_eigen_graph, nframes = frame_num, fps = 10, width = 800
 
 # 多次元ガウス分布の乱数生成
 
-　多次元ガウス分布(Maltivariate Gaussian Distribution)・多変量正規分布(Maltivariate Normal Distribution)の乱数を生成します。多次元ガウス分布については「分布の定義式」を参照してください。\
+　多次元ガウス分布(Multivariate Gaussian Distribution)・多変量正規分布(Multivariate Normal Distribution)の乱数を生成します。多次元ガウス分布については「分布の定義式」を参照してください。\
 \
 
 　利用するパッケージを読み込みます。
@@ -2261,7 +2261,7 @@ ggplot() +
   geom_point(data = data_df, mapping = aes(x = x_1, y = x_2), 
              color = "orange", alpha = 0.3) + # サンプル
   geom_contour(data = dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 元の分布
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Multivariate Gaussian Distribution", 
        subtitle = parse(text = math_text), 
        color = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -2279,7 +2279,7 @@ ggplot() +
   geom_contour(data = dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 元の分布
   scale_fill_distiller(palette = "Spectral") + # 塗りつぶしの色
   scale_color_distiller(palette = "Spectral") + # 等高線の色
-  labs(title = "Maltivariate Gaussian Distribution", 
+  labs(title = "Multivariate Gaussian Distribution", 
        subtitle = parse(text = math_text), 
        fill = "frequency", color = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -2296,7 +2296,7 @@ ggplot() +
                          alpha = 0.8) + # サンプル
   geom_contour(data = dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 元の分布
   scale_color_viridis_c(option = "D") + # 等高線の色
-  labs(title = "Maltivariate Gaussian Distribution", 
+  labs(title = "Multivariate Gaussian Distribution", 
        subtitle = parse(text = math_text), 
        fill = "density", color = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -2384,7 +2384,7 @@ anime_freq_graph <- ggplot() +
   geom_point(data = anime_data_df, mapping = aes(x = x_1, y = x_2), 
              color = "orange", size = 6) + # n番目のサンプル
   gganimate::transition_manual(parameter) + # フレーム
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Multivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        color = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -2414,7 +2414,7 @@ anime_freq_graph <- ggplot() +
   gganimate::transition_manual(parameter) + # フレーム
   scale_fill_distiller(palette = "Spectral") + # 塗りつぶしの色
   scale_color_distiller(palette = "Spectral") + # 等高線の色
-  labs(title = "Maltivariate Gaussian Distribution", 
+  labs(title = "Multivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        fill = "frequency", color = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -2456,7 +2456,7 @@ anime_freq_graph <- ggplot() +
              color = "orange", size = 6) + # n番目のサンプル
   gganimate::transition_manual(parameter) + # フレーム
   scale_color_viridis_c(option = "D") + # 等高線の色
-  labs(title = "Maltivariate Gaussian Distribution", 
+  labs(title = "Multivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        fill = "density", color = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -2523,7 +2523,7 @@ anime_freq_graph <- ggplot() +
              color = "orange", alpha = 0.3, size = 3) + # サンプル
   geom_contour(data = dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 元の分布
   gganimate::transition_manual(parameter) + # フレーム
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Multivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        color = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -2550,7 +2550,7 @@ anime_freq_graph <- ggplot() +
   gganimate::transition_manual(parameter) + # フレーム
   scale_fill_distiller(palette = "Spectral") + # 塗りつぶしの色
   scale_color_distiller(palette = "Spectral") + # 等高線の色
-  labs(title = "Maltivariate Gaussian Distribution", 
+  labs(title = "Multivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        fill = "frequency", color = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -2571,7 +2571,7 @@ anime_freq_graph <- ggplot() +
   geom_contour(data = dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 元の分布
   gganimate::transition_manual(parameter) + # フレーム
   scale_color_viridis_c(option = "D") + # 等高線の色
-  labs(title = "Maltivariate Gaussian Distribution", 
+  labs(title = "Multivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        fill = "density", color = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -2589,7 +2589,7 @@ gganimate::animate(anime_freq_graph, nframes = frame_num+10, end_pause = 10, fps
 
 # 多次元ガウス分布から確率分布の生成
 
-　多次元ガウス分布(Maltivariate Gaussian Distribution)・多変量正規分布(Maltivariate Normal Distribution)から多次元ガウス分布を生成します。多次元ガウス分布については「分布の定義式」を参照してください。\
+　多次元ガウス分布(Multivariate Gaussian Distribution)・多変量正規分布(Multivariate Normal Distribution)から多次元ガウス分布を生成します。多次元ガウス分布については「分布の定義式」を参照してください。\
 \
 
 　利用するパッケージを読み込みます。
@@ -2736,7 +2736,7 @@ gaussian_generator_graph <- ggplot() +
              color = "red", size = 6, shape = 4) + # パラメータの期待値
   geom_point(data = param_df, mapping = aes(x = mu_1, y = mu_2, color = parameter), 
              alpha = 0.8, size = 6) + # パラメータのサンプル
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Multivariate Gaussian Distribution", 
        subtitle = parse(text = generator_param_text), 
        color = expression(mu), fill = "density", 
        x = expression(mu[1]), y = expression(mu[2]))
@@ -2854,7 +2854,7 @@ gaussian_sample_graph <- ggplot() +
              size = 6, shape = 4, show.legend = FALSE) + # サンプルによる分布の期待値
   facet_wrap(. ~ parameter, dir = "v", labeller = label_bquote(mu==.((as.character(parameter))))) + # グラフの分割
   coord_cartesian(xlim = c(min(mu_1_vals), max(mu_1_vals)), ylim = c(min(mu_2_vals), max(mu_2_vals))) + # 軸の表示範囲
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Multivariate Gaussian Distribution", 
        subtitle = parse(text = sample_param_text), 
        color = expression(mu), fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -2914,7 +2914,7 @@ gaussian_sample_graph <- ggplot() +
   geom_point(data = param_df, mapping = aes(x = mu_1, y = mu_2, color = parameter), 
              size = 6, shape = 4, show.legend = FALSE) + # サンプルによる分布の期待値
   coord_cartesian(xlim = c(min(mu_1_vals), max(mu_1_vals)), ylim = c(min(mu_2_vals), max(mu_2_vals))) + # 軸の表示範囲
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Multivariate Gaussian Distribution", 
        subtitle = parse(text = sample_param_text), 
        color = expression(mu), 
        x = expression(x[1]), y = expression(x[2]))

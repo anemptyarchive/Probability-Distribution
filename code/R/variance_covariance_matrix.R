@@ -228,7 +228,7 @@ ggplot() +
   scale_linetype_manual(breaks = c("ed", "md"), values = c("solid", "solid"), 
                         labels = c("euclidean", "mahalanobis"), name = "distance") + # (凡例表示用の黒魔術)
   guides(linetype = guide_legend(override.aes = list(color = c("pink", "skyblue")))) + # (凡例表示用の黒魔術)
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Multivariate Gaussian Distribution", 
        subtitle = parse(text = math_text), # (数式表示用)
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -266,7 +266,7 @@ ggplot() +
   scale_linetype_manual(breaks = c("ed", "md"), values = c("solid", "solid"), 
                         labels = c("euclidean", "mahalanobis"), name = "distance") + # (凡例表示用の黒魔術)
   guides(linetype = guide_legend(override.aes = list(color = c("pink", "skyblue")))) + # (凡例表示用の黒魔術)
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Multivariate Gaussian Distribution", 
        subtitle = parse(text = math_text), 
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -523,7 +523,7 @@ anime_dist_graph <- ggplot() +
   gganimate::transition_manual(parameter) + # フレーム
   coord_fixed(ratio = 1) + # アスペクト比
   scale_color_manual(breaks = c("euclidean", "mahalanobis"), values = c("pink", "skyblue"), name = "distance") + # 線の色
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Multivariate Gaussian Distribution", 
        subtitle = "{current_frame}", 
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -796,7 +796,7 @@ dens_x_graph <- ggplot() +
   geom_point(data = data_x_df, mapping = aes(x = x_1, y = x_2, color = n), 
              alpha = 0.8, size = 5, show.legend = FALSE) + # サンプル
   coord_fixed(ratio = 1) + # アスペクト比
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Multivariate Gaussian Distribution", 
        subtitle = parse(text = param_x_text), 
        fill = "density", 
        x = expression(x[1]), y = expression(x[2]))
@@ -880,7 +880,7 @@ dens_y_graph <- ggplot() +
   geom_point(data = data_y_df, mapping = aes(x = y_1, y = y_2, color = n), 
              alpha = 0.8, size = 5, show.legend = FALSE) + 
   coord_fixed(ratio = 1) + # アスペクト比
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Multivariate Gaussian Distribution", 
        subtitle = parse(text = param_y_text), 
        fill = "density", 
        x = expression(y[1]), y = expression(y[2]))
@@ -967,7 +967,7 @@ dens_y_graph <- ggplot() +
   geom_point(data = data_y_df, mapping = aes(x = y_1, y = y_2, color = n), 
              alpha = 0.8, size = 5, show.legend = FALSE) + 
   coord_fixed(ratio = 1) + # アスペクト比
-  labs(title ="Maltivariate Gaussian Distribution", 
+  labs(title ="Multivariate Gaussian Distribution", 
        subtitle = parse(text = param_y_text), 
        fill = "density", 
        x = expression(y[1]), y = expression(y[2]))
