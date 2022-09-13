@@ -22,6 +22,7 @@ knitr::opts_chunk$set(
 
 - 2022/09/06：「分布の計算」を追加
 - 2022/09/09：「乱数の生成」と「確率分布の生成」を追加
+- 2022/09/12：「分布の可視化」を追加
 
 ----
 
@@ -317,7 +318,7 @@ w_dd <- c(
 N <- 5000
 ```
 
-　自由度$\nu$と逆スケール行列$\mathbf{W}$とデータ数(サンプルサイズ)$N$を指定します。\
+　次元数$D$と自由度$\nu$、逆スケール行列$\mathbf{W}$、またデータ数(サンプルサイズ)$N$を指定します。\
 　自由度は$\nu > D - 1$、逆スケール行列は$D \times D$の正定値行列を満たす必要があります。設定した値に従う確率密度を計算します。\
 \
 
@@ -857,4 +858,1279 @@ ggplot() +
 
 　概ね、期待値による分布の軸(赤色の破線の線分)と同じ方向を向いているのが分かります。\
 \
+
+
+# ウィシャート分布の可視化
+
+　ウィシャート分布(Wishart Distribution)の確率密度をグラフで表現するのは難しいので、期待値と乱数を用いたマハラノビス距離(Mahalanobis Distance)のグラフにより可視化します。ウィシャート分布については「分布の定義式」、マハラノビス距離については「分散共分散行列とユークリッド距離・マハラノビス距離の関係」、固有ベクトルについては「分散共分散行列と固有値・固有ベクトルの関係」、楕円の軸については「2次元ガウス分布の作図」を参照してください。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r, eval=FALSE}
+# 利用パッケージ
+library(tidyverse)
+library(gganimate)
+```
+
+```{r, echo=FALSE}
+### 資料作成用
+
+# チェック用
+library(ggplot2)
+```
+
+　この記事では、基本的に`パッケージ名::関数名()`の記法を使うので、パッケージを読み込む必要はありません。ただし、作図コードがごちゃごちゃしないようにパッケージ名を省略しているため、`ggplot2`は読み込む必要があります。\
+　`magrittr`パッケージのパイプ演算子`%>%`ではなく、ベースパイプ(ネイティブパイプ)演算子`|>`を使っています。`%>%`に置き換えても処理できます。\
+　分布の変化をアニメーション(gif画像)で確認するのに`gganimate`パッケージを利用します。不要であれば省略してください。\
+\
+
+
+## 期待値による距離と軸の計算
+
+　まずは、ウィシャート分布のパラメータを設定して、分散共分散行列(確率変数の逆行列)の期待値によるマハラノビス距離の楕円と軸を計算します。\
+\
+
+　ウィシャート分布のパラメータ$\nu, \mathbf{W}$とサンプルサイズ$N$を設定します。この例では、2次元のグラフで描画するため、次元数を$D = 2$とします。
+
+```{r}
+# 次元数を指定
+D <- 2
+
+# 自由度を指定
+nu <- D + 8
+
+# 逆スケール行列を指定
+w_dd <- matrix(c(5, 0.6, 0.6, 12), nrow = D, ncol = D)
+
+# パラメータの数(サンプルサイズ)を指定
+N <- 100
+```
+
+　自由度$\nu$と逆スケール行列$\mathbf{W}$、サンプルサイズ$N$を指定します。\
+　自由度は$\nu > D - 1$、逆スケール行列は$D \times D$の正定値行列を満たす必要があります。\
+
+　分散共分散行列の期待値$\mathbb{E}[\boldsymbol{\Sigma}]$を計算します。
+
+```{r}
+# 分散共分散行列の期待値を計算
+E_sigma_dd <- solve(nu * w_dd)
+E_sigma_dd
+```
+
+　ウィシャート分布の期待値(精度行列$\boldsymbol{\Lambda}$の期待値)$\mathbb{E}[\boldsymbol{\Lambda}] = \nu \mathbf{W}$の逆行列をとり、分散共分散行列の期待値$\mathbb{E}[\boldsymbol{\Sigma}] = (\nu \mathbf{W})^{-1}$を求めます。\
+
+　分散共分散行列に対応する変数の値$\mathbf{x}$を作成します。
+
+```{r}
+# xの値を作成
+x_1_vals <- seq(
+  from = - sqrt(E_sigma_dd[1, 1]) * 3, 
+  to = sqrt(E_sigma_dd[1, 1]) * 3, 
+  length.out = 100
+)
+x_2_vals <- seq(
+  from = - sqrt(E_sigma_dd[2, 2]) * 3, 
+  to = sqrt(E_sigma_dd[2, 2]) * 3, 
+  length.out = 100
+)
+
+# xの点を作成
+x_mat <- tidyr::expand_grid(
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # 格子点を作成
+  as.matrix() # マトリクスに変換
+head(x_mat)
+```
+
+　$x_1$(x軸)の値を`x_1_vals`、$x_2$(y軸)の値を`x_2_vals`とします。この例では、それぞれ平均を中心に標準偏差の期待値の3倍を範囲とします。\
+　`x_1_vals`と`x_2_vals`の要素の全ての組み合わせ(格子状の点)を`expand_grid()`で作成します。データフレームが出力されるので、`as.matrix()`でマトリクスに変換して`x_mat`とします。`x_mat`の各行が点$\mathbf{x} = (x_1, x_2)$に対応します。\
+
+　分散共分散行列の期待値$\mathbb{E}[\boldsymbol{\Sigma}]$によるマハラノビス距離を計算します。
+
+```{r}
+# 期待値によるマハラノビス距離(楕円)を計算
+E_delta_df <- tibble::tibble(
+  x_1 = x_mat[, 1], # x軸の値
+  x_2 = x_mat[, 2], # y軸の値
+  delta = mahalanobis(x = x_mat, center = 0, cov = E_sigma_dd) |> 
+    sqrt() # マハラノビス距離
+)
+E_delta_df
+```
+
+　マハラノビス距離は、`mahalanobis()`で計算できます。変数の引数`X`に`x_mat`、平均ベクトルの引数`center`に`0`(または`c(0, 0)`)、分散共分散行列の引数`cov`に`E_sigma_dd`を指定します。\
+
+　分散共分散行列の期待値$\mathbb{E}[\boldsymbol{\Sigma}]$の固有値と固有ベクトルを計算します。
+
+```{r}
+# 期待値の固有値・固有ベクトルを計算
+res_eigen  <- eigen(E_sigma_dd)
+E_lambda_d <- res_eigen[["values"]]
+E_u_dd     <- res_eigen[["vectors"]] |> 
+  t()
+E_lambda_d; E_u_dd
+```
+
+　固有値$\lambda_1, \lambda_2$と固有ベクトル$\mathbf{u}_1 = (u_{1,1}, u_{1,2}), \mathbf{u}_2 = (u_{2,1}, u_{2,2})$を`eigen()`で計算します。リストが出力されるので、`"values"`で固有値(をまとめたベクトル)、`"vectors"`で固有ベクトル(をまとめたマトリクス)を取り出します。数式での成分と合わせるために転置しておきます。\
+
+　固有値と固有ベクトルを用いて、楕円の軸を計算します。
+
+```{r}
+# 期待値による楕円の長軸を計算
+E_axis_df <- tibble::tibble(
+  xend = E_u_dd[1, 1] * sqrt(E_lambda_d[1]), 
+  yend = E_u_dd[1, 2] * sqrt(E_lambda_d[1])
+)
+E_axis_df
+```
+
+　軸番号を$i$、次元を$j$として、軸の先端の点を$u_{j,i} \sqrt{\lambda_j}$で計算します。ここでは、長い方の軸($i = 1$)のデータフレームに格納します。\
+\
+
+　ここまでは、ウィシャート分布の期待値に用いて計算しました。続いて、ウィシャート分布のサンプルに用いて計算します。\
+\
+
+
+## サンプルによる可視化
+
+　次は、ウィシャート分布から精度行列をサンプリングして、サンプルごとにマハラノビス距離の楕円と軸を計算します。乱数生成については「ウィシャート分布の乱数生成」を参照してください。\
+\
+
+　ウィシャート分布に従う乱数を生成します。
+
+```{r}
+# 分散共分散行列を生成
+lambda_ddn <- rWishart(n = N, df = nu, Sigma = w_dd)
+lambda_ddn[, , 1:3]
+```
+
+　ウィシャート分布の乱数は、`rWishart()`で生成できます。データ数の引数`n`に`N`、自由度の引数`df`に`nu`、逆スケール行列の引数`Sigma`に`w_dd`を指定します。\
+　生成した値をガウス分布の精度行列$\boldsymbol{\Lambda}_n = (\lambda_{1,1,n}, \cdots, \lambda_{D,D, n})$のN個のサンプル`lambda_ddn`とします。(記号が被っていますが、$\lambda_{i,j,n}$はウィシャート分布の乱数(精度行列)の各成分です。)\
+
+　精度行列のサンプル$\boldsymbol{\Lambda}_n$ごとにマハラノビス距離を計算します。
+
+```{r}
+# サンプルごとにマハラノビス距離(楕円)を計算
+res_delta_df <- tidyr::expand_grid(
+  n = 1:N, # データ番号
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals 
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(n) |> # 距離の計算用にグループ化
+  dplyr::mutate(
+    delta = mahalanobis(x = x_mat, center = 0, cov = lambda_ddn[, , unique(n)], inverted = TRUE) |> 
+      sqrt() # マハラノビス距離
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+res_delta_df
+```
+
+　パラメータ番号(`1`から`N`の整数)と変数`x_1_vals, x_2_vals`の要素の全ての組み合わせを`expand_grid()`を作成します。これにより、サンプルごとに`x_mat`を複製できます。\
+　パラメータ列`n`でグループ化することで、`x_mat`ごとにマハラノビス距離を計算できます。\
+　`mahalanobis()`の`x`引数に`x_mat`、`center`引数に`0`、`cov`引数に`lambda_ddn`の`n`番目の値(マトリクス)を指定します。`cov`引数に精度行列を指定する場合は、`inverted`引数に`TRUE`を指定します。\
+
+　精度行列のサンプル$\boldsymbol{\Lambda}_n$ごとのマハラノビス距離の等高線図を作成します。
+
+```{r, fig.width=8, fig.height=6}
+# 等高線を引く距離を指定
+delta <- 1
+
+# サンプルごとにマハラノビス距離(楕円)を作図
+ggplot() + 
+  geom_contour(data = E_delta_df, mapping = aes(x = x_1, y = x_2, z = delta), 
+               breaks = delta, color ="red", size = 1, linetype = "dashed") + # 期待値による分布
+  geom_contour(data = res_delta_df, mapping = aes(x = x_1, y = x_2, z = delta, color = factor(n)), 
+               breaks = delta, alpha = 0.5, show.legend = FALSE) + # サンプルによる分布
+  coord_fixed(ratio = 1, xlim = c(min(x_1_vals), max(x_1_vals)), ylim = c(min(x_2_vals), max(x_2_vals))) + # アスペクト比
+  labs(title = "Mahalabobis Distance", 
+       subtitle = parse(text = paste0("list(nu==", nu, ", W==(list(", paste0(round(w_dd, 2), collapse = ", "), ")), N==", N, ")")), 
+       x = expression(x[1]), y = expression(x[2]))
+```
+
+　`geom_contour()`の`breaks`引数に値を指定すると、その値で等高線を引きます。\
+　期待値による楕円を赤色の破線で示します。\
+
+　それぞれ楕円形になります。\
+
+　精度行列のサンプル$\boldsymbol{\Lambda}_n$ごとに固有値と固有ベクトルを計算して、楕円の軸を計算します。
+
+```{r}
+# サンプルごとに楕円の長軸を計算
+res_axis_df <- tibble::tibble(
+  n = 1:N # データ番号
+) |> 
+  dplyr::group_by(n) |> # 軸の計算用にグループ化
+  dplyr::mutate(
+    lambda_1 = lambda_ddn[, , n] |> 
+      solve() |> 
+      eigen() |> 
+      (\(.){.[["values"]][1]})(), # 固有値
+    u_11 = lambda_ddn[, , n] |> 
+      solve() |> 
+      eigen() |> 
+      (\(.){t(.[["vectors"]])[1, 1]})(), # 固有ベクトルの成分
+    u_12 = lambda_ddn[, , n] |> 
+      solve() |> 
+      eigen() |> 
+      (\(.){t(.[["vectors"]])[1, 2]})(), # 固有ベクトルの成分
+    xend = u_11 * sqrt(lambda_1), # 終点のx軸の値
+    yend = u_12 * sqrt(lambda_1)  # 終点のy軸の値
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+res_axis_df
+```
+
+　上手いことして(もっといいやり方があれば教えてください)、固有値と固有ベクトルの値の列を作成して、軸の先端の点を$u_{j,i}^{(n)} \sqrt{\lambda_j^{(n)}}$で計算します。($\lambda_j^{(n)}$はウィシャート分布の$n$番目の乱数$\boldsymbol{\Lambda}_n$の逆行列$\boldsymbol{\Sigma}_n$の固有値です。)\
+
+　精度行列のサンプル$\boldsymbol{\Lambda}_n$ごとの楕円の軸を描画します。
+
+```{r, fig.width=8, fig.height=6}
+# サンプルごとに楕円の長軸を作図
+ggplot() + 
+  geom_contour(data = E_delta_df, mapping = aes(x = x_1, y = x_2, z = delta), 
+               breaks = delta, color ="red", size = 1, linetype = "dashed") + # 期待値による分布
+  geom_segment(data = E_axis_df, mapping = aes(x = 0, y = 0, xend = xend, yend = yend), 
+               color = "red", size = 1, linetype = "dashed", arrow = arrow(length = unit(10, "pt"))) + # 期待値による分布の長軸
+  geom_segment(data = res_axis_df, mapping = aes(x = 0, y = 0, xend = xend, yend = yend), 
+               color = "orange", alpha = 0.5, arrow = arrow(length = unit(5, "pt"))) + # サンプルによる分布の長軸
+  coord_fixed(ratio = 1, xlim = c(min(x_1_vals), max(x_1_vals)), ylim = c(min(x_2_vals), max(x_2_vals))) + # アスペクト比
+  labs(title = "Mahalanobis Distance", 
+       subtitle = parse(text = paste0("list(nu==", nu, ", W==(list(", paste0(round(w_dd, 2), collapse = ", "), ")), N==", N, ")")), 
+       x = expression(x[1]), y = expression(x[2]))
+```
+
+　`geom_segment()`で楕円の軸を描画します。軸の始点の引数`x, y`に原点`0`、終点の引数`xend, yend`に`axis_df`の`xstart, ystart`列を指定すると、長さが$\sqrt{\lambda_j^{(n)}}$のベクトルを描画できます。\
+
+　サンプルの軸(オレンジ色の矢印)が期待値による軸(赤色の矢印)に近い方向を向いているのを確認できます。\
+\
+
+
+## アニメーションによる可視化
+
+　次は、パラメータの値を少しずつ変化させて、期待値とサンプルによるマハラノビス距離の楕円と軸の変化をアニメーションで確認します。\
+\
+
+
+### 自由度の影響
+
+　まずは、自由度$\nu$の値を変化させ、$\mathbf{W}$を固定します。
+
+```{r}
+# 次元数を指定
+D <- 2
+
+# 自由度として利用する値を指定
+nu_vals <- seq(from = D, to = 50, by = 1)
+
+# 逆スケール行列を指定
+w_dd <- matrix(c(6, -0.6, -0.6, 10), nrow = D, ncol = D)
+
+# フレーム数を設定
+frame_num <- length(nu_vals)
+frame_num
+```
+
+　値の間隔が一定になるように$\nu$の値を`nu_vals`として作成します。パラメータごとにフレームを切り替えるので、`nu_vals`の要素数がアニメーションのフレーム数になります。\
+
+　設定したパラメータに応じて、変数の値$\mathbf{x}$を作成します。
+
+```{r}
+# 作図用の共分散行列を作成
+E_sigma_dd <- solve(max(nu_vals) * w_dd)
+
+# xの値を作成
+x_1_vals <- seq(
+  from = - sqrt(E_sigma_dd[1, 1]) * 3, 
+  to = sqrt(E_sigma_dd[1, 1]) * 3, 
+  length.out = 100
+)
+x_2_vals <- seq(
+  from = - sqrt(E_sigma_dd[2, 2]) * 3, 
+  to = sqrt(E_sigma_dd[2, 2]) * 3, 
+  length.out = 100
+)
+
+# xの点を作成
+x_mat <- tidyr::expand_grid(
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # 格子点を作成
+  as.matrix() # マトリクスに変換
+head(x_mat)
+```
+
+　ここで計算する`E_sigma_dd`は、描画範囲を一定にするための仮の値です。\
+
+　パラメータごとに分散共分散行列の期待値$\mathbb{E}[\boldsymbol{\Sigma}]$を計算して、マハラノビス距離を計算します。
+
+```{r}
+# パラメータごとに共分散行列の期待値によるマハラノビス距離(楕円)を計算
+anime_E_delta_df <- tidyr::expand_grid(
+  nu = nu_vals, # パラメータ
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(nu) |> # 距離の計算用にグループ化
+  dplyr::mutate(
+    delta = mahalanobis(
+      x = x_mat, 
+      center = 0, 
+      cov = unique(nu) * w_dd, # 精度行列の期待値を指定
+      inverted = TRUE
+    ), # 確率密度
+    parameter = paste0("nu=", unique(nu), ", W=(", paste0(w_dd, collapse = ", "), ")") |> 
+      factor(levels = paste0("nu=", nu_vals, ", W=(", paste0(w_dd, collapse = ", "), ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_E_delta_df
+```
+
+　パラメータ`nu_vals`と確率変数`x_1_vals, x_2_vals`の要素の全ての組み合わせを`expand_grid()`を作成します。これにより、パラメータごとに`x_mat`を複製できます。\
+　パラメータ列`nu`でグループ化することで、`x_mat`ごとに距離を計算できます。\
+　パラメータごとにフレーム切替用のラベルを作成します。文字列型だと文字列の基準で順序が決まるので、因子型にしてパラメータに応じたレベル(順序)を設定します。\
+
+　パラメータごとに分散共分散行列の期待値$\mathbb{E}[\boldsymbol{\Sigma}]$の固有値・固有ベクトルを計算して、楕円の軸を計算します。
+
+```{r}
+# パラメータごとに共分散行列の期待値による楕円の軸を計算
+anime_E_axis_df <- tidyr::expand_grid(
+  nu = nu_vals, # パラメータ
+  name = paste0(rep(c("x", "y"), each = 2, times = 2), rep(c("start", "end"), each = 4)) # 列名
+) |> # パラメータごとに受け皿を複製
+  dplyr::group_by(nu) |> # 軸の計算用にグループ化
+  dplyr::mutate(
+    axis = rep(c("y_1", "y_2"), times = 4), # pivot_wider用の列
+    sign = rep(c(-1, 1), each = 4), # 始点・終点の計算用の符号
+    lambda = solve(unique(nu) * w_dd) |> # 共分散行列の期待値を計算
+      (\(.){eigen(.)[["values"]]})() |> 
+      (\(.){rep(sqrt(.), times = 4)})(), # 固有値
+    u = solve(unique(nu) * w_dd) |> # 共分散行列の期待値を計算
+      (\(.){t(eigen(.)[["vectors"]])})() |> 
+      (\(.){rep(as.vector(.), times = 2)})(), # 固有ベクトル
+    value = sign * u * lambda, # 軸の始点・終点を計算
+    parameter = paste0("nu=", nu, ", W=(", paste0(w_dd, collapse = ", "), ")") |> 
+      factor(levels = paste0("nu=", nu_vals, ", W=(", paste0(w_dd, collapse = ", "), ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() |> # グループ化を解除
+  dplyr::select(axis, name, value, parameter) |> # 利用する列を選択
+  tidyr::pivot_wider(
+    id_cols = c(axis, parameter), 
+    names_from = name, 
+    values_from = value
+  ) # 軸の視点・終点の列を分割
+anime_E_axis_df
+```
+
+　パラメータごとに2つの軸の始点と終点の8つの値を計算します。\
+　パラメータ`sigma2_1_vals`と8つの値に対応する列名の全ての組み合わせを`expand_grid()`で作成します。これにより、パラメータごとに列名を複製できます。\
+　`eigen()`で固有値と固有ベクトルをそれぞれ計算し、上手いことして軸の始点と終点を計算します(誰かもっと上手く処理してください…)。\
+　求めた値を`pivot_wider()`で列名と対応付けて分割します。\
+
+　パラメータごとにウィシャート分布の乱数(精度行列$\boldsymbol{\Lambda}_n$)を生成して、サンプルごとに距離を計算します。
+
+```{r}
+# 楕円の数(サンプルサイズ)を指定
+N <- 30
+
+# パラメータごとに楕円のサンプルを計算
+anime_sample_delta_df <- tidyr::expand_grid(
+  nu = nu_vals, # パラメータ
+  n = 1:N, # サンプル番号
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # パラメータとサンプルごとに格子点を複製
+  dplyr::group_by(nu, n) |> # 距離の計算用にグループ化
+  dplyr::mutate(
+    delta = mahalanobis(
+      x = x_mat, 
+      center = 0, 
+      cov = rWishart(n = 1, df = nu, Sigma = w_dd)[, , 1], # 精度行列を生成
+      inverted = TRUE
+    ), 
+    parameter = paste0("nu=", nu, ", W=(", paste0(w_dd, collapse = ", "), ")") |> 
+      factor(levels = paste0("nu=", nu_vals, ", W=(", paste0(w_dd, collapse = ", "), ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_sample_delta_df
+```
+
+　パラメータ`nu_vals`・サンプル番号(`1`から`N`の整数)・確率変数`x_1_vals, x_2_vals`の要素の全ての組み合わせを作成します。これにより、パラメータとサンプルの組み合わせごとに`x_mat`を複製します。\
+　`x_mat`ごとにサンプルを生成してマハラノビス距離を計算します。\
+
+　パラメータごとにウィシャート分布の乱数(精度行列$\boldsymbol{\Lambda}_n$)を生成して、サンプルごとに軸を計算します。
+
+```{r}
+# 軸の数(サンプルサイズ)を指定
+N <- 100
+
+# パラメータごとに楕円の長軸のサンプルを計算
+anime_sample_axis_df <- tidyr::expand_grid(
+  nu = nu_vals, # パラメータ
+  n = 1:N # サンプル番号
+) |> # パラメータごとに受け皿を複製
+  dplyr::group_by(nu, n) |> # 軸の計算用にグループ化
+  dplyr::mutate(
+    eigen_lt = rWishart(n = 1, df = nu, Sigma = w_dd)[, , 1] |> # 精度行列を生成
+      solve() |> # 分散共分散行列に変換
+      eigen() |> # 固有値・固有ベクトルを計算
+      list(), # リストに格納
+    lambda_1 = eigen_lt[[1]][["values"]][1], # 固有値
+    u_11 = eigen_lt[[1]][["vectors"]][1, 1], # 固有ベクトルの成分
+    u_12 = eigen_lt[[1]][["vectors"]][2, 1], # 固有ベクトルの成分
+    xend = u_11 * sqrt(lambda_1), # 終点のx軸の値
+    yend = u_12 * sqrt(lambda_1), # 終点のy軸の値
+    parameter = paste0("nu=", nu, ", W=(", paste0(w_dd, collapse = ", "), ")") |> 
+      factor(levels = paste0("nu=", nu_vals, ", W=(", paste0(w_dd, collapse = ", "), ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_sample_axis_df
+```
+
+　パラメータ`nu_vals`とサンプル番号(`1`から`N`の整数)の要素の全ての組み合わせを作成します。これにより、パラメータとごとにN個のサンプルを格納するための行を複製します。\
+　パラメータとサンプル番号の組み合わせごとにサンプルを生成して、固有値と固有ベクトルを計算し、楕円の軸の先端の値を計算します。\
+
+　パラメータごとに分散共分散行列の期待値$\mathbb{E}[\boldsymbol{\Sigma}]$を計算して、ラベルを作成します。
+
+```{r}
+# パラメータごとに精度行列の期待値のラベルを作成
+anime_label_df <- tibble::tibble(
+  nu = nu_vals # パラメータ
+) |> 
+  dplyr::group_by(nu) |> # 期待値の計算用にグループ化
+  dplyr::mutate(
+    label = paste0("E[Lambda]=(", paste0(round(unique(nu) * w_dd, 2), collapse = ", "), ")"), # 精度行列ラベル
+    parameter = paste0("nu=", nu, ", W=(", paste0(w_dd, collapse = ", "), ")") |> 
+      factor(levels = paste0("nu=", nu_vals, ", W=(", paste0(w_dd, collapse = ", "), ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_label_df
+```
+
+　パラメータごとにラベル用の文字列を作成します。\
+
+　等高線図のアニメーション(gif画像)を作成します。
+
+```{r}
+# 等高線を引く距離を指定
+delta <- 1
+
+# マハラノビス距離(楕円)のアニメーションを作図
+anime_delta_graph <- ggplot() + 
+  geom_contour(data = anime_E_delta_df, mapping = aes(x = x_1, y = x_2, z = delta), 
+               breaks = delta, color ="red", size = 1, linetype = "dashed") + # 期待値による分布
+  geom_contour(data = anime_sample_delta_df, mapping = aes(x = x_1, y = x_2, z = delta, color = factor(n)), 
+               breaks = delta, alpha = 0.5, show.legend = FALSE) + # サンプルによる分布
+  geom_label(data = anime_label_df, mapping = aes(x = min(x_1_vals), y = max(x_2_vals), label = label), 
+             hjust = 0, vjust = 0, alpha = 0.5) + # 分散共分散行列の期待値ラベル
+  gganimate::transition_manual(parameter) + # フレーム
+  coord_fixed(ratio = 1, xlim = c(min(x_1_vals), max(x_1_vals)), ylim = c(min(x_2_vals), max(x_2_vals))) + # アスペクト比
+  labs(title = "Mahalanobis Distance", 
+       subtitle = "{current_frame}", 
+       x = expression(x[1]), y = expression(x[2]))
+
+# gif画像を作成
+gganimate::animate(anime_delta_graph, nframes = frame_num, fps = 10, width = 800, height = 600)
+```
+
+　`transition_manual()`にフレームの順序を表す列を指定します。この例では、因子型のラベルのレベルの順に描画されます。\
+　`animate()`のフレーム数の引数`nframes`にパラメータ数、フレームレートの引数`fps`に1秒当たりのフレーム数を指定します。`fps`引数の値が大きいほどフレームが早く切り替わります。ただし、値が大きいと意図通りに動作しません。\
+
+　同様に、マハラノビス距離(楕円)の軸のアニメーションを作成します。
+
+```{r}
+# 楕円の軸のアニメーションを作図
+anime_axis_graph <- ggplot() + 
+  geom_contour_filled(data = anime_E_delta_df, mapping = aes(x = x_1, y = x_2, z = delta, fill = ..level..), 
+                      alpha = 0.8) + # 期待値による分布
+  geom_contour(data = anime_E_delta_df, mapping = aes(x = x_1, y = x_2, z = delta), 
+               breaks = 1, color = "red", size = 1, linetype = "dotted") + # 期待値による分布の断面
+  geom_segment(data = anime_E_axis_df, mapping = aes(x = xstart, y = ystart, xend = xend, yend = yend), 
+               color = "red", size = 1, linetype = "dashed", arrow = arrow(length = unit(10, "pt"))) + # 期待値による断面の軸
+  geom_segment(data = anime_sample_axis_df, mapping = aes(x = 0, y = 0, xend = xend, yend = yend), 
+               color = "orange", alpha = 0.5, size = 1, arrow = arrow(length = unit(5, "pt"))) + # サンプルによる分布の長軸
+  geom_label(data = anime_label_df, mapping = aes(x = min(x_1_vals), y = max(x_2_vals), label = label), 
+             hjust = 0, vjust = 0, alpha = 0.5) + # 分散共分散行列の期待値ラベル
+  gganimate::transition_manual(parameter) + # フレーム
+  coord_fixed(ratio = 1, xlim = c(min(x_1_vals), max(x_1_vals)), ylim = c(min(x_2_vals), max(x_2_vals))) + # アスペクト比
+  labs(title ="Mahalanobis Distance", 
+       subtitle = "{current_frame}", 
+       fill = "distance", 
+       x = expression(x[1]), y = expression(x[2]))
+
+# gif画像を作成
+gganimate::animate(anime_axis_graph, nframes = frame_num, fps = 10, width = 800, height = 600)
+```
+
+　$\nu$が大きくなるほど、サンプルによる楕円と軸が期待値による楕円と軸に近付いています(なぜ？)。\
+\
+
+
+### スケール行列(1,1成分)の影響
+
+　続いて、$\mathbf{W}$の$1,1$成分$w_{1,1}$の値を変化させ、$\nu, w_{1,2}, w_{2,2}$を固定します。
+
+```{r}
+# 次元数を指定
+D <- 2
+
+# 自由度を指定
+nu <- D + 18
+
+# 逆スケール行列を指定
+w_11_vals <- seq(from = 1, to = 10, by = 0.1) |> 
+  round(digits = 2)
+w_12 <- 0.6
+w_22 <- 5
+
+# フレーム数を設定
+frame_num <- length(w_11_vals)
+frame_num
+```
+
+　値の間隔が一定になるように$w_{1,1}$の値を`w_11_vals`として作成します。また、$w_{1,2} = w_{2,1}$を`w_12`、$w_{2,2}$の値を`w_22`として値を指定します。\
+
+　設定したパラメータに応じて、変数の値$\mathbf{x}$を作成します。
+
+```{r}
+# 作図用の共分散行列を作成
+E_sigma_dd <- solve(nu * matrix(c(min(w_11_vals), w_12, w_12, w_22), nrow = D, ncol = D))
+
+# xの値を作成
+x_1_vals <- seq(
+  from = - sqrt(E_sigma_dd[1, 1]) * 1.5, 
+  to = sqrt(E_sigma_dd[1, 1]) * 1.5, 
+  length.out = 100
+)
+x_2_vals <- seq(
+  from = - sqrt(E_sigma_dd[2, 2]) * 3, 
+  to = sqrt(E_sigma_dd[2, 2]) * 3, 
+  length.out = 100
+)
+
+# xの点を作成
+x_mat <- tidyr::expand_grid(
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # 格子点を作成
+  as.matrix() # マトリクスに変換
+head(x_mat)
+```
+
+\ 
+
+　パラメータごとに期待値による距離を計算します。
+
+```{r}
+# パラメータごとに共分散行列の期待値によるマハラノビス距離(楕円)を計算
+anime_E_delta_df <- tidyr::expand_grid(
+  w_11 = w_11_vals, # パラメータ
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # サンプルごとに格子点を複製
+  dplyr::group_by(w_11) |> # 距離の計算用にグループ化
+  dplyr::mutate(
+    delta = mahalanobis(
+      x = x_mat, 
+      center = 0, 
+      cov = nu * matrix(c(unique(w_11), w_12, w_12, w_22), nrow = D, ncol = D), # 精度行列の期待値を指定
+      inverted = TRUE
+    ), # 確率密度
+    parameter = paste0("nu=", nu, ", W=(", unique(w_11), ", ", w_12, ", ", w_12, ", ", w_22, ")") |> 
+      factor(levels = paste0("nu=", nu, ", W=(", w_11_vals, ", ", w_12, ", ", w_12, ", ", w_22, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_E_delta_df
+```
+
+　「自由度の影響」の`nu, nu_vals`と`w_11, w_11_vals`を置き換えるように処理します。\
+
+　パラメータごとに期待値による軸を計算します。
+
+```{r}
+# パラメータごとに共分散行列の期待値による楕円の軸を計算
+anime_E_axis_df <- tidyr::expand_grid(
+  w_11 = w_11_vals, # パラメータごとに
+  name = paste0(rep(c("x", "y"), each = 2, times = 2), rep(c("start", "end"), each = 4)) # 列名
+) |> # パラメータごとに受け皿を複製
+  dplyr::group_by(w_11) |> # 軸の計算用にグループ化
+  dplyr::mutate(
+    axis = rep(c("y_1", "y_2"), times = 4), # pivot_wider用の列
+    sign = rep(c(-1, 1), each = 4), # 始点・終点の計算用の符号
+    lambda = solve(nu * matrix(c(unique(w_11), w_12, w_12, w_22), nrow = D, ncol = D)) |> # 共分散行列の期待値を計算
+      (\(.){eigen(.)[["values"]]})() |> 
+      (\(.){rep(sqrt(.), times = 4)})(), # 固有値
+    u = solve(nu * matrix(c(unique(w_11), w_12, w_12, w_22), nrow = D, ncol = D)) |> # 共分散行列の期待値を計算
+      (\(.){t(eigen(.)[["vectors"]])})() |> 
+      (\(.){rep(as.vector(.), times = 2)})(), # 固有ベクトル
+    value = sign * u * lambda, # 軸の始点・終点を計算
+    parameter = paste0("nu=", nu, ", W=(", unique(w_11), ", ", w_12, ", ", w_12, ", ", w_22, ")") |> 
+      factor(levels = paste0("nu=", nu, ", W=(", w_11_vals, ", ", w_12, ", ", w_12, ", ", w_22, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() |> # グループ化を解除
+  dplyr::select(axis, name, value, parameter) |> # 利用する列を選択
+  tidyr::pivot_wider(
+    id_cols = c(axis, parameter), 
+    names_from = name, 
+    values_from = value
+  ) # 軸の視点・終点の列を分割
+anime_E_axis_df
+```
+
+\ 
+
+　パラメータごとにサンプリングして距離を計算します。
+
+```{r}
+# 楕円の数(サンプルサイズ)を指定
+N <- 30
+
+# パラメータごとに楕円のサンプルを計算
+anime_sample_delta_df <- tidyr::expand_grid(
+  w_11 = w_11_vals, # パラメータ
+  n = 1:N, # サンプル番号
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # パラメータとサンプルごとに格子点を複製
+  dplyr::group_by(w_11, n) |> # 距離の計算用にグループ化
+  dplyr::mutate(
+    delta = mahalanobis(
+      x = x_mat, 
+      center = 0, 
+      cov = rWishart(
+        n = 1, df = nu, Sigma = matrix(c(unique(w_11), w_12, w_12, w_22), nrow = D, ncol = D)
+      )[, , 1], # 精度行列を生成
+      inverted = TRUE
+    ), 
+    parameter = paste0("nu=", nu, ", W=(", unique(w_11), ", ", w_12, ", ", w_12, ", ", w_22, ")") |> 
+      factor(levels = paste0("nu=", nu, ", W=(", w_11_vals, ", ", w_12, ", ", w_12, ", ", w_22, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_sample_delta_df
+```
+
+\ 
+
+　パラメータごとにサンプリングして軸を計算します。
+
+```{r}
+# 軸の数(サンプルサイズ)を指定
+N <- 100
+
+# パラメータごとに楕円の長軸のサンプルを計算
+anime_sample_axis_df <- tidyr::expand_grid(
+  w_11 = w_11_vals, # パラメータ
+  n = 1:N # サンプル番号
+) |> # パラメータごとに受け皿を複製
+  dplyr::group_by(w_11, n) |> # 軸の計算用にグループ化
+  dplyr::mutate(
+    eigen_lt = rWishart(
+      n = 1, 
+      df = nu, 
+      Sigma = matrix(c(unique(w_11), w_12, w_12, w_22), nrow = D, ncol = D)
+    )[, , 1] |> # 精度行列を生成
+      solve() |> # 分散共分散行列に変換
+      eigen() |> # 固有値・固有ベクトルを計算
+      list(), # リストに格納
+    lambda_1 = eigen_lt[[1]][["values"]][1], # 固有値
+    u_11 = eigen_lt[[1]][["vectors"]][1, 1], # 固有ベクトルの成分
+    u_12 = eigen_lt[[1]][["vectors"]][2, 1], # 固有ベクトルの成分
+    xend = u_11 * sqrt(lambda_1), # 終点のx軸の値
+    yend = u_12 * sqrt(lambda_1), # 終点のy軸の値
+    parameter = paste0("nu=", nu, ", W=(", unique(w_11), ", ", w_12, ", ", w_12, ", ", w_22, ")") |> 
+      factor(levels = paste0("nu=", nu, ", W=(", w_11_vals, ", ", w_12, ", ", w_12, ", ", w_22, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_sample_axis_df
+```
+
+\ 
+
+　パラメータごとに期待値のラベルを作成します。
+
+```{r}
+# パラメータごとに共分散行列の期待値のラベルを作成
+anime_label_df <- tibble::tibble(
+  w_11 = w_11_vals # パラメータ
+) |> 
+  dplyr::group_by(w_11) |> # 期待値の計算用にグループ化
+  dplyr::mutate(
+    label = paste0("E[Lambda]=(", paste0(round(unique(nu) * matrix(c(unique(w_11), w_12, w_12, w_22), nrow = D, ncol = D), 2), collapse = ", "), ")"), # 分散共分散行列ラベル
+    parameter = paste0("nu=", nu, ", W=(", unique(w_11), ", ", w_12, ", ", w_12, ", ", w_22, ")") |> 
+      factor(levels = paste0("nu=", nu, ", W=(", w_11_vals, ", ", w_12, ", ", w_12, ", ", w_22, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_label_df
+```
+
+\ 
+
+　「自由度の影響」のコードで作図できます。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 等高線を引く距離を指定
+delta <- 1
+
+# マハラノビス距離(楕円)のアニメーションを作図
+anime_delta_graph <- ggplot() + 
+  geom_contour(data = anime_E_delta_df, mapping = aes(x = x_1, y = x_2, z = delta), 
+               breaks = delta, color ="red", size = 1, linetype = "dashed") + # 期待値による分布
+  geom_contour(data = anime_sample_delta_df, mapping = aes(x = x_1, y = x_2, z = delta, color = factor(n)), 
+               breaks = delta, alpha = 0.5, show.legend = FALSE) + # サンプルによる分布
+  geom_label(data = anime_label_df, mapping = aes(x = min(x_1_vals), y = max(x_2_vals), label = label), 
+             hjust = 0, vjust = 0, alpha = 0.5) + # 分散共分散行列の期待値ラベル
+  gganimate::transition_manual(parameter) + # フレーム
+  coord_fixed(ratio = 1, xlim = c(min(x_1_vals), max(x_1_vals)), ylim = c(min(x_2_vals), max(x_2_vals))) + # アスペクト比
+  labs(title = "Mahalanobis Distance", 
+       subtitle = "{current_frame}", 
+       x = expression(x[1]), y = expression(x[2]))
+
+# gif画像を作成
+gganimate::animate(anime_delta_graph, nframes = frame_num, fps = 10, width = 800, height = 600)
+```
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 楕円の軸のアニメーションを作図
+anime_axis_graph <- ggplot() + 
+  geom_contour_filled(data = anime_E_delta_df, mapping = aes(x = x_1, y = x_2, z = delta, fill = ..level..), 
+                      alpha = 0.8) + # 期待値による分布
+  geom_contour(data = anime_E_delta_df, mapping = aes(x = x_1, y = x_2, z = delta), 
+               breaks = 1, color = "red", size = 1, linetype = "dotted") + # 期待値による分布の断面
+  geom_segment(data = anime_E_axis_df, mapping = aes(x = xstart, y = ystart, xend = xend, yend = yend), 
+               color = "red", size = 1, linetype = "dashed", arrow = arrow(length = unit(10, "pt"))) + # 期待値による断面の軸
+  geom_segment(data = anime_sample_axis_df, mapping = aes(x = 0, y = 0, xend = xend, yend = yend), 
+               color = "orange", alpha = 0.5, size = 1, arrow = arrow(length = unit(5, "pt"))) + # サンプルによる分布の長軸
+  geom_label(data = anime_label_df, mapping = aes(x = min(x_1_vals), y = max(x_2_vals), label = label), 
+             hjust = 0, vjust = 0, alpha = 0.5) + # 分散共分散行列の期待値ラベル
+  gganimate::transition_manual(parameter) + # フレーム
+  coord_fixed(ratio = 1, xlim = c(min(x_1_vals), max(x_1_vals)), ylim = c(min(x_2_vals), max(x_2_vals))) + # アスペクト比
+  labs(title ="Mahalanobis Distance", 
+       subtitle = "{current_frame}", 
+       fill = "distance", 
+       x = expression(x[1]), y = expression(x[2]))
+
+# gif画像を作成
+gganimate::animate(anime_axis_graph, nframes = frame_num, fps = 10, width = 800, height = 600)
+```
+
+　$w_{1,1} < w_{2,2}$なほど楕円の軸の傾きが小さく、$w_{1,1} < w_{2,2}$なほど楕円の軸の傾きが大きくなっています。また、$w_{1,1}, w_{2,2}$の差が小さいと、サンプルによる楕円・軸と期待値による楕円・軸のばらつきが大きくなっています。\
+\
+
+### スケール行列(1,2成分)の影響
+
+　$w_{1,2} = w_{2,1}$の値を変化させ、$\nu, w_{1,1}, w_{2,2}$を固定します。
+
+```{r}
+# 次元数を指定
+D <- 2
+
+# 自由度を指定
+nu <- D + 18
+
+# 逆スケール行列を指定
+w_11 <- 6
+w_12_vals <- seq(from = -4, to = 4, by = 0.1) |> 
+  round(digits = 2)
+w_22 <- 5
+
+# フレーム数を設定
+frame_num <- length(w_12_vals)
+frame_num
+```
+
+　値の間隔が一定になるように$w_{1,2} = w_{2,1}$の値を`w_12_vals`として作成します。また、$w_{1,1}$を`w_11`、$w_{2,2}$の値を`w_22`として値を指定します。\
+
+　設定したパラメータに応じて、変数の値$\mathbf{x}$を作成します。
+
+```{r}
+# 作図用の共分散行列を作成
+E_sigma_dd <- solve(nu * matrix(c(w_11, median(w_12_vals), median(w_12_vals), w_22), nrow = D, ncol = D))
+
+# xの値を作成
+x_1_vals <- seq(
+  from = - sqrt(E_sigma_dd[1, 1]) * 3, 
+  to = sqrt(E_sigma_dd[1, 1]) * 3, 
+  length.out = 100
+)
+x_2_vals <- seq(
+  from = - sqrt(E_sigma_dd[2, 2]) * 3, 
+  to = sqrt(E_sigma_dd[2, 2]) * 3, 
+  length.out = 100
+)
+
+# xの点を作成
+x_mat <- tidyr::expand_grid(
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # 格子点を作成
+  as.matrix() # マトリクスに変換
+head(x_mat)
+```
+
+\ 
+
+　パラメータごとに期待値による距離を計算します。
+
+```{r}
+# パラメータごとに共分散行列の期待値によるマハラノビス距離(楕円)を計算
+anime_E_delta_df <- tidyr::expand_grid(
+  w_12 = w_12_vals, # パラメータ
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(w_12) |> # 距離の計算用にグループ化
+  dplyr::mutate(
+    delta = mahalanobis(
+      x = x_mat, 
+      center = 0, 
+      cov = nu * matrix(c(w_11, unique(w_12), unique(w_12), w_22), nrow = D, ncol = D), # 精度行列の期待値を計算
+      inverted = TRUE
+    ), # 確率密度
+    parameter = paste0("nu=", nu, ", W=(", w_11, ", ", unique(w_12), ", ", unique(w_12), ", ", w_22, ")") |> 
+      factor(levels = paste0("nu=", nu, ", W=(", w_11, ", ", w_12_vals, ", ", w_12_vals, ", ", w_22, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_E_delta_df
+```
+
+　「自由度の影響」の`nu, nu_vals`と`w_12, w_12_vals`を置き換えるように処理します。\
+
+　パラメータごとに期待値による軸を計算します。
+
+```{r}
+# パラメータごとに共分散行列の期待値による楕円の軸を計算
+anime_E_axis_df <- tidyr::expand_grid(
+  w_12 = w_12_vals, # パラメータ
+  name = paste0(rep(c("x", "y"), each = 2, times = 2), rep(c("start", "end"), each = 4)) # 列名
+) |> # パラメータごとに受け皿を複製
+  dplyr::group_by(w_12) |> # 軸の計算用にグループ化
+  dplyr::mutate(
+    axis = rep(c("y_1", "y_2"), times = 4), # pivot_wider用の列
+    sign = rep(c(-1, 1), each = 4), # 始点・終点の計算用の符号
+    lambda = solve(nu * matrix(c(w_11, unique(w_12), unique(w_12), w_22), nrow = D, ncol = D)) |> # 共分散行列の期待値を計算
+      (\(.){eigen(.)[["values"]]})() |> 
+      (\(.){rep(sqrt(.), times = 4)})(), # 固有値
+    u = solve(nu * matrix(c(w_11, unique(w_12), unique(w_12), w_22), nrow = D, ncol = D)) |> # 共分散行列の期待値を計算
+      (\(.){t(eigen(.)[["vectors"]])})() |> 
+      (\(.){rep(as.vector(.), times = 2)})(), # 固有ベクトル
+    value = sign * u * lambda, # 軸の始点・終点を計算
+    parameter = paste0("nu=", nu, ", W=(", w_11, ", ", unique(w_12), ", ", unique(w_12), ", ", w_22, ")") |> 
+      factor(levels = paste0("nu=", nu, ", W=(", w_11, ", ", w_12_vals, ", ", w_12_vals, ", ", w_22, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() |> # グループ化を解除
+  dplyr::select(axis, name, value, parameter) |> # 利用する列を選択
+  tidyr::pivot_wider(
+    id_cols = c(axis, parameter), 
+    names_from = name, 
+    values_from = value
+  ) # 軸の視点・終点の列を分割
+anime_E_axis_df
+```
+
+\ 
+
+　パラメータごとにサンプリングして距離を計算します。
+
+```{r}
+# 楕円の数(サンプルサイズ)を指定
+N <- 30
+
+# パラメータごとに楕円のサンプルを計算
+anime_sample_delta_df <- tidyr::expand_grid(
+  w_12 = w_12_vals, # パラメータ
+  n = 1:N, # サンプル番号
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # パラメータとサンプルごとに格子点を複製
+  dplyr::group_by(w_12, n) |> # 距離の計算用にグループ化
+  dplyr::mutate(
+    delta = mahalanobis(
+      x = x_mat, 
+      center = 0, 
+      cov = rWishart(
+        n = 1, df = nu, Sigma = matrix(c(w_11, unique(w_12), unique(w_12), w_22), nrow = D, ncol = D)
+      )[, , 1], # 精度行列を生成
+      inverted = TRUE
+    ), 
+    parameter = paste0("nu=", nu, ", W=(", w_11, ", ", unique(w_12), ", ", unique(w_12), ", ", w_22, ")") |> 
+      factor(levels = paste0("nu=", nu, ", W=(", w_11, ", ", w_12_vals, ", ", w_12_vals, ", ", w_22, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_sample_delta_df
+```
+
+\ 
+
+　パラメータごとにサンプリングして軸を計算します。
+
+```{r}
+# 軸の数(サンプルサイズ)を指定
+N <- 100
+
+# パラメータごとに楕円の長軸のサンプルを計算
+anime_sample_axis_df <- tidyr::expand_grid(
+  w_12 = w_12_vals, # パラメータ
+  n = 1:N # サンプル番号
+) |> 
+  dplyr::group_by(w_12, n) |> # 軸の計算用にグループ化
+  dplyr::mutate(
+    eigen_lt = rWishart(
+      n = 1, 
+      df = nu, 
+      Sigma = matrix(c(w_11, unique(w_12), unique(w_12), w_22), nrow = D, ncol = D)
+    )[, , 1] |> # 精度行列を生成
+      solve() |> # 分散共分散行列に変換
+      eigen() |> # 固有値・固有ベクトルを計算
+      list(), # リストに格納
+    lambda_1 = eigen_lt[[1]][["values"]][1], # 固有値
+    u_11 = eigen_lt[[1]][["vectors"]][1, 1], # 固有ベクトルの成分
+    u_12 = eigen_lt[[1]][["vectors"]][2, 1], # 固有ベクトルの成分
+    xend = u_11 * sqrt(lambda_1), # 終点のx軸の値
+    yend = u_12 * sqrt(lambda_1), # 終点のy軸の値
+    parameter = paste0("nu=", nu, ", W=(", w_11, ", ", unique(w_12), ", ", unique(w_12), ", ", w_22, ")") |> 
+      factor(levels = paste0("nu=", nu, ", W=(", w_11, ", ", w_12_vals, ", ", w_12_vals, ", ", w_22, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_sample_axis_df
+```
+
+\ 
+
+　パラメータごとに期待値のラベルを作成します。
+
+```{r}
+# パラメータごとに精度行列の期待値のラベルを作成
+anime_label_df <- tibble::tibble(
+  w_12 = w_12_vals # パラメータ
+) |> 
+  dplyr::group_by(w_12) |> # 期待値の計算用にグループ化
+  dplyr::mutate(
+    label = paste0("E[Lambda]=(", paste0(round(nu * matrix(c(w_11, unique(w_12), unique(w_12), w_22), nrow = D, ncol = D), 2), collapse = ", "), ")"), # 分散共分散行列ラベル
+    parameter = paste0("nu=", nu, ", W=(", w_11, ", ", unique(w_12), ", ", unique(w_12), ", ", w_22, ")") |> 
+      factor(levels = paste0("nu=", nu, ", W=(", w_11, ", ", w_12_vals, ", ", w_12_vals, ", ", w_22, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_label_df
+```
+
+\ 
+
+　「自由度の影響」のコードで作図できます。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 等高線を引く距離を指定
+delta <- 1
+
+# マハラノビス距離(楕円)のアニメーションを作図
+anime_delta_graph <- ggplot() + 
+  geom_contour(data = anime_E_delta_df, mapping = aes(x = x_1, y = x_2, z = delta), 
+               breaks = delta, color ="red", size = 1, linetype = "dashed") + # 期待値による分布
+  geom_contour(data = anime_sample_delta_df, mapping = aes(x = x_1, y = x_2, z = delta, color = factor(n)), 
+               breaks = delta, alpha = 0.5, show.legend = FALSE) + # サンプルによる分布
+  geom_label(data = anime_label_df, mapping = aes(x = min(x_1_vals), y = max(x_2_vals), label = label), 
+             hjust = 0, vjust = 0, alpha = 0.5) + # 分散共分散行列の期待値ラベル
+  gganimate::transition_manual(parameter) + # フレーム
+  coord_fixed(ratio = 1, xlim = c(min(x_1_vals), max(x_1_vals)), ylim = c(min(x_2_vals), max(x_2_vals))) + # アスペクト比
+  labs(title = "Mahalanobis Distance", 
+       subtitle = "{current_frame}", 
+       x = expression(x[1]), y = expression(x[2]))
+
+# gif画像を作成
+gganimate::animate(anime_delta_graph, nframes = frame_num, fps = 10, width = 800, height = 600)
+```
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 楕円の軸のアニメーションを作図
+anime_axis_graph <- ggplot() + 
+  geom_contour_filled(data = anime_E_delta_df, mapping = aes(x = x_1, y = x_2, z = delta, fill = ..level..), 
+                      alpha = 0.8) + # 期待値による分布
+  geom_contour(data = anime_E_delta_df, mapping = aes(x = x_1, y = x_2, z = delta), 
+               breaks = 1, color = "red", size = 1, linetype = "dotted") + # 期待値による分布の断面
+  geom_segment(data = anime_E_axis_df, mapping = aes(x = xstart, y = ystart, xend = xend, yend = yend), 
+               color = "red", size = 1, linetype = "dashed", arrow = arrow(length = unit(10, "pt"))) + # 期待値による断面の軸
+  geom_segment(data = anime_sample_axis_df, mapping = aes(x = 0, y = 0, xend = xend, yend = yend), 
+               color = "orange", alpha = 0.5, size = 1, arrow = arrow(length = unit(5, "pt"))) + # サンプルによる分布の長軸
+  geom_label(data = anime_label_df, mapping = aes(x = min(x_1_vals), y = max(x_2_vals), label = label), 
+             hjust = 0, vjust = 0, alpha = 0.5) + # 分散共分散行列の期待値ラベル
+  gganimate::transition_manual(parameter) + # フレーム
+  coord_fixed(ratio = 1, xlim = c(min(x_1_vals), max(x_1_vals)), ylim = c(min(x_2_vals), max(x_2_vals))) + # アスペクト比
+  labs(title ="Mahalanobis Distance", 
+       subtitle = "{current_frame}", 
+       fill = "distance", 
+       x = expression(x[1]), y = expression(x[2]))
+
+# gif画像を作成
+gganimate::animate(anime_axis_graph, nframes = frame_num, fps = 10, width = 800, height = 600)
+```
+
+　$w_{1,2} < 0$なほど軸の傾きが大きく、$w_{1,2} > 0$なほど軸の傾きが小さくなっています。\
+\
+
+
+### スケール行列(2,2成分)の影響
+
+　$w_{2,2}$の値を変化させ、$\nu, w_{1,1}, w_{1,2}$を固定します。
+
+```{r}
+# 次元数を指定
+D <- 2
+
+# 自由度を指定
+nu <- D + 18
+
+# 逆スケール行列を指定
+w_11 <- 5
+w_12 <- 0.6
+w_22_vals <- seq(from = 1, to = 10, by = 0.1) |> 
+  round(digits = 2)
+
+# フレーム数を設定
+frame_num <- length(w_22_vals)
+frame_num
+```
+
+　値の間隔が一定になるように$w_{2,2}$の値を`w_22_vals`として作成します。また、$w_{1,1}, w_{2,2}$を`w_11, w_22`として値を指定します。\
+
+　設定したパラメータに応じて、変数の値$\mathbf{x}$を作成します。
+
+```{r}
+# 作図用の共分散行列を作成
+E_sigma_dd <- solve(nu * matrix(c(w_11, w_12, w_12, min(w_22_vals)), nrow = D, ncol = D))
+
+# xの値を作成
+x_1_vals <- seq(
+  from = - sqrt(E_sigma_dd[1, 1]) * 3, 
+  to = sqrt(E_sigma_dd[1, 1]) * 3, 
+  length.out = 100
+)
+x_2_vals <- seq(
+  from = - sqrt(E_sigma_dd[2, 2]) * 1.5, 
+  to = sqrt(E_sigma_dd[2, 2]) * 1.5, 
+  length.out = 100
+)
+
+# xの点を作成
+x_mat <- tidyr::expand_grid(
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # 格子点を作成
+  as.matrix() # マトリクスに変換
+head(x_mat)
+```
+
+　「自由度の影響」の`nu, nu_vals`と`w_22, w_22_vals`を置き換えるように処理します。\
+
+　パラメータごとに期待値による距離を計算します。
+
+```{r}
+# パラメータごとに共分散行列の期待値によるマハラノビス距離(楕円)を計算
+anime_E_delta_df <- tidyr::expand_grid(
+  w_22 = w_22_vals, # パラメータ
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(w_22) |> # 距離の計算用にグループ化
+  dplyr::mutate(
+    delta = mahalanobis(
+      x = x_mat, 
+      center = 0, 
+      cov = nu * matrix(c(w_11, w_12, w_12, unique(w_22)), nrow = D, ncol = D), # 精度行列の期待値を指定
+      inverted = TRUE
+    ), # 確率密度
+    parameter = paste0("nu=", nu, ", W=(", w_11, ", ", w_12, ", ", w_12, ", ", unique(w_22), ")") |> 
+      factor(levels = paste0("nu=", nu, ", W=(", w_11, ", ", w_12, ", ", w_12, ", ", w_22_vals, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_E_delta_df
+```
+
+\ 
+
+　パラメータごとに期待値による軸を計算します。
+
+```{r}
+# パラメータごとに共分散行列の期待値による楕円の軸を計算
+anime_E_axis_df <- tidyr::expand_grid(
+  w_22 = w_22_vals, # パラメータごとに
+  name = paste0(rep(c("x", "y"), each = 2, times = 2), rep(c("start", "end"), each = 4)) # 列名
+) |> # パラメータごとに受け皿を複製
+  dplyr::group_by(w_22) |> # 軸の計算用にグループ化
+  dplyr::mutate(
+    axis = rep(c("y_1", "y_2"), times = 4), # pivot_wider用の列
+    sign = rep(c(-1, 1), each = 4), # 始点・終点の計算用の符号
+    lambda = solve(nu * matrix(c(w_11, w_12, w_12, unique(w_22)), nrow = D, ncol = D)) |> # 共分散行列の期待値を計算
+      (\(.){eigen(.)[["values"]]})() |> 
+      (\(.){rep(sqrt(.), times = 4)})(), # 固有値
+    u = solve(nu * matrix(c(w_11, w_12, w_12, unique(w_22)), nrow = D, ncol = D)) |> # 共分散行列の期待値を計算
+      (\(.){t(eigen(.)[["vectors"]])})() |> 
+      (\(.){rep(as.vector(.), times = 2)})(), # 固有ベクトル
+    value = sign * u * lambda, # 軸の始点・終点を計算
+    parameter = paste0("nu=", nu, ", W=(", w_11, ", ", w_12, ", ", w_12, ", ", unique(w_22), ")") |> 
+      factor(levels = paste0("nu=", nu, ", W=(", w_11, ", ", w_12, ", ", w_12, ", ", w_22_vals, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() |> # グループ化を解除
+  dplyr::select(axis, name, value, parameter) |> # 利用する列を選択
+  tidyr::pivot_wider(
+    id_cols = c(axis, parameter), 
+    names_from = name, 
+    values_from = value
+  ) # 軸の視点・終点の列を分割
+anime_E_axis_df
+```
+
+\ 
+
+　パラメータごとにサンプリングして距離を計算します。
+
+```{r}
+# 楕円の数(サンプルサイズ)を指定
+N <- 30
+
+# パラメータごとに楕円のサンプルを計算
+anime_sample_delta_df <- tidyr::expand_grid(
+  w_22 = w_22_vals, # パラメータ
+  n = 1:N, # サンプル番号
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # パラメータとサンプルごとに格子点を複製
+  dplyr::group_by(w_22, n) |> # 距離の計算用にグループ化
+  dplyr::mutate(
+    delta = mahalanobis(
+      x = x_mat, 
+      center = 0, 
+      cov = rWishart(
+        n = 1, df = nu, Sigma = matrix(c(w_11, w_12, w_12, unique(w_22)), nrow = D, ncol = D)
+      )[, , 1], # 精度行列を生成
+      inverted = TRUE
+    ), 
+    parameter = paste0("nu=", nu, ", W=(", w_11, ", ", w_12, ", ", w_12, ", ", unique(w_22), ")") |> 
+      factor(levels = paste0("nu=", nu, ", W=(", w_11, ", ", w_12, ", ", w_12, ", ", w_22_vals, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_sample_delta_df
+```
+
+\ 
+
+　パラメータごとにサンプリングして軸を計算します。
+
+```{r}
+# 軸の数(サンプルサイズ)を指定
+N <- 100
+
+# パラメータごとに楕円の長軸のサンプルを計算
+anime_sample_axis_df <- tidyr::expand_grid(
+  w_22 = w_22_vals, # パラメータ
+  n = 1:N # サンプル番号
+) |> 
+  dplyr::group_by(w_22, n) |> # 軸の計算用にグループ化
+  dplyr::mutate(
+    eigen_lt = rWishart(
+      n = 1, 
+      df = nu, 
+      Sigma = matrix(c(w_11, w_12, w_12, unique(w_22)), nrow = D, ncol = D)
+    )[, , 1] |> # 精度行列を生成
+      solve() |> # 分散共分散行列に変換
+      eigen() |> # 固有値・固有ベクトルを計算
+      list(), # リストに格納
+    lambda_1 = eigen_lt[[1]][["values"]][1], # 固有値
+    u_11 = eigen_lt[[1]][["vectors"]][1, 1], # 固有ベクトルの成分
+    u_12 = eigen_lt[[1]][["vectors"]][2, 1], # 固有ベクトルの成分
+    xend = u_11 * sqrt(lambda_1), # 終点のx軸の値
+    yend = u_12 * sqrt(lambda_1), # 終点のy軸の値
+    parameter = paste0("nu=", nu, ", W=(", w_11, ", ", w_12, ", ", w_12, ", ", unique(w_22), ")") |> 
+      factor(levels = paste0("nu=", nu, ", W=(", w_11, ", ", w_12, ", ", w_12, ", ", w_22_vals, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_sample_axis_df
+```
+
+\ 
+
+　パラメータごとに期待値のラベルを作成します。
+
+```{r}
+# パラメータごとに分散共分散行列の期待値のラベルを作成
+anime_label_df <- tibble::tibble(
+  w_22 = w_22_vals # パラメータ
+) |> 
+  dplyr::group_by(w_22) |> # 期待値の計算用にグループ化
+  dplyr::mutate(
+    label = paste0("E[Lambda]=(", paste0(round(nu * matrix(c(w_11, w_12, w_12, unique(w_22)), nrow = D, ncol = D), 2), collapse = ", "), ")"), # 分散共分散行列ラベル
+    parameter = paste0("nu=", nu, ", W=(", w_11, ", ", w_12, ", ", w_12, ", ", unique(w_22), ")") |> 
+      factor(levels = paste0("nu=", nu, ", W=(", w_11, ", ", w_12, ", ", w_12, ", ", w_22_vals, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_label_df
+```
+
+\ 
+
+　「自由度の影響」のコードで作図できます。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 等高線を引く距離を指定
+delta <- 1
+
+# マハラノビス距離(楕円)のアニメーションを作図
+anime_delta_graph <- ggplot() + 
+  geom_contour(data = anime_E_delta_df, mapping = aes(x = x_1, y = x_2, z = delta), 
+               breaks = delta, color ="red", size = 1, linetype = "dashed") + # 期待値による分布
+  geom_contour(data = anime_sample_delta_df, mapping = aes(x = x_1, y = x_2, z = delta, color = factor(n)), 
+               breaks = delta, alpha = 0.5, show.legend = FALSE) + # サンプルによる分布
+  geom_label(data = anime_label_df, mapping = aes(x = min(x_1_vals), y = max(x_2_vals), label = label), 
+             hjust = 0, vjust = 0, alpha = 0.5) + # 分散共分散行列の期待値ラベル
+  gganimate::transition_manual(parameter) + # フレーム
+  coord_fixed(ratio = 1, xlim = c(min(x_1_vals), max(x_1_vals)), ylim = c(min(x_2_vals), max(x_2_vals))) + # アスペクト比
+  labs(title = "Mahalanobis Distance", 
+       subtitle = "{current_frame}", 
+       x = expression(x[1]), y = expression(x[2]))
+
+# gif画像を作成
+gganimate::animate(anime_delta_graph, nframes = frame_num, fps = 10, width = 800, height = 600)
+```
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 楕円の軸のアニメーションを作図
+anime_axis_graph <- ggplot() + 
+  geom_contour_filled(data = anime_E_delta_df, mapping = aes(x = x_1, y = x_2, z = delta, fill = ..level..), 
+                      alpha = 0.8) + # 期待値による分布
+  geom_contour(data = anime_E_delta_df, mapping = aes(x = x_1, y = x_2, z = delta), 
+               breaks = 1, color = "red", size = 1, linetype = "dotted") + # 期待値による分布の断面
+  geom_segment(data = anime_E_axis_df, mapping = aes(x = xstart, y = ystart, xend = xend, yend = yend), 
+               color = "red", size = 1, linetype = "dashed", arrow = arrow(length = unit(10, "pt"))) + # 期待値による断面の軸
+  geom_segment(data = anime_sample_axis_df, mapping = aes(x = 0, y = 0, xend = xend, yend = yend), 
+               color = "orange", alpha = 0.5, size = 1, arrow = arrow(length = unit(5, "pt"))) + # サンプルによる分布の長軸
+  geom_label(data = anime_label_df, mapping = aes(x = min(x_1_vals), y = max(x_2_vals), label = label), 
+             hjust = 0, vjust = 0, alpha = 0.5) + # 分散共分散行列の期待値ラベル
+  gganimate::transition_manual(parameter) + # フレーム
+  coord_fixed(ratio = 1, xlim = c(min(x_1_vals), max(x_1_vals)), ylim = c(min(x_2_vals), max(x_2_vals))) + # アスペクト比
+  labs(title ="Mahalanobis Distance", 
+       subtitle = "{current_frame}", 
+       fill = "distance", 
+       x = expression(x[1]), y = expression(x[2]))
+
+# gif画像を作成
+gganimate::animate(anime_axis_graph, nframes = frame_num, fps = 10, width = 800, height = 600)
+```
+
+　「1,1成分の影響」と同様に、$w_{1,1}, w_{2,2}$の大小関係によって軸の向きが変化しています。\
+\
+
+　この記事では、ウィシャート分布をマハラノビス距離とその軸を用いて可視化しました。\
+\
+
 
