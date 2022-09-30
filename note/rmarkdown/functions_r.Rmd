@@ -1,273 +1,33 @@
 ---
-title: "確率分布に利用する関数"
+title: "多次元ガウス分布"
 author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
-date: "`r paste('2022/02/28',  '2022/03/03', sep = ' - ')`"
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M:%S')`"
 output:
-  pdf_document:
-    latex_engine: xelatex
-    number_section: true
-    toc: true
-    toc_depth: 4
-    keep_tex: false
-header-includes:
-  - \usepackage{bookmark}
-  - \usepackage{xltxtra}
-  - \usepackage{zxjatype}
-  - \usepackage[ipa]{zxjafont}
+  html_document:
+    toc: TRUE       # 目次
+    toc_depth: 3    # 目次の見出しレベル
+    toc_float: TRUE # 目次のスクロール追跡
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   echo = TRUE, 
-  message = FALSE, error = FALSE, warning = FALSE, # メッセージを非表示
-  fig.align = "center", # 画像を中央揃え
-  fig.width = 5, fig.height = 4, # 画像のサイズ
-  dev = "cairo_pdf", dev.args = list(family = "ipaexg"), # {ggplot2}に日本語を組み込む場合の対処
-  class.source = "numberLines lineAnchors", # ソースを番号付けする
-  class.output = "numberLines lineAnchors chunkout" # 出力を番号付けする
+  message = FALSE, error = FALSE, warning = FALSE # メッセージを非表示
 )
 ```
 
-```{r}
-# レンダリング日時
-Sys.time()
-```
+----
 
-\newpage
+【編集履歴】
 
+- 2022/03/01：「ガンマ関数の作図」を追加
+- 2022/03/02：「ディガンマの作図」を追加
+- 2022/03/03：「ベータ関数の作図」を追加
 
-# ガンマ関数の性質の導出
-
-　ガンマ関数(Gamma Function)の定義と性質を確認します。\
-\
+----
 
 
-## 定義
-
-　ガンマ関数は、次の式で定義されます。
-
-$$
-\Gamma(x)
-  = \int_0^{\infty}
-        u^{x-1}
-        e^{-u}
-    du
-$$
-
-　ここで、$e$はネイピア数です。$e^x = \exp(x)$で表記することもあります。\
-\
-
-　ガンマ関数には、次の性質があります。\
-
-$$
-\begin{aligned}
-\Gamma(x + 1) 
-   &= x \Gamma(x)
-   &\quad
-      (x > 0)
-\\
-\Gamma(1)
-   &= 1
-\\
-\Gamma(n + 1)
-   &= n!
-   &\quad
-      (n > 0)
-\end{aligned}
-$$
-
-　これらの性質を導出します。\
-\
-
-
-## 性質1
-
-　まずは、$x$が非負の実数の場合を考えます。ガンマ関数の定義式の$x$を$x + 1$に置き換えます。
-
-$$
-\begin{aligned}
-\Gamma(x + 1) 
-   &= \int_0^{\infty}
-          u^{(x+1)-1}
-          e^{-u}
-      du
-\\
-   &= \int_0^{\infty}
-          u^x
-          e^{-u}
-      du
-\end{aligned}
-$$
-
-　部分積分$\int_a^b f'(x) g(x) dx = [f(x) g(x)]_a^b - \int_a^b f(x) g'(x) dx$を行うために、後の項を変形します。\
-　微分と積分は打ち消し合うので、$f(x) = \{\int f(x) dx\}'$です。また、係数を含む指数関数の積分$\int e^{ax} dx = \frac{1}{a} e^{ax}$を行います。
-
-$$
-\begin{aligned}
-e^{-u}
-   &=\left\{
-          \int
-              e^{-u}
-          du
-      \right\}'
-\\
-   &= \Bigl\{
-          - e^{-u}
-      \Bigr\}'
-\end{aligned}
-$$
-
-　係数を含む指数関数の微分(合成関数の微分)$(e^{ax})' = e^{ax} (a x)' = a e^{ax}$より、この式が成り立つのを確認できます。\
-　変形した項に置き換えます。
-
-$$
-\Gamma(x + 1)
-    = \int_0^{\infty}
-          u^{x}
-          \Bigl\{
-              - e^{-u}
-          \Bigr\}'
-      du
-$$
-
-　$f(x) = - e^{-u}$、$f'(x) = \{- e^{-u}\}'$、$g(x) = u^x$、$g'(x) = x u^{x-1}$として部分積分を行います。
-
-$$
-\Gamma(x + 1)
-    = \left[
-          u^x
-          \Bigl(
-              - e^{-u}
-          \Bigr)
-      \right]_0^{\infty}
-      - \int_0^{\infty}
-          x u^{x-1}
-          \Bigl(
-              - e^{-u}
-          \Bigr)
-        du
-$$
-
-　定積分$\int_a^b f(x) dx = [F(x)]_a^b = F(b) - F(a)$について、$u \rightarrow \infty$のとき$e^{-u} \rightarrow e^{-\infty} = 0$、$u = 0$のとき$u^x = 0^x = 0$となります。また、$u$と無関係な$-x$を$\int$の外に出します。
-
-$$
-\Gamma(x + 1)
-    = 0 - 0
-      + x
-        \int_0^{\infty}
-          u^{x-1}
-          e^{-u}
-        du
-$$
-
-　ガンマ関数の定義より置き換えます。
-
-$$
-\Gamma(x + 1) 
-    = x \Gamma(x)
-$$
-
-　1つ目の性質の式が得られました。\
-\
-
-
-## 性質2
-
-　次に、$x$が1の場合を考えます。ガンマ関数の定義式に$x = 1$を代入します。
-
-$$
-\begin{aligned}
-\Gamma(1)
-   &= \int_0^{\infty}
-         u^{1-1}
-         e^{-u}
-      du
-\\
-   &= \int_0^{\infty}
-         u^0
-         e^{-u}
-      du
-\end{aligned}
-$$
-
-　性質1のときと同様に、部分積分$\int_a^b f'(x) g(x) dx = [f(x) g(x)]_a^b - \int_a^b f(x) g'(x) dx$を行えるように、項を変形します。また、べき乗の定義より$x^0 = 1$です。
-
-$$
-\Gamma(1)
-    = \int_0^{\infty}
-          1
-          \Bigl(
-              - e^{-u}
-          \Bigr)'
-      du
-$$
-
-　$f(x) = - e^{-u}$、$f'(x) = \{- e^{-u}\}'$、$g(x) = 1$、$g'(x) = 0$として部分積分を行います。
-
-$$
-\Gamma(1)
-    = [- e^{-u}]_0^{\infty}
-      - \int_0^{\infty}
-          0
-          \Bigl(
-              - e^{-u}
-          \Bigr)
-        du
-$$
-
-　定積分$\int_a^b f(x) dx = [F(x)]_a^b = F(b) - F(a)$について、$u \rightarrow \infty$のとき$e^{-u} \rightarrow e^{-\infty} = 0$、$u = 0$のとき$e^{-u} = e^0 = 1$となります。
-
-$$
-\begin{aligned}
-\Gamma(1)
-   &= 0 - (-1)
-      - 0
-\\
-   &= 1
-\end{aligned}
-$$
-
-　2つ目の性質の式が得られました。\
-\
-
-
-## 性質3
- 
-　最後に、$x$が自然数の場合を考えます。性質1の式を用います。
-
-$$
-\Gamma(x + 1)
-    = x \Gamma(x)
-$$
-
-　性質1より$\Gamma(x) = (x - 1) \Gamma(x - 1)$になります。
-
-$$
-\Gamma(x + 1)
-    = x (x - 1) \Gamma(x - 1)
-$$
-
-　同様に、$\Gamma(x - 1) = (x - 2) \Gamma(x - 2)$になるので、更に繰り返します。
-
-$$
-\Gamma(x + 1)
-    = x (x - 1) (x - 2)
-      \cdots
-      2 * 1 * \Gamma(1)
-$$
-
-　性質2より$\Gamma(x) = 1$なので、式全体が1から$x$の自然数の積(階乗)$x!$となります。
-
-$$
-\Gamma(x + 1)
-    = x!
-$$
-
-　3つ目の性質の式が得られました。\
-\
-
-
-# Rでガンマ関数の作図
+# ガンマ関数の作図
 
 　ガンマ関数(Gamma Function)の計算を確認して、グラフを作成します。\
 \
@@ -436,13 +196,7 @@ ggplot(data = gamma_df, mapping = aes(x = x, y = y)) + # データ
 \
 
 
-# ディガンマ関数の定義
-
-　ディガンマ関数(Digamma Function)の定義を確認します。\
-\
-
-
-# Rでディガンマ関数の作図
+# ディガンマ関数の作図
 
 　ディガンマ関数(Digamma Function)の計算を確認して、グラフを作成します。\
 \
@@ -580,13 +334,7 @@ ggplot(data = digamma_df, mapping = aes(x = x, y = y)) + # データ
 \
 
 
-# ベータ関数の定義
-
-　ベータ関数(Beta Function)の定義と性質を確認します。\
-\
-
-
-# Rでベータ関数の作図
+# ベータ関数の作図
 
 　ベータ関数(Beta Function)の計算を確認して、グラフを作成します。\
 \
