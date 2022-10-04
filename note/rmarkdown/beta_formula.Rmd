@@ -32,8 +32,7 @@ knitr::opts_chunk$set(
 
 【編集履歴】
 
-- 2022/01/15：執筆開始
-- 2022/00/00：中断
+- 2022/10045：「定義式」・「正規化項の導出」・「統計量の導出」を修正
 
 ----
 
@@ -42,80 +41,105 @@ knitr::opts_chunk$set(
 
 # ベータ分布の定義式
 
-　ベータ分布(Beta Distribution)の定義を確認します。\
+　ベータ分布(Beta Distribution)の定義式を確認します。\
 \
 
 
 ## 定義式
 
-　ベータ分布とは、ベルヌーイ分布・二項分布のパラメータ$0 \leq \phi \leq 1$を生成するための確率分布である。このような分布を共役事前分布と呼ぶ。\
-\
-
-　ベータ分布は次の式で定義される。
+　ベータ分布は、パラメータ$\alpha, \beta$を用いて、次の式で定義されます。
 
 $$
 \mathrm{Beta}(\phi | \alpha, \beta)
   = \frac{
         \Gamma(\alpha + \beta)
     }{
-        \Gamma(\alpha) \Gamma(\beta)
+        \Gamma(\alpha)
+        \Gamma(\beta)
     }
     \phi^{\alpha-1}
     (1 - \phi)^{\beta-1}
-\tag{1.8}
 $$
 
-　ここで$\alpha,\ \beta$はベータ分布のパラメータであり、次の条件を満たす必要がある。
+　ここで、$\Gamma(x)$はガンマ関数です。正規化項とベータ関数については「正規化項の導出」、ガンマ関数については「ガンマ関数の性質の導出」を参照してください。\
+　確率変数は$0 < \phi < 1$の値をとり、2つのパラメータはそれぞれ非負の実数$\alpha > 0, \beta > 0$を満たす必要があります。\
 
-$$
-\alpha > 0,\ 
-\beta > 0
-$$
-
-　共役事前分布のパラメータのことをハイパーパラメータとも呼ぶ。\
-
-　この式に従うと、ベルヌーイ分布・二項分布のパラメータ$\phi,\ 1 - \phi$を求めることができる。\
+　ベータ分布は、ベルヌーイ分布と二項分布の共役事前分布であり、$\phi$はベルヌーイ分布・二項分布のパラメータ$\phi, 1 - \phi$の条件を満たします。\
 \
-
-　まずは、$\phi$の関数である$\phi^{\alpha-1} (1 - \phi)^{\beta-1}$について考える。\
-　この関数を確率分布(確率密度関数)として扱うためには、全ての事象を考慮した際の値が1となる必要がある。しかしこの式のままではそうはならない。そこで、正規化項(この式の逆数となる値)$\frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha) \Gamma(\beta)}$を掛けることで対応する。\
-\
-
-
-## 他の分布との関係
-
 
 
 ## 統計量の計算式
 
-　ベータ分布の平均と分散は、次の式で計算できます。詳しくは「統計量の導出」を参照してください。
+　ベータ分布の期待値・分散・最頻値は、それぞれ次の式で計算できます。詳しくは「統計量の導出」を参照してください。
 
 $$
 \begin{aligned}
-\mathbb{E}[]
-   &= 
+\mathbb{E}[\phi]
+   &= \frac{\alpha}{\alpha + \beta}
 \\
-\mathbb{V}[]
-   &= 
+\mathbb{V}[\phi]
+   &= \frac{
+          \alpha \beta
+      }{
+          (\alpha + \beta)^2
+          (\alpha + \beta + 1)
+      }
+\\
+\mathrm{mode}[\phi]
+   &= \frac{\alpha - 1}{\alpha + \beta - 2}
 \end{aligned}
 $$
 
+\ 
+
+　この記事では、ベータ分布の定義式を確認しました。次は、正規化項を導出します。\
+\
 
 
 # ベータ分布の正規化項の導出
 
-　ベータ分布(Beta Distribution)の正規化項を導出します。\
+　ベータ分布(Beta Distribution)の正規化項を導出します。正規化項は、正規化係数や規格化定数(normalization constant)などとも呼ばれます。ベータ分布については「分布の定義式」を参照してください。\
 \
 
-　ベータ分布は、ベータ関数を用いて次の式で定義されます。
+
+## 定義式の確認
+
+　まずは、ベータ分布の定義式を確認します。\
+\
+
+　ベータ分布は、ベータ関数を用いて、次の式で定義されます。
 
 $$
 \mathrm{Beta}(\phi | \alpha, \beta)
-    = \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha) \Gamma(\beta)}
+    = C_{\mathrm{Beta}}(\alpha, \beta)
       \phi^{\alpha-1}
       (1 - \phi)^{\beta-1}
 $$
 
+　ここで、$C_{\mathrm{Beta}}(\alpha, \beta)$は正規化項、$\alpha, \beta$はパラメータです。確率変数は$0 < \phi < 1$の値をとり、パラメータは$\alpha > 0, \beta > 0$を満たす必要があります。\
+　また、確率分布を満たすには、確率変数がとり得る範囲で積分して1になる必要があります。
+
+$$
+\int_0^1
+    \mathrm{Beta}(\phi | \alpha, \beta)
+d\phi
+    = 1
+$$
+
+　正規化項は、この条件を満たすための定数で、ベータ関数の逆数で定義されます。
+
+$$
+C_{\mathrm{Beta}}(\alpha, \beta)
+    = \frac{
+          \Gamma(\alpha + \beta)
+      }{
+          \Gamma(\alpha)
+          \Gamma(\beta)
+      }
+    = \frac{1}{B(\alpha,\beta)}
+$$
+
+　$\Gamma(x)$は、ガンマ関数です。詳しくは「ガンマ関数の性質の導出」を参照してください。\
 　ベータ関数は、次の式で定義されます。
 
 $$
@@ -126,20 +150,44 @@ B(\alpha,\beta)
       dx
 $$
 
-　部分積分$\int_a^b f'(x) g(x) dx = [f(x) g(x)]_a^b - \int_a^b f(x) g'(x) dx$を行うために、前の項を
+\ 
+
+　ベータ関数からベータ分布の正規化項を求めます。また、ベータ関数とガンマ関数の関係を求めます。\
+\
+
+
+## ベータ関数の積分計算
+
+　次は、ベータ関数の計算を行い(変形して)正規化項を導出します。\
+\
+
+　ベータ関数の計算を考えます。
 
 $$
+B(\alpha,\beta)
+    = \int_0^1
+          x^{\alpha-1}
+          (1 - x)^{\beta-1}
+      dx
+$$
+
+　部分積分を行うために、前の項を変形します。微分と積分は打ち消し合うので、$f(x) = \{\int f(x) dx\}'$より
+
+$$
+\begin{aligned}
 x^{\alpha-1}
-    = \left\{
+   &= \left\{
           \int x^{\alpha-1} dx
       \right\}'
-    = \left\{
+\\
+   &= \left\{
           \frac{1}{\alpha}
           x^{\alpha}
       \right\}'
+\end{aligned}
 $$
 
-と変形します。
+で置き換えます。
 
 $$
 B(\alpha, \beta)
@@ -152,13 +200,13 @@ B(\alpha, \beta)
       dx
 $$
 
-　$f(x) = \frac{1}{\alpha} x^{\alpha}$、$f'(x) = \{ \frac{1}{\alpha} x^{\alpha} \}' = x^{\alpha-1}$を、$g(x) = (1 - x)^{\beta-1}$、$g'(x) = \{ (1 - x)^{\beta-1} \}' = - (\beta - 1) (1 - x)^{\beta-2}$として、部分積分を行います。$(1 - x)^{\beta-1}$については、合成関数の微分$\{g(f(x))\} = g'(f(x)) f'(x)$より
+　後の項を微分すると、合成関数の微分$\{g(f(x))\}' = g'(f(x)) f'(x)$より
 
 $$
 \begin{aligned}
 \{(1 - x)^{\beta-1}\}'
-   &= (\beta - 1) (1 - x)^{\beta-2}
-      (1 - x)'
+   &= (\beta - 1) (1 - x)^{(\beta-1)-1}
+      \{1 - x\}'
 \\
    &= (\beta - 1) (1 - x)^{\beta-2}
       (- 1)
@@ -167,7 +215,8 @@ $$
 \end{aligned}
 $$
 
-です。
+となります。\
+　$\frac{1}{\alpha} x^{\alpha}$を$f(x)$、$\{\frac{1}{\alpha} x^{\alpha}\}'$を$f'(x)$、$(1 - x)^{\beta-1}$を$g(x)$、$- (\beta - 1) (1 - x)^{\beta-2}$を$g'(x)$として、部分積分$\int_a^b f'(x) g(x) dx = [f(x) g(x)]_a^b - \int_a^b f(x) g'(x) dx$を行います。
 
 $$
 \begin{aligned}
@@ -195,31 +244,20 @@ B(\alpha, \beta)
 \end{aligned}
 $$
 
-　前の因子について、定積分$\int_a^b f(x) dx = [F(x)]_a^b = F(b) - F(a)$を行うと、0になり消えます。
+　$- \frac{\beta - 1}{\alpha}$は、$x$と無関係なので(積分に影響しないので)$\int$の外に出せます。\
+　前の因子について、定積分$[F(x)]_a^b = F(b) - F(a)$より、$x = 0$のとき$x^a = 0$、$x = 1$のとき$1 - x = 0$なので、0となり消えます。
 
 $$
-\begin{aligned}
 B(\alpha, \beta)
-   &= \frac{1}{\alpha} 0^{\alpha}
-      (1 - 0)^{\beta-1}
-      - \frac{1}{\alpha} 1^{\alpha}
-      (1 - 1)^{\beta-1}
+    = 0 - 0
       + \frac{\beta - 1}{\alpha}
         \int_0^1
           x^{\alpha}
           (1 - x)^{\beta-2}
         dx
-\\
-   &= 0 - 0
-      + \frac{\beta - 1}{\alpha}
-        \int_0^1
-          x^{\alpha}
-          (1 - x)^{\beta-2}
-        dx
-\end{aligned}
 $$
 
-　後の因子について、ベータ関数の定義より置き換えます。
+　ベータ関数の定義式より、$\int$の因子を置き換えます。
 
 $$
 \begin{aligned}
@@ -235,16 +273,28 @@ B(\alpha, \beta)
 \end{aligned}
 $$
 
-　$B(\alpha, \beta) = \frac{\beta - 1}{\alpha} B(\alpha + 1, \beta - 1)$になることから、$B(\alpha + 1, \beta - 1) = \frac{\beta - 2}{\alpha + 1} B(\alpha + 2, \beta - 2)$になります。
+　$B(\alpha, \beta) = \frac{\beta - 1}{\alpha} B(\alpha + 1, \beta - 1)$となるのが分かりました。\
+
+　同様に、$B(\alpha + 1, \beta - 1) = \frac{\beta - 2}{\alpha + 1} B(\alpha + 2, \beta - 2)$になるので置き替えます。
 
 $$
 B(\alpha, \beta)
     = \frac{\beta - 1}{\alpha}
       \frac{\beta - 2}{\alpha + 1}
       B(\alpha + 2, \beta - 2)
+\tag{1}
 $$
 
-　同様に、合計$\beta - 1$回繰り返します。
+　ここからは、$\alpha, \beta$が離散値の場合と連続値の場合に分けて進めます。どちらも同じ結果になります(が、連続値の方は諦めました)。\
+\
+
+
+### 離散値の場合
+
+　先に、$\alpha, \beta$が離散値の場合を考えます。\
+\
+
+　式(1)の変形をさらに、$B(\alpha + \beta - 2, \beta - (\beta - 2)) = \frac{\beta - (\beta - 1)}{\alpha + \beta - 2} B(\alpha + \beta - 1, \beta - (\beta - 1))$まで(合計$\beta - 1$回)繰り返します。
 
 $$
 \begin{aligned}
@@ -256,37 +306,24 @@ B(\alpha, \beta)
       \frac{\beta - (\beta - 1)}{\alpha + \beta - 2}
       B(\alpha + \beta - 1, \beta - (\beta - 1))
 \\
-   &= \frac{\beta - 1}{\alpha}
-      \frac{\beta - 2}{\alpha + 1}
-      \cdots
-      \frac{2}{\alpha + \beta - 3}
-      \frac{1}{\alpha + \beta - 2}
-      B(\alpha + \beta - 1, 1)
-\end{aligned}
-$$
-
-　分子は、1から$\beta - 1$までの自然数の積なので、$\beta - 1$の階乗$(\beta - 1)!$です。分母は、$\alpha$から$\alpha + \beta - 2$までの自然数の積なので、分母分子に$(\alpha - 1)!$を掛けると$(\alpha + \beta - 2)!$になります。
-
-$$
-\begin{aligned}
-B(\alpha, \beta)
    &= \frac{
-         (\beta - 1) (\beta - 2) \cdots 1
+          (\beta - 1)
+          (\beta - 2)
+          \cdots
+          2
+          * 1
       }{
-          \alpha (\alpha + 1) \cdots (\alpha + \beta - 2)
-      }
-      B(\alpha + \beta - 1, 1)
-\\
-   &= \frac{
-         (\beta - 1)! (\alpha - 1)!
-      }{
-          (\alpha + \beta - 2)!
+          \alpha
+          (\alpha + 1)
+          \cdots
+          (\alpha + \beta - 3)
+          (\alpha + \beta - 2)
       }
       B(\alpha + \beta - 1, 1)
 \end{aligned}
 $$
 
-　最後の項について、定積分を行うと
+　最後の項について、ベータ関数の定義式より
 
 $$
 \begin{aligned}
@@ -296,6 +333,17 @@ B(\alpha + \beta - 1, 1)
           (1 - x)^{1-1}
       dx
 \\
+   &= \int_0^1
+          x^{\alpha+\beta-2}
+      dx
+\end{aligned}
+$$
+
+になるので、定積分$\int_a^b f(x) dx = [F(x)]_a^b = F(b) - F(a)$を行い
+
+$$
+\begin{aligned}
+B(\alpha + \beta - 1, 1)
    &= \left[
           \frac{1}{\alpha + \beta - 1}
           x^{\alpha+\beta-1}
@@ -310,59 +358,201 @@ B(\alpha + \beta - 1, 1)
 \end{aligned}
 $$
 
-となります。
+で置き換えます。
+
+$$
+B(\alpha, \beta)
+    = \frac{
+          (\beta - 1)
+          (\beta - 2)
+          \cdots
+          2
+      }{
+          \alpha
+          (\alpha + 1)
+          \cdots
+          (\alpha + \beta - 3)
+          (\alpha + \beta - 2)
+      }
+      \frac{1}{\alpha + \beta - 1}
+$$
+
+　分子は、1から$\beta - 1$までの自然数の積なので、$\beta - 1$の階乗$(\beta - 1)!$で表せます。また分母は、$\alpha$から$\alpha + \beta - 1$までの自然数の積なので、$(\alpha - 1)!$を掛けると$(\alpha + \beta - 1)!$になります。そこで、$\frac{(\alpha - 1)!}{(\alpha - 1)!} = 1$を掛けて項をまとめます。
+
+$$
+B(\alpha, \beta)
+    = \frac{
+          (\alpha - 1)!
+          (\beta - 1)!
+      }{
+          (\alpha + \beta - 1)!
+      }
+$$
+
+　ガンマ関数の性質$\Gamma(n) = (n - 1)!$より、それぞれ階乗の項をガンマ関数の項に置き換えます。
+
+$$
+B(\alpha, \beta)
+    = \frac{
+          \Gamma(\alpha)
+          \Gamma(\beta)
+      }{
+          \Gamma(\alpha + \beta)
+      }
+$$
+
+　ベータ関数をガンマ関数で表現できるのが分かりました。\
+\
+
+
+### 連続値の場合
+
+　続いて、$\beta$が連続値の場合を考えます(未完)。\
+\
+
+　式(1)の変形をさらに、$0 < \beta - n < 1$まで(合計$n$回)繰り返します。
 
 $$
 \begin{aligned}
 B(\alpha, \beta)
-   &= \frac{
-         (\beta - 1)! (\alpha - 1)!
-      }{
-          (\alpha + \beta - 2)!
-      }
-      \frac{1}{\alpha + \beta - 1}
+   &= \frac{\beta - 1}{\alpha}
+      \frac{\beta - 2}{\alpha + 1}
+      \cdots
+      \frac{\beta - (n - 1)}{\alpha + n - 2}
+      \frac{\beta - n}{\alpha + n - 1}
+      B(\alpha + n, \beta - n)
 \\
    &= \frac{
-          (\alpha - 1)! (\beta - 1)!
+          (\beta - 1)
+          (\beta - 2)
+          \cdots
+          (\beta - n + 1)
+          (\beta - n)
       }{
-          (\alpha + \beta - 1)!
+          \alpha
+          (\alpha + 1)
+          \cdots
+          (\alpha + n - 2)
+          (\alpha + n - 1)
+      }
+      B(\alpha + n, \beta - n)
+\end{aligned}
+$$
+
+　分子は、1から$\beta - n$までの1間隔の値の積なので、ガンマ関数の性質$\Gamma(x) = (x - 1) \Gamma(x - 1)$より、$\Gamma(\beta) = (\beta - 1) \Gamma(\beta - 1)$の変形を$\Gamma(\beta - n + 1) = (\beta - n) \Gamma(\beta - n)$まで繰り返すと$\frac{\Gamma(\beta)}{\Gamma(\beta - n)}$で表せます。また分母は、$\alpha$から$\alpha + n - 1$までの1間隔の値の積なので、$\Gamma(\alpha)$を掛けると$\Gamma(\alpha + \beta)$になります。そこで、$\frac{\Gamma(\alpha)}{\Gamma(\alpha)} = 1$を掛けて項をまとめます。
+
+$$
+\begin{aligned}
+B(\alpha + n, \beta - n)
+   &= \frac{
+          \Gamma(\alpha)
+          \Gamma(\beta)
+      }{
+          \Gamma(\alpha + n)
+          \Gamma(\beta - n)
+      }
+      B(\alpha + n, \beta - n)
+\end{aligned}
+$$
+
+　(証明途中にこの関係が登場するのはおかしいですがあくまで確認として、)後の項について、ベータ関数の定義式より、$B(\alpha + n, \beta - n) = \frac{\Gamma(\alpha + n) \Gamma(\beta - n)}{\Gamma(\alpha + \beta)}$で置き換えます。
+
+$$
+\begin{aligned}
+B(\alpha + n, \beta - n)
+   &= \frac{\Gamma(\alpha) \Gamma(\beta)}{\Gamma(\alpha + n) \Gamma(\beta - n)}
+      \frac{\Gamma(\alpha + n) \Gamma(\beta - n)}{\Gamma(\alpha + \beta)}
+\\
+  　&= \frac{
+          \Gamma(\alpha)
+          \Gamma(\beta)
+      }{
+          \Gamma(\alpha + \beta)
       }
 \end{aligned}
 $$
 
-　ガンマ関数の性質$\Gamma(x) = (x - 1)!$より、各項を置き換えます。
-
-$$
-B(\alpha, \beta)
-    = \frac{\Gamma(\alpha) \Gamma(\beta)}{\Gamma(\alpha + \beta)}
-$$
-
-　ベータ関数$B(\alpha,\beta) = \frac{\Gamma(\alpha) \Gamma(\beta)}{\Gamma(\alpha + \beta)}$が求まった。この式の逆数$\frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha) \Gamma(\beta)}$を正規化項(積分して1とするための項)として用いることで、ベータ分布(1.8)が定義される。\
+　(今日のところはこれで納得することにしました)。\
 \
 
+　この記事では、ベータ分布の正規化項を導出しました。次は、統計量を導出します。\
+\
+
+
+## ベータ分布の積分計算
+
+　ベータ関数の計算を確認できたので、ベータ分布の積分計算を考えます。\
+\
+
+　ベータ関数$B(\alpha,\beta) = \frac{\Gamma(\alpha) \Gamma(\beta)}{\Gamma(\alpha + \beta)}$の逆数$\frac{1}{B(\alpha,\beta)} = \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha) \Gamma(\beta)}$を正規化項とすることで、ベータ分布の積分が1になります。
+
+$$
+\begin{aligned}
+\int_0^1
+    \mathrm{Beta}(\phi | \alpha, \beta)
+d\phi
+   &= \int_0^1
+          \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha) \Gamma(\beta)}
+          \phi^{\alpha-1}
+          (1 - \phi)^{\beta-1}
+      d\phi
+\\
+   &= \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha) \Gamma(\beta)}
+      \int_0^1
+          \phi^{\alpha-1}
+          (1 - \phi)^{\beta-1}
+      d\phi
+\\
+   &= \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha) \Gamma(\beta)}
+      \frac{\Gamma(\alpha) \Gamma(\beta)}{\Gamma(\alpha + \beta)}
+\\
+   &= 1
+\end{aligned}
+$$
+
+\ 
+
+　この記事では、ベータ分布の正規化項を導出しました。次は、統計量を導出します。\
+\
 
 
 # ベータ分布の統計量の導出
 
-　ベータ分布(Beta Distribution)の統計量を導出します。ベータ分布については「定義式の確認」を参照してください。\
+　ベータ分布(Beta Distribution)の統計量を導出します。ベータ分布については「分布の定義式」を参照してください。\
 \
 
 
-## 定義式から導出
+## 定義式の確認
 
-　定義式を利用して、平均・分散・最頻値の計算式を導出します。\
+　まずは、ベータ分布の定義式を確認します。\
+\
 
 　ベータ分布は、次の式で定義されます。
 
 $$
-\mathrm{p}()
-    = 
+\mathrm{Beta}(\phi | \alpha, \beta)
+    = \frac{
+          \Gamma(\alpha + \beta)
+      }{
+          \Gamma(\alpha)
+          \Gamma(\beta)
+      }
+      \phi^{\alpha-1}
+      (1 - \phi)^{\beta-1}
 $$
 
+　ここで、$\alpha, \beta$はパラメータ、$\Gamma(x)$はガンマ関数です。確率変数は$0 < \phi < 1$の値をとり、パラメータは$\alpha > 0, \beta > 0$を満たす必要があります。ガンマ関数については「ガンマ関数の性質の導出」を参照してください。\
 
-### 平均の計算
+　この式を用いて統計量を求めていきます。\
+\
 
-　分布が取り得る値$\phi$とその確率密度$p(\phi)$を掛けて、0から1の範囲で積分した値が平均となる。
+
+## 期待値
+
+　連続値をとる確率分布の期待値(mean)は、確率変数がとり得る値$x$とその値の確率密度$p(x)$の積を確率変数がとり得る範囲で積分$\mathbb{E}[x] = \int x p(x) dx$して求められます。\
+\
+
+　$\phi$と$\phi$の確率密度$\mathrm{Beta}(\phi | \alpha, \beta)$の積を0から1の範囲で積分します。
 
 $$
 \begin{aligned}
@@ -377,7 +567,8 @@ $$
           \frac{
               \Gamma(\alpha + \beta)
           }{
-              \Gamma(\alpha) \Gamma(\beta)
+              \Gamma(\alpha)
+              \Gamma(\beta)
           }
           \phi^{\alpha-1}
           (1 - \phi)^{\beta-1}
@@ -385,13 +576,17 @@ $$
 \end{aligned}
 $$
 
-1. 正規化項はベータ関数の逆数であるため、$\frac{1}{B(\alpha, \beta)} = \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha) \Gamma(\beta)}$で置き換える。また$\phi \phi^{\alpha-1} = \phi^\alpha$で$\phi$の項をまとめる。
-
+　$\phi^{\alpha} = \phi \phi^{\alpha-1}$で、$\phi$の項をまとめます。
 
 $$
 \mathbb{E}[\phi]
     = \int_0^1
-          \frac{1}{B(\alpha, \beta)}
+          \frac{
+              \Gamma(\alpha + \beta)
+          }{
+              \Gamma(\alpha)
+              \Gamma(\beta)
+          }
           \phi^{\alpha}
           (1 - \phi)^{\beta-1}
       d\phi
@@ -402,76 +597,30 @@ $$
 $$
 \mathbb{E}[\phi]
     = \int_0^1
-          \frac{1}{B(\alpha' - 1, \beta)}
+          \frac{
+              \Gamma(\alpha' + \beta - 1)
+          }{
+              \Gamma(\alpha' - 1)
+              \Gamma(\beta)
+          }
           \phi^{\alpha'-1}
           (1 - \phi)^{\beta-1}
       d\phi
 $$
 
-
-1. ベータ関数の定義式$B(\alpha, \beta) = \frac{\Gamma(\alpha) \Gamma(\beta)}{\Gamma(\alpha + \beta)} = \frac{(\alpha - 1)! (\beta - 1)!}{(\alpha + \beta - 1)!}$用いて、項を変形する。
-
-　ベータ関数の定義式
-
-$$
-B(\alpha, \beta)
-    = \frac{(\alpha - 1)! (\beta - 1)!}{(\alpha + \beta - 1)!}
-$$
-
-より、$B(\alpha - 1, \beta)$は
-
-$$
-B(\alpha - 1, \beta)
-    = \frac{
-          (\alpha - 2)! (\beta - 1)!
-      }{
-          (\alpha + \beta - 2)!
-      }
-$$
-
-となる。この式の両辺に$\frac{\alpha - 1}{\alpha + \beta - 1}$を掛けると
-
-$$
-\begin{aligned}
-\frac{\alpha - 1}{\alpha + \beta - 1}
-B(\alpha - 1,\beta)
-   &= \frac{
-          (\alpha - 1) (\alpha - 2)! (\beta - 1)!
-      }{
-          (\alpha + \beta - 1) (\alpha + \beta - 2)!
-      }
-\\
-   &= \frac{
-          (\alpha - 1)! (\beta - 1)!
-      }{
-          (\alpha + \beta - 1)!
-      }
-    = B(\alpha, \beta)
-\end{aligned}
-$$
-
-$B(\alpha, \beta)$となる。この式の両辺の逆数をとり、式を整理すると
-
-$$
-\frac{1}{B(\alpha - 1, \beta)}
-  = \frac{\alpha - 1}{\alpha + \beta-1}
-    \frac{1}{B(\alpha, \beta)}
-$$
-
-の関係が求まる。
-
-
-5. 定数の項を$\int$の外に出す。また$\frac{1}{B(\alpha' - 1, \beta)}$を正規化項の形に戻す。
-6. パラメータが$\alpha',\ \beta$のベータ分布について、
-$\phi$が取り得る全ての値の積分であるため1になる。
-
+　ガンマ関数の性質$\Gamma(x) = (x - 1) \Gamma(x - 1)$より、$\frac{\alpha' - 1}{\alpha' + \beta - 1} \frac{\alpha' + \beta - 1}{\alpha' - 1} = 1$を掛けて、項を変形します。
 
 $$
 \begin{aligned}
 \mathbb{E}[\phi]
    &= \int_0^1
           \frac{\alpha' - 1}{\alpha' + \beta - 1}
-          \frac{1}{B(\alpha', \beta)}
+          \frac{
+              (\alpha' + \beta - 1) \Gamma(\alpha' + \beta - 1)
+          }{
+              (\alpha' - 1) \Gamma(\alpha' - 1)
+              \Gamma(\beta)
+          }
           \phi^{\alpha'-1}
           (1 - \phi)^{\beta-1}
       d\phi
@@ -481,64 +630,173 @@ $$
           \frac{
               \Gamma(\alpha' + \beta)
           }{
-              \Gamma(\alpha') \Gamma(\beta)
+              \Gamma(\alpha')
+              \Gamma(\beta)
           }
           \phi^{\alpha'-1}
           (1 - \phi)^{\beta-1}
       d\phi
-\\
-   &= \frac{\alpha' - 1}{\alpha' + \beta-1} * 1
 \end{aligned}
 $$
 
-　$\alpha' = \alpha + 1$に戻します。
+　$\frac{\alpha' - 1}{\alpha' + \beta - 1}$は、$\phi$と無関係なので(積分に影響しないので)$\int$の外に出せます。\
+　後の因子は、パラメータが$\alpha', \beta$のベータ分布に対する$\phi$がとり得る範囲の積分なので、1になります。
+
+$$
+\begin{aligned}
+\mathbb{E}[\phi]
+   &= \frac{\alpha' - 1}{\alpha' + \beta - 1}
+      \int_0^1
+          \mathrm{Beta}(\phi | \alpha', \beta)
+      d\phi
+\\
+   &= \frac{\alpha' - 1}{\alpha' + \beta-1}
+      1
+\end{aligned}
+$$
+
+　$\alpha' = \alpha + 1$で、$\alpha$に戻します。
 
 $$
 \mathbb{E}[\phi]
     = \frac{\alpha}{\alpha + \beta}
 $$
 
-　平均の計算式が得られました。\
+　期待値の計算式が得られました。\
 \
 
 
-### 分散の計算
+## 2乗の期待値
 
-　「$\phi$の2乗の平均」と「$\phi$の平均の2乗」との差が分散となる。そこでまずは、$\phi$の2乗の平均を求める。
+　分散(variance)は、「$x$の2乗の期待値」と「$x$の期待値の2乗」の差$\mathbb{V}[x] = \mathbb{E}[x^2] - (\mathbb{E}[x])^2$で求められます。そこでまずは、$\phi$の2乗の期待値を求めます。\
+\
+
+　$\phi$の2乗と$\phi$の確率密度$\mathrm{Beta}(\phi | \alpha, \beta)$の積を0から1の範囲で積分します。
 
 $$
 \begin{aligned}
 \mathbb{E}[\phi^2]
-   &= \int_0^1 \phi^2 p(\phi) d\phi
+   &= \int_0^1
+          \phi^2
+          \mathrm{Beta}(\phi | \alpha, \beta)
+      d\phi
 \\
    &= \int_0^1
           \phi^2
-          \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha) \Gamma(\beta)}
+          \frac{
+              \Gamma(\alpha + \beta)
+          }{
+              \Gamma(\alpha)
+              \Gamma(\beta)
+          }
           \phi^{\alpha-1}
           (1 - \phi)^{\beta-1}
       d\phi
-\\
-   &= \int_0^1
-          \frac{1}{B(\alpha, \beta)}
+\end{aligned}
+$$
+
+　$\phi^{\alpha+1} = \phi^2 \phi^{\alpha-1}$で、$\phi$の項をまとめます。
+
+$$
+\mathbb{E}[\phi^2]
+    = \int_0^1
+          \frac{
+              \Gamma(\alpha + \beta)
+          }{
+              \Gamma(\alpha)
+              \Gamma(\beta)
+          }
           \phi^{\alpha+1}
           (1 - \phi)^{\beta-1}
       d\phi
-\\
+$$
+
+　$\alpha = \alpha' - 2$とおきます。
+
+$$
+\begin{aligned}
+\mathbb{E}[\phi^2]
    &= \int_0^1
-          \frac{1}{B(\alpha' - 2, \beta)}
-          \phi^{\alpha'-1}
+          \frac{
+              \Gamma(\alpha' + \beta - 2)
+          }{
+              \Gamma(\alpha' - 2)
+              \Gamma(\beta)
+          }
+          \phi^{(\alpha'-2)+1}
           (1 - \phi)^{\beta-1}
       d\phi
 \\
+   &= \int_0^1
+          \frac{
+              \Gamma(\alpha' + \beta - 2)
+          }{
+              \Gamma(\alpha' - 2)
+              \Gamma(\beta)
+          }
+          \phi^{\alpha'-1}
+          (1 - \phi)^{\beta-1}
+      d\phi
+\end{aligned}
+$$
+
+　ガンマ関数の項について、$\frac{(\alpha' - 1) (\alpha' - 2)}{(\alpha' + \beta - 1) (\alpha' + \beta - 2)} \frac{(\alpha' + \beta - 1) (\alpha' + \beta - 2)}{(\alpha' - 1) (\alpha' - 2)} = 1$を掛けて変形して
+
+$$
+\begin{aligned}
+\frac{
+    \Gamma(\alpha' + \beta - 2)
+}{
+    \Gamma(\alpha - 2)
+    \Gamma(\beta)
+}
+   &= \frac{
+          (\alpha' - 1)
+          (\alpha' - 2)
+      }{
+          (\alpha' + \beta - 1)
+          (\alpha' + \beta - 2)
+      }
+      \frac{
+          (\alpha' + \beta - 1)
+          (\alpha' + \beta - 2)
+          \Gamma(\alpha' + \beta - 2)
+      }{
+          (\alpha' - 1)
+          (\alpha' - 2)
+          \Gamma(\alpha - 2)
+          \Gamma(\beta)
+      }
+\\
+   &= \frac{
+          (\alpha' - 1)
+          (\alpha' - 2)
+      }{
+          (\alpha' + \beta - 1)
+          (\alpha' + \beta - 2)
+      }
+      \frac{
+          \Gamma(\alpha' + \beta)
+      }{
+          \Gamma(\alpha)
+          \Gamma(\beta)
+      }
+\end{aligned}
+$$
+
+で置き換えます。
+
+$$
+\begin{aligned}
+\mathbb{E}[\phi^2]
    &= \int_0^1
           \frac{
               (\alpha' - 2) (\alpha' - 1)
           }{
               (\alpha' + \beta - 2) (\alpha' + \beta - 1)
           }
-          \frac{1}{B(\alpha', \beta)}
-          \phi^{\alpha'-1}
-          (1 - \phi)^{\beta-1}
+          \frac{\Gamma(\alpha' + \beta)}{\Gamma(\alpha') \Gamma(\beta)}
+          \phi^{\alpha'-1} (1 - \phi)^{\beta-1}
       d\phi
 \\
    &= \frac{
@@ -550,85 +808,55 @@ $$
           \frac{\Gamma(\alpha' + \beta)}{\Gamma(\alpha') \Gamma(\beta)}
           \phi^{\alpha'-1} (1 - \phi)^{\beta-1}
       d\phi
+\end{aligned}
+$$
+
+　後の因子は、パラメータが$\alpha', \beta$のベータ分布の積分なので、1になり消えます。
+
+$$
+\begin{aligned}
+\mathbb{E}[\phi^2]
+   &= \frac{
+          (\alpha' - 2) (\alpha' - 1)
+      }{
+          (\alpha' + \beta - 2) (\alpha' + \beta - 1)
+      }
+      \int_0^1
+          \mathrm{Beta}(\phi | \alpha', \beta)
+      d\phi
 \\
    &= \frac{
           (\alpha' - 2) (\alpha' - 1)
       }{
           (\alpha' + \beta - 2) (\alpha' + \beta - 1)
       }
-      * 1
-\\
-   &= \frac{
+      1
+\end{aligned}
+$$
+
+　$\alpha' = \alpha + 2$で、$\alpha$に戻します。
+
+$$
+\mathbb{E}[\phi^2]
+    = \frac{
           \alpha (\alpha + 1)
       }{
           (\alpha + \beta)
           (\alpha + \beta + 1)
       }
-\end{aligned}
 $$
 
-\begin{center}\underline{\hspace{10cm}}\end{center}
+　2乗の期待値が求まりました。\
+\
 
-【途中式の途中式】
 
-0. 平均の定義式(1.5')より、式を立てる。
-1. $p(\phi) = \mathrm{Beta}(\phi | \alpha, \beta)$で置き換える。
-1. 正規化項はベータ関数の逆数なので、$\frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha) \Gamma(\beta)} = \frac{1}{B(\alpha, \beta)}$で置き換える。また$\phi^2  \phi^{\alpha-1} = \phi^{\alpha+1}$である。
-1. $\alpha + 1 = \alpha' - 1$とおく。
-1. ベータ関数の定義式$B(\alpha, \beta) = \frac{\Gamma(\alpha) \Gamma(\beta)}{\Gamma(\alpha + \beta)} = \frac{(\alpha - 1)! (\beta - 1)!}{(\alpha + \beta - 1)!}$を用いて、項を置き換える。
+## 分散
 
-　先ほどと同様に、ベータ関数の定義式から
-
-$$
-\frac{
-    (\alpha - 1) (\alpha - 2)
-}{
-    (\alpha + \beta - 1)
-    (\alpha + \beta - 2)
-}
-B(\alpha - 2, \beta)
-  = \frac{
-        (\alpha - 1) (\alpha - 2)
-    }{
-        (\alpha + \beta - 1)
-        (\alpha + \beta - 2)
-    }
-    \frac{
-        (\alpha - 3)! (\beta - 1)!
-    }{
-        (\alpha + \beta - 3)!
-    }
-      = B(\alpha, \beta)
-$$
-
-となることが分かる。この式の両辺の逆数をとり、式を整理すると
-
-$$
-\frac{1}{B(\alpha - 2, \beta)}
-    = \frac{
-          (\alpha - 1) (\alpha - 2)
-      }{
-          (\alpha + \beta - 1)
-          (\alpha + \beta - 2)
-      }
-      \frac{1}{B(\alpha, \beta)}
-$$
-
-の関係が求まる。
-
-5. 定数の項を$\int$の外に出す。また$\frac{1}{B(\alpha', \beta)}$を正規化項の形に戻す。
-6. パラメータが$\alpha',\ \beta$のベータ分布について、$0 \leq \phi \leq 1$の範囲での積分なので1になる。
-7. $\alpha' = \alpha + 2$に戻す。
-
-\begin{center}\underline{\hspace{10cm}}\end{center}
-
-\ 
-
-　「$\phi$の2乗の平均」と「$\phi$の平均の2乗」との差を求める。
+　$\phi^2$の期待値と$\phi$の期待値の2乗の差を求めます。
 
 $$
 \begin{aligned}
-\mathrm{Var}[\phi]
+\mathbb{V}[\phi]
    &= \mathbb{E}[\phi^2]
       - (\mathbb{E}[\phi])^2
 \\
@@ -636,21 +864,52 @@ $$
           \alpha (\alpha + 1)
       }{
           (\alpha + \beta)
-          (\alpha + \beta+1)
+          (\alpha + \beta + 1)
       }
       - \left(
             \frac{\alpha}{\alpha + \beta}
       \right)^2
-\\
+\end{aligned}
+$$
+
+　分子を展開して、式を整理します。
+
+$$
+\begin{aligned}
+\mathbb{V}[\phi]
    &= \frac{
-          \alpha (\alpha + 1) * (\alpha + \beta)
+          \alpha (\alpha + 1)
       }{
-          (\alpha + \beta) (\alpha + \beta+1) * (\alpha + \beta)
+          (\alpha + \beta)
+          (\alpha + \beta + 1)
+      }
+      \frac{
+          (\alpha + \beta)
+      }{
+          (\alpha + \beta)
       }
       - \frac{
-            \alpha^2 * (\alpha + \beta+1)
+            \alpha^2
         }{
-            (\alpha + \beta)^2 * (\alpha + \beta + 1)
+            (\alpha + \beta)^2
+        }
+        \frac{
+            (\alpha + \beta + 1)
+        }{
+            (\alpha + \beta + 1)
+        }
+\\
+   &= \frac{
+          \alpha^3 + \alpha^2
+          + \alpha^2 \beta + \alpha \beta
+      }{
+          (\alpha + \beta)
+          (\alpha + \beta+1)
+      }
+      - \frac{
+            \alpha^3 + \alpha^2 \beta + \alpha^2
+        }{
+            (\alpha + \beta + 1)
         }
 \\
    &= \frac{
@@ -662,148 +921,131 @@ $$
 \end{aligned}
 $$
 
-\ 
-
-
-### 最頻値の計算
-
-　最頻値は曲線(グラフ)の頂点の値であることから、$p(\phi)$を微分して、$\frac{\partial p(\phi)}{\partial \phi} = 0$となる$\phi$である。\
+　分散の計算式が得られました。\
 \
 
-　ベータ分布の確率密度関数
+
+## 最頻値
+
+　連続値をとる確率分布の最頻値(mode)は、$x$についての確率密度関数$p(x)$の微分$\frac{\partial p(x)}{\partial x}$が0となる$x$です。\
+\
+
+　ベータ分布の確率密度関数$\mathrm{Beta}(\phi | \alpha, \beta)$を$\phi$で微分することを考えます。
 
 $$
-p(\phi)
-    = \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha) \Gamma(\beta)}
-      \phi^{\alpha-1}
+\begin{aligned}
+\frac{\partial \mathrm{Beta}(\phi | \alpha, \beta)}{\partial \phi}
+   &= \frac{\partial}{\partial \phi} \left\{
+          \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha) \Gamma(\beta)}
+          \phi^{\alpha-1}
+          (1 - \phi)^{\beta-1}
+      \right\}
+\\
+   &= \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha) \Gamma(\beta)}
+      \frac{\partial}{\partial \phi} \Bigl\{
+          \phi^{\alpha-1}
+          (1 - \phi)^{\beta-1}
+      \Bigr\}
+\end{aligned}
+$$
+
+　$\phi^{\alpha-1} (1 - \phi)^{\beta-1}$の微分は、積の微分$\{f(\phi) g(\phi)\}' = f'(\phi) g(\phi) + f(\phi) g'(\phi)$です。$\phi^{\alpha-1}$を$f(\phi)$、$(1 - \phi)^{\beta-1}$を$g(\phi)$として、式を変形します。
+
+$$
+\frac{\partial}{\partial \phi} \Bigl\{
+    \phi^{\alpha-1}
+    (1 - \phi)^{\beta-1}
+\Bigr\}
+    = \frac{\partial \phi^{\alpha-1}}{\partial \phi}
       (1 - \phi)^{\beta-1}
-$$
-
-を$\phi$で微分する。\
-\
-
-\begin{center}\underline{\hspace{10cm}}\end{center}
-
-【途中式の途中式】
-
-　そのためにまずは、$\phi^{\alpha-1} (1 - \phi)^{\beta-1}$の微分について考える。\
-
-　$\phi^{\alpha-1}$を$f(\phi)$、$(1 - \phi)^{\beta-1}$を$g(\phi)$とするとこの式の微分は、積の微分$\{f(\phi) g(\phi)\}' = f'(\phi) g(\phi) + f(\phi) g'(\phi)$である。
-
-$$
-\{\phi^{\alpha-1} (1 - \phi)^{\beta-1}\}'
-    = (\phi^{\alpha-1})'
-      * (1 - \phi)^{\beta-1}
       + \phi^{\alpha-1}
-        * \{(1 - \phi)^{\beta-1}\}' \\
+        \frac{\partial (1 - \phi)^{\beta-1}}{\partial \phi}
 $$
 
-　$\phi^{\alpha-1}$を微分すると$(\alpha - 1) \phi^{\alpha-2}$になる。
+　前の項の微分は
 
 $$
-\{\phi^{\alpha-1} (1 - \phi)^{\beta-1}\}'
+\frac{\partial \phi^{\alpha-1}}{\partial \phi}
     = (\alpha - 1) \phi^{\alpha-2}
-      * (1 - \phi)^{\beta-1}
-      + \phi^{\alpha-1}
-        * \{(1 - \phi)^{\beta-1}\}' \\
 $$
 
-　$(1 - \phi)^{\beta-1}$の微分は、合成関数の微分$\{g(h(\phi))\}' = g'(h(\phi)) h'(\phi)$である。$(1 - \phi)^{\beta-1}$を$g(h(\phi))$、$1 - \phi$を$h(\phi)$とすると
+となります。\
+　また後の項の微分は、合成関数の微分$\{g(h(\phi))\}' = g'(h(\phi)) h'(\phi)$です。$(1 - \phi)^{\beta-1}$を$g(h(\phi))$、$1 - \phi$を$h(\phi)$として
 
 $$
 \begin{aligned}
-\{\phi^{\alpha-1} (1 - \phi)^{\beta-1}\}'
-   &= (\alpha - 1) \phi^{\alpha-2}
-      * (1 - \phi)^{\beta-1}
-      + \phi^{\alpha-1}
-        * (\beta - 1) (1 - \phi)^{\beta-2}
-        * (1 - \phi)'
+\frac{\partial (1 - \phi)^{\beta-1}}{\partial \phi}
+   &= (\beta - 1) (1 - \phi)^{\beta-2}
+      \frac{\partial (1 - \phi)}{\partial \phi}
 \\
-   &= (\alpha - 1) \phi^{\alpha-2}
-      * (1 - \phi)^{\beta-1}と
-      + \phi^{\alpha-1}
-        * (\beta - 1) (1 - \phi)^{\beta-2}
-        * (-1)
+   &= (\beta - 1) (1 - \phi)^{\beta-2}
+      (- 1)
 \\
-   &= (\alpha - 1) \phi^{\alpha-2}
-      (1 - \phi)^{\beta-1}
-      - \phi^{\alpha-1}
-        (\beta - 1) (1 - \phi)^{\beta-2}
+   &= - (\beta - 1) (1 - \phi)^{\beta-2}
 \end{aligned}
 $$
 
-となる。
-
-\begin{center}\underline{\hspace{10cm}}\end{center}
-
-\ 
+となります。\
+　それぞれ代入して式を整理します。
 
 $$
 \begin{aligned}
-\frac{\partial p(\phi)}{\partial \phi}
-   &= \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha) \Gamma(\beta)}
-      \{
-         (\alpha - 1) \phi^{\alpha-2}
-         (1 - \phi)^{\beta-1}
-         - \phi^{\alpha-1}
-           (\beta - 1) (1 - \phi)^{\beta-2}
-      \}
+\frac{\partial \mathrm{Beta}(\phi | \alpha, \beta)}{\partial \phi}
+   &= \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha) \Gamma(\beta)} \Bigl\{
+          (\alpha - 1)
+          \phi^{\alpha-2}
+          (1 - \phi)^{\beta-1}
+          - (\beta - 1)
+          \phi^{\alpha-1}
+            (1 - \phi)^{\beta-2}
+      \Bigr\}
 \\
    &= \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha) \Gamma(\beta)}
-      \{
-          (\alpha - 1) \phi^{\alpha-2}
-          (1 - \phi) * (1 - \phi)^{\beta-2}
-          - \phi * \phi^{\alpha-2}
-            (\beta - 1) (1 - \phi)^{\beta-2}
-      \}
-\\
-   &= \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha) \Gamma(\beta)}
-      \phi^{\alpha-2} (1 - \phi)^{\beta-2}
-      \{
-          (1 - \phi) (\alpha - 1)
-          - \phi (\beta - 1)
-      \}
+      \phi^{\alpha-2} (1 - \phi)^{\beta-2} \Bigl\{
+          (\alpha - 1) (1 - \phi)
+          - (\beta - 1) \phi
+      \Bigr\}
 \end{aligned}
 $$
 
-\begin{center}\underline{\hspace{10cm}}\end{center}
+　ベータ分布の微分$\frac{\partial \mathrm{Beta}(\phi | \alpha, \beta)}{\partial \phi}$が求まりました。\
 
-【途中式の途中式】
-
-1. $(1 - \phi)^{\beta-1} = (1 - \phi) (1 - \phi)^{\beta-2}$、$\phi^{\alpha-1} = \phi \phi^{\alpha-2}$に項を分割する。
-1. $\phi^{\alpha-2}$と$(1 - \phi)^{\beta-2}$を括り出す。
-
-\begin{center}\underline{\hspace{10cm}}\end{center}
-
-\ 
-
-　$\frac{\partial p(\phi)}{\partial \phi} = 0$となる$\phi$を求める。
+　$\frac{\partial \mathrm{Beta}(\phi | \alpha, \beta)}{\partial \phi}$を0とおき、$\phi$について解きます。
 
 $$
 \begin{aligned}
-\frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha) \Gamma(\beta)}
-\phi^{\alpha-2} (1 - \phi)^{\beta-2}
-\{
-   (1 - \phi) (\alpha - 1)
-   - \phi (\beta - 1)
-\}
+\frac{\partial \mathrm{Beta}(\phi | \alpha, \beta)}{\partial \phi}
+   = \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha) \Gamma(\beta)}
+      \phi^{\alpha-2} (1 - \phi)^{\beta-2} \Bigl\{
+          (\alpha - 1) (1 - \phi)
+   &      - (\beta - 1) \phi
+      \Bigr\}
+    = 0
+\\
+\Rightarrow
+(\alpha - 1) (1 - \phi)
+- (\beta - 1) \phi
    &= 0
 \\
-(1 - \phi) (\alpha - 1) - \phi (\beta - 1)
+\Rightarrow
+\alpha - 1 - \alpha \phi + \phi
+- \beta \phi + \phi
    &= 0
 \\
-\alpha - 1 - \alpha \phi + \phi - \beta \phi + \phi
-   &= 0
+\Rightarrow
+(\alpha + \beta - 2) \phi
+   &= \alpha - 1
 \\
-- (\alpha + \beta - 2) \phi
-   &= - (\alpha - 1) \\
+\Rightarrow
 \phi
    &= \frac{\alpha - 1}{\alpha + \beta - 2}
         = \mathrm{mode}[\phi]
 \end{aligned}
 $$
 
-　ここで式よりパラメータ$\alpha,\ \beta$は、$\alpha > 1,\ \beta > 1$を満たす必要がある。\
+　最頻値の計算式が得られました。$0 < \phi < 1$なので、$\alpha > 1, \beta > 1$を満たす必要があります。\
 \
 
+　この記事では、ベータ分布の統計量を導出しました。\
+\
 
