@@ -1,0 +1,1390 @@
+---
+title: "ディリクレ分布"
+author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M:%S')`"
+output:
+  html_document:
+    toc: TRUE       # 目次
+    toc_depth: 3    # 目次の見出しレベル
+    toc_float: TRUE # 目次のスクロール追跡
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, error = FALSE, warning = FALSE # メッセージを非表示
+)
+```
+
+----
+
+【編集履歴】
+
+- 2022/09/29：「計算」と「作図」を追加
+
+----
+
+
+# ディリクレ分布の計算
+
+　ディリクレ分布(Dirichlet Distribution)の確率密度と統計量を計算します。ディリクレ分布については「分布の定義式」を参照してください。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r, eval=FALSE}
+# 利用パッケージ
+library(MCMCpack)
+```
+
+　この記事では、`パッケージ名::関数名()`の記法を使うので、パッケージを読み込む必要はありません。\
+　`magrittr`パッケージのパイプ演算子`%>%`ではなく、ベースパイプ(ネイティブパイプ)演算子`|>`を使っています。`%>%`に置き換えても処理できます。\
+\
+
+
+## 確率密度の計算
+
+　ディリクレ分布に従う確率密度を計算する方法をいくつか確認します。\
+\
+
+
+### パラメータの設定
+
+　ディリクレ分布のパラメータ$\boldsymbol{\beta}$、確率変数の実現値$\boldsymbol{\phi}$を設定します。
+
+```{r}
+# パラメータを指定
+beta_v <- c(4, 2, 3)
+
+# 確率変数の値を指定
+phi_v <- c(0.5, 0.3, 0.2)
+```
+
+　$V$次元ベクトル$\boldsymbol{\beta} = (\beta_1, \beta_2, \cdots, \beta_V)$、$\boldsymbol{\phi} = (\phi_1, \phi_2, \cdots, \phi_V)$を指定します。\
+　パラメータの各要素は$\beta_v > 0$を満たす必要があり、確率変数の各要素は$0 < \phi_v < 1$、$\sum_{v=1}^V \phi_v = 1$をとります。\
+\
+
+
+### スクラッチで計算
+
+　定義式から計算します。
+
+```{r}
+# 定義式により確率密度を計算
+C    <- gamma(sum(beta_v)) / prod(gamma(beta_v))
+dens <- C * prod(phi_v^(beta_v - 1))
+dens
+```
+
+　ディリクレ分布は、次の式で定義されます。
+
+$$
+\begin{aligned}
+C_{\mathrm{Dir}}
+   &= \frac{
+          \Gamma(\sum_{v=1}^V \beta_v)
+      }{
+          \prod_{v=1}^V \Gamma(\beta_v)
+      }
+\\
+\mathrm{Dir}(\boldsymbol{\phi} | \boldsymbol{\beta})
+   &= C_{\mathrm{Dir}}
+      \prod_{v=1}^V
+          \phi_v^{\beta_v-1}
+\end{aligned}
+$$
+
+　ここで、$C_{\mathrm{Dir}}$はディリクレ分布の正規化係数、$\Gamma(x)$はガンマ関数です。\
+　ガンマ関数は`gamma()`で計算できます。\
+
+　対数をとった定義式から計算します。
+
+```{r}
+# 対数をとった定義式により確率密度を計算
+log_C    <- lgamma(sum(beta_v)) - sum(lgamma(beta_v))
+log_dens <- log_C + sum((beta_v - 1) * log(phi_v))
+dens     <- exp(log_dens)
+dens; log_dens
+```
+
+　対数をとった定義式を計算します。
+
+$$
+\begin{aligned}
+\log C_{\mathrm{Dir}}
+   &= \log \Gamma \Bigl(
+          \sum_{v=1}^V \beta_v
+      \Bigr)
+      - \sum_{v=1}^V
+          \log \Gamma(\beta_v)
+\\
+\log \mathrm{Dir}(\boldsymbol{\phi} | \boldsymbol{\beta})
+   &= \log C_{\mathrm{Dir}}
+      + \sum_{v=1}^V
+          (\beta_v - 1 )\log \phi_v
+\end{aligned}
+$$
+
+　対数をとったガンマ関数は、`lgamma()`で計算できます。引数の値が大きいと`gamma()`の計算結果が発散してしまいます。その場合でも、`lgamma()`で計算できます。\
+　計算結果の指数をとると確率密度が得られます。
+
+$$
+ \mathrm{Dir}(\boldsymbol{\phi} | \boldsymbol{\beta})
+    = \exp \Bigr(
+          \log  \mathrm{Dir}(\boldsymbol{\phi} | \boldsymbol{\beta})
+      \Bigr)
+$$
+
+　指数と対数の性質より$\exp(\log x) = x$です。\
+
+　次は、関数を使って確率密度を計算します。\
+\
+
+
+### 関数で計算
+
+　`MCMCpack`パッケージのディリクレ分布の確率密度関数`ddirichlet()`で計算します。
+
+```{r}
+# 関数により確率密度を計算
+dens <- MCMCpack::ddirichlet(x = phi_v, alpha = beta_v)
+dens
+```
+
+　確率変数の引数`x`に`phi_v`、パラメータの引数`alpha`に`beta_v`を指定します。\
+\
+
+
+## 統計量の計算
+
+　次は、ディリクレ分布の統計量を計算します。詳しくは「統計量の導出」を参照してください。\
+\
+
+　ディリクレ分布のパラメータ$\boldsymbol{\beta}$と次元数$V$を設定します。
+
+```{r}
+# パラメータを指定
+beta_v <- c(4, 2, 3)
+
+# 次元数を設定
+V <- length(beta_v)
+```
+
+\ 
+
+　期待値を計算します。
+
+```{r}
+# 期待値を計算
+E_phi_v <- beta_v / sum(beta_v)
+E_phi_v
+```
+
+　ディリクレ分布の期待値は、次の式で計算できます。
+
+$$
+\mathbb{E}[\phi_v]
+    = \frac{\beta_v}{\sum_{v'=1}^V \beta_{v'}}
+$$
+
+　対数の期待値を計算します。
+
+```{r}
+# 対数の期待値を計算
+E_log_phi_v <- digamma(beta_v) - digamma(sum(beta_v))
+E_log_phi_v
+```
+
+　対数をとった変数の期待値は、次の式で計算できます。
+
+$$
+\mathbb{E}[\log \phi_v]
+    = \Psi(\beta_v)
+      - \Psi \Bigl(
+            \sum_{v=1}^V \beta_v
+        \Bigr)
+$$
+
+　ここで、$\Psi(x)$はディガンマ関数で、`digamma()`で計算できます。\
+
+　分散を計算します。
+
+```{r}
+# 分散を計算
+V_phi_v <- beta_v * (sum(beta_v) - beta_v) / sum(beta_v)^2 / (sum(beta_v) + 1)
+V_phi_v
+```
+
+　ディリクレ分布の分散は、次の式で計算できます。
+
+$$
+\mathbb{V}[\phi_v]
+    = \frac{
+          \beta_v \left\{
+              \left(
+                  \sum_{v=1}^V \beta_v
+              \right)
+              - \beta_v
+          \right\}
+      }{
+          \left(
+              \sum_{v=1}^V \beta_v
+          \right)^2
+          \left\{
+              \left(
+                  \sum_{v=1}^V \beta_v
+              \right)
+              + 1
+          \right\}
+      }
+$$
+
+　要素を指定して、共分散を計算します。
+
+```{r}
+# インデックスを指定:(i ≠ j)
+i <- 1
+j <- 2
+
+# 共分散を計算
+Cov_phi_ij <- -beta_v[i] * beta_v[j] / sum(beta_v)^2 / (sum(beta_v) + 1)
+Cov_phi_ij
+```
+
+　ディリクレ分布の共分散は、次の式で計算できます。
+
+$$
+\mathrm{Cov}[\phi_i, \phi_j]
+    = \frac{
+          \beta_i \beta_j
+      }{
+          \left(
+              \sum_{v=1}^V \beta_v
+          \right)^2
+          \left\{
+              \left(
+                  \sum_{v=1}^V \beta_v
+              \right)
+              + 1
+          \right\}
+      }
+    \qquad
+      (i \neq j)
+$$
+
+　全ての要素の組み合わせで、共分散を計算します。
+
+```{r}
+# 共分散を計算
+Cov_phi_vv <- -beta_v %*% t(beta_v) / sum(beta_v)^2 / (sum(beta_v) + 1)
+diag(Cov_phi_vv) <- as.numeric(NA)
+Cov_phi_vv
+```
+
+　ただし、$i = j$の場合は計算できないので、`diag()`を使って欠損値`NA`に置き換えます。\
+
+　最頻値(モード)を計算します。
+
+```{r}
+# 最頻値を計算:(β_v > 1)
+mode_phi_v <- (beta_v - 1) / (sum(beta_v) - V)
+mode_phi_v
+```
+
+　ディリクレ分布の最頻値は、次の式で計算できます。
+
+$$
+\mathrm{mode}[\phi_v]
+    = \frac{
+          \beta_v - 1
+      }{
+          \left(
+              \sum_{v=1}^V \beta_v
+          \right)
+          - V
+      }
+    \qquad
+      (\beta_v > 1)
+$$
+
+\ 
+
+　この記事では、ディリクレ分布の計算を確認しました。次は、グラフを作成します。\
+\
+
+
+
+# ディリクレ分布の作図
+
+　ディリクレ分布(Dirichlet Distribution)のグラフを作成します。ディリクレ分布については「定義式の確認」を参照してください。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r, eval=FALSE}
+# 利用するパッケージ
+library(tidyverse)
+library(MCMCpack)
+library(gganimate)
+```
+
+```{r, echo=FALSE}
+### 資料作成用
+
+# チェック用
+library(ggplot2)
+```
+
+　この記事では、基本的に`パッケージ名::関数名()`の記法を使うので、パッケージを読み込む必要はありません。ただし、作図コードがごちゃごちゃしないようにパッケージ名を省略しているため、`ggplot2`は読み込む必要があります。\
+　`magrittr`パッケージのパイプ演算子`%>%`ではなく、ベースパイプ(ネイティブパイプ)演算子`|>`を使っています。`%>%`に置き換えても処理できます。\
+　分布の変化をアニメーション(gif画像)で確認するのに`gganimate`パッケージを利用します。不要であれば省略してください。\
+\
+
+
+## 定義式の確認
+
+　まずは、ディリクレ分布の定義式を確認します。\
+\
+
+　ディリクレ分布は、次の式で定義されます。
+
+$$
+\mathrm{Dir}(\boldsymbol{\phi} | \boldsymbol{\beta})
+    = \frac{
+          \Gamma(\sum_{v=1}^V \beta_v)
+      }{
+          \prod_{v=1}^V \Gamma(\beta_v)
+      }
+      \prod_{v=1}^V
+          \phi_v^{\beta_v-1}
+$$
+
+　ここで、$V$は次元数で、$\boldsymbol{\beta} = (\beta_1, \beta_2, \cdots, \beta_V)$はパラメータです。$\beta_v > 0$を満たす必要があります。確率変数の実現値$\boldsymbol{\phi} = (\phi_1, \phi_2, \cdots, \phi_V)$は、$0 < \phi_v < 1$、$\sum_{v=1}^V \phi_v = 1$となります。\
+　ディリクレ分布は、総和が1となる非負の$V$次元ベクトルを生成することから、カテゴリ分布と多項分布のパラメータ(出現確率)の生成分布や事前分布として利用されます。\
+
+　ベータ分布の期待値は、次の式で計算できます。詳しくは「統計量の導出」を参照してください。
+
+$$
+\mathbb{E}[\phi_v]
+    = \frac{
+          \beta_v
+      }{
+          \sum_{v'=1}^V \beta_{v'}
+      }
+$$
+
+　これらの計算を行いグラフを作成します。\
+\
+
+
+## 三角座標の準備
+
+　ディリクレ分布を三角図により可視化するために、三角座標を描画するための準備をします。詳しくは「ggplot2で三角グラフを作図したい」と「ggplot2で三角グラフの等高線を作図したい」を参照してください。\
+\
+
+<details><summary>・作図用のコード(クリックで展開)</summary>
+
+　軸目盛の間隔を設定して、三角座標を描画するためのデータフレームを作成します。
+
+```{r}
+# 軸目盛の位置を指定
+axis_vals <- seq(from = 0, to = 1, by = 0.1)
+
+# 枠線用の値を作成
+ternary_axis_df <- tibble::tibble(
+  y_1_start = c(0.5, 0, 1),         # 始点のx軸の値
+  y_2_start = c(0.5*sqrt(3), 0, 0), # 始点のy軸の値
+  y_1_end = c(0, 1, 0.5),           # 終点のx軸の値
+  y_2_end = c(0, 0, 0.5*sqrt(3)),   # 終点のy軸の値
+  axis = c("x_1", "x_2", "x_3")     # 元の軸
+)
+
+# グリッド線用の値を作成
+ternary_grid_df <- tibble::tibble(
+  y_1_start = c(
+    0.5 * axis_vals, 
+    axis_vals, 
+    0.5 * axis_vals + 0.5
+  ), # 始点のx軸の値
+  y_2_start = c(
+    sqrt(3) * 0.5 * axis_vals, 
+    rep(0, times = length(axis_vals)), 
+    sqrt(3) * 0.5 * (1 - axis_vals)
+  ), # 始点のy軸の値
+  y_1_end = c(
+    axis_vals, 
+    0.5 * axis_vals + 0.5, 
+    0.5 * rev(axis_vals)
+  ), # 終点のx軸の値
+  y_2_end = c(
+    rep(0, times = length(axis_vals)), 
+    sqrt(3) * 0.5 * (1 - axis_vals), 
+    sqrt(3) * 0.5 * rev(axis_vals)
+  ), # 終点のy軸の値
+  axis = c("x_1", "x_2", "x_3") |> 
+    rep(each = length(axis_vals)) # 元の軸
+)
+
+# 軸ラベル用の値を作成
+ternary_axislabel_df <- tibble::tibble(
+  y_1 = c(0.25, 0.5, 0.75),               # x軸の値
+  y_2 = c(0.25*sqrt(3), 0, 0.25*sqrt(3)), # y軸の値
+  label = c("phi[1]", "phi[2]", "phi[3]"),      # 軸ラベル
+  h = c(3, 0.5, -2),  # 水平方向の調整用の値
+  v = c(0.5, 3, 0.5), # 垂直方向の調整用の値
+  axis = c("x_1", "x_2", "x_3") # 元の軸
+)
+
+# 軸目盛ラベル用の値を作成
+ternary_ticklabel_df <- tibble::tibble(
+  y_1 = c(
+    0.5 * axis_vals, 
+    axis_vals, 
+    0.5 * axis_vals + 0.5
+  ), # x軸の値
+  y_2 = c(
+    sqrt(3) * 0.5 * axis_vals, 
+    rep(0, times = length(axis_vals)), 
+    sqrt(3) * 0.5 * (1 - axis_vals)
+  ), # y軸の値
+  label = c(
+    rev(axis_vals), 
+    axis_vals, 
+    rev(axis_vals)
+  ), # 軸目盛ラベル
+  h = c(
+    rep(1.5, times = length(axis_vals)), 
+    rep(1.5, times = length(axis_vals)), 
+    rep(-0.5, times = length(axis_vals))
+  ), # 水平方向の調整用の値
+  v = c(
+    rep(0.5, times = length(axis_vals)), 
+    rep(0.5, times = length(axis_vals)), 
+    rep(0.5, times = length(axis_vals))
+  ), # 垂直方向の調整用の値
+  angle = c(
+    rep(-60, times = length(axis_vals)), 
+    rep(60, times = length(axis_vals)), 
+    rep(0, times = length(axis_vals))
+  ), # ラベルの表示角度
+  axis = c("x_1", "x_2", "x_3") |> 
+    rep(each = length(axis_vals)) # 元の軸
+)
+```
+
+</details>
+<br>
+
+　4つのデータフレームを使って以降の作図を行います。\
+\
+
+
+## グラフの作成
+
+　`ggplot2`パッケージを利用して、ディリクレ分布のグラフを作成します。ディリクレ分布の確率密度の計算については「分布の計算」を参照してください。\
+\
+
+
+### パラメータの設定
+
+　ディリクレ分布のパラメータ$\boldsymbol{\beta}$を設定します。この例では、三角図で描画するため、次元数を$V = 3$とします。
+
+```{r}
+# パラメータを指定
+beta_v <- c(4, 2, 3)
+```
+
+　$V$次元ベクトル$\boldsymbol{\beta} = (\beta_1, \beta_2, \beta_3)$、$\beta_v > 0$の値を指定します。\
+\
+
+　2つの処理方法でグラフを作成します。\
+\
+
+
+### 散布図によるヒートマップ
+
+　1つ目の方法は、散布図によって簡易的にヒートマップを作成します。こちらの方が直感的に処理できます。\
+\
+
+　ディリクレ分布の確率変数がとり得る値$\boldsymbol{\phi}$の各要素$\phi_v$の値を作成します。
+
+```{r}
+# Φがとり得る値を作成
+phi_vals <- seq(from = 0, to = 1, length.out = 51)
+head(phi_vals)
+```
+
+　$0 < \phi_v < 1$の値を`phi_vals`とします。グラフが粗い場合や処理が重い場合は、`phi_vals`の間隔(`by`引数)や要素数(`length.out`引数)を調整してください。\
+
+　$\boldsymbol{\phi}$の値を作成します。
+
+```{r}
+# Φがとり得る点を作成
+phi_mat <- tidyr::expand_grid(
+  phi_1 = phi_vals, 
+  phi_2 = phi_vals, 
+  phi_3 = phi_vals
+) |> # 格子点を作成
+  dplyr::mutate(
+    sum_phi = rowSums(cbind(phi_1, phi_2, phi_3)), 
+    phi_1 = phi_1 / sum_phi, 
+    phi_2 = phi_2 / sum_phi, 
+    phi_3 = phi_3 / sum_phi
+  ) |> # 正規化
+  dplyr::distinct(phi_1, phi_2, phi_3) |> # 重複を除去
+  as.matrix() # マトリクスに変換
+head(phi_mat)
+```
+
+　3つの要素分の`phi_vals`の全ての組み合わせ(格子状の点)を`expand_grid()`で作成します。データフレームが出力されるので、`as.matrix()`でマトリクスに変換して`phi_mat`とします。`phi_mat`の各行が点$\boldsymbol{\phi} = (\phi_1, \phi_2, \phi_3)$に対応します。\
+　ただし、$\sum_{v=1}^V \phi_v = 1$を満たす必要があるため、行ごとに総和で割って正規化します。正規化によって重複する組み合わせ(行)ができるので、`distinct()`で取り除きます。全ての要素が`0`の行はゼロ除算になるため非数`NaN`になっています(作図に影響しないのでこのままとします)。\
+
+　$\boldsymbol{\phi}$の点ごとの確率密度を計算します。
+
+```{r}
+# ディリクレ分布を計算
+dens_df <- tibble::tibble(
+  phi_1 = phi_mat[, 1], # 三次元座標のx軸の値
+  phi_2 = phi_mat[, 2], # 三次元座標のy軸の値
+  phi_3 = phi_mat[, 3], # 三次元座標のz軸の値
+  y_1 = phi_mat[, 2] + 0.5 * phi_mat[, 3], # 三角座標のx軸の値
+  y_2 = sqrt(3) * 0.5 * phi_mat[, 3],      # 三角座標のy軸の値
+  density = MCMCpack::ddirichlet(x = phi_mat, alpha = beta_v) # 確率密度
+)
+dens_df
+```
+
+　`phi_mat`の値を三角座標に変換してデータフレームに格納します。\
+　ディリクレ分布の確率密度は、`MCMCpack`パッケージの`ddirichlet()`で計算できます。確率変数の引数`x`に`phi_mat`、パラメータの引数`alpha`に`beta_v`を指定します。\
+
+　散布図によって、ディリクレ分布のヒートマップを作成します。
+
+```{r, fig.width=8, fig.height=8}
+# ディリクレ分布の(散布図による)ヒートマップを作成
+ggplot() + 
+  geom_point(data = dens_df, 
+             mapping = aes(x = y_1, y = y_2, color = density)) + # 確率密度の散布図
+  scale_alpha_manual(breaks = c(TRUE, FALSE), values = c(0.5, 0), guide = "none") + # 透過
+  scale_color_viridis_c() + # グラデーション
+  #scale_color_gradientn(colors = c("blue", "green", "yellow", "orange")) + # グラデーション
+  geom_segment(data = ternary_grid_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50", alpha = 0.5, linetype = "dashed") + # 三角図のグリッド線
+  geom_segment(data = ternary_axis_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50") + # 三角図の枠線
+  geom_text(data = ternary_ticklabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v, angle = angle)) + # 三角図の軸目盛ラベル
+  geom_text(data = ternary_axislabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v), 
+            parse = TRUE, size = 6) + # 三角図の軸ラベル
+  scale_x_continuous(breaks = c(0, 0.5, 1), labels = NULL) + # x軸
+  scale_y_continuous(breaks = c(0, 0.25*sqrt(3), 0.5*sqrt(3)), labels = NULL) + # y軸
+  coord_fixed(ratio = 1, clip = "off") + # アスペクト比
+  theme(axis.ticks = element_blank(), 
+        panel.grid.minor = element_blank()) + # 図の体裁
+  labs(title = "Dirichlet Distribution", 
+       subtitle = paste0("beta=(", paste0(beta_v, collapse = ", "), ")"), # (文字列表示用)
+       #subtitle = parse(text = paste0("beta==(list(", paste0(beta_v, collapse = ", "), "))")), # (数式表示用)
+       fill = "density", 
+       x = "", y = "")
+```
+
+```{r, echo=FALSE, fig.width=8, fig.height=8}
+### 資料作成用:(再掲)
+
+# ディリクレ分布の(散布図による)ヒートマップを作成
+ggplot() + 
+  geom_point(data = dens_df, 
+             mapping = aes(x = y_1, y = y_2, color = density)) + # 確率密度の散布図
+  scale_alpha_manual(breaks = c(TRUE, FALSE), values = c(0.5, 0), guide = "none") + # 透過
+  #scale_color_viridis_c() + # グラデーション
+  scale_color_gradientn(colors = c("blue", "green", "yellow", "orange")) + # グラデーション
+  geom_segment(data = ternary_grid_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50", alpha = 0.5, linetype = "dashed") + # 三角図のグリッド線
+  geom_segment(data = ternary_axis_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50") + # 三角図の枠線
+  geom_text(data = ternary_ticklabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v, angle = angle)) + # 三角図の軸目盛ラベル
+  geom_text(data = ternary_axislabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v), 
+            parse = TRUE, size = 6) + # 三角図の軸ラベル
+  scale_x_continuous(breaks = c(0, 0.5, 1), labels = NULL) + # x軸
+  scale_y_continuous(breaks = c(0, 0.25*sqrt(3), 0.5*sqrt(3)), labels = NULL) + # y軸
+  coord_fixed(ratio = 1, clip = "off") + # アスペクト比
+  theme(axis.ticks = element_blank(), 
+        panel.grid.minor = element_blank()) + # 図の体裁
+  labs(title = "Dirichlet Distribution", 
+       #subtitle = paste0("beta=(", paste0(beta_v, collapse = ", "), ")"), # (文字列表示用)
+       subtitle = parse(text = paste0("beta==(list(", paste0(beta_v, collapse = ", "), "))")), # (数式表示用)
+       fill = "density", 
+       x = "", y = "")
+```
+
+　`scale_color_viridis_c()`や`scale_color_gradientn()`を使ってグラデーションのカラーマップを指定します。\
+　ギリシャ文字などの記号を使った数式を表示する場合は、`expression()`の記法を使います。等号は`"=="`、複数の(数式上の)変数を並べるには`"list(変数1, 変数2)"`とします。(プログラム上の)変数の値を使う場合は、`parse()`の`text`引数に指定します。\
+\
+
+
+### 等高線図
+
+ 2つ目の方法は、三角座標を含めた2次元座標上の格子点を作成し、元の3次元座標に戻して確率密度を計算します。こちらの方が綺麗なグラフを作成できます。\
+\
+
+　グラフ用と計算用の$\boldsymbol{\phi}$の値を作成します。
+
+```{r}
+# 三角座標の値を作成
+y_1_vals <- seq(from = 0, to = 1, length.out = 301)
+y_2_vals <- seq(from = 0, to = 0.5*sqrt(3), length.out = 300)
+
+# 格子点を作成
+y_mat <- tidyr::expand_grid(
+  y_1 = y_1_vals, 
+  y_2 = y_2_vals
+) |> # 格子点を作成
+  as.matrix() # マトリクスに変換
+
+# 3次元変数に変換
+phi_mat <- tibble::tibble(
+  phi_2 = y_mat[, 1] - y_mat[, 2] / sqrt(3), 
+  phi_3 = 2 * y_mat[, 2] / sqrt(3)
+) |> # 元の座標に変換
+  dplyr::mutate(
+    phi_2 = dplyr::if_else(phi_2 >= 0 & phi_2 <= 1, true = phi_2, false = as.numeric(NA)), 
+    phi_3 = dplyr::if_else(phi_3 >= 0 & phi_3 <= 1 & !is.na(phi_2), true = phi_3, false = as.numeric(NA)), 
+    phi_1 = 1 - phi_2 - phi_3, 
+    phi_1 = dplyr::if_else(phi_1 >= 0 & phi_1 <= 1, true = phi_1, false = as.numeric(NA))
+  ) |> # 範囲外の値をNAに置換
+  dplyr::select(phi_1, phi_2, phi_3) |> # 順番を変更
+  as.matrix() # マトリクスに変換
+head(phi_mat)
+```
+
+　三角座標を含めた2次元座標上の格子点を作成して`y_mat`とします。\
+　`y_mat`を3次元座標上の点($\boldsymbol{\phi}$の点)に変換して`phi_mat`とします。ただし、三角座標外の点については、総和が1の値($\boldsymbol{\phi}$を満たす値)にならないので欠損値`NA`に置き換えます。\
+
+　ディリクレ分布を計算します。
+
+```{r}
+# ディリクレ分布の確率密度を計算
+dens_df <- tibble::tibble(
+  y_1 = y_mat[, 1], # x軸の値
+  y_2 = y_mat[, 2], # y軸の値
+  density = MCMCpack::ddirichlet(x = phi_mat, alpha = beta_v), # 確率密度
+) |> 
+  dplyr::mutate(
+    fill_flg = !is.na(rowSums(phi_mat)), 
+    density = dplyr::if_else(fill_flg, true = density, false = as.numeric(NA))
+  ) # 範囲外の値をNAに置換
+dens_df
+```
+
+　グラフ用の値`y_mat`と、計算用の値`x_mat`により求めた確率密度をデータフレームに格納します。ただし、三角座標外の要素(`phi_mat`の欠損値を含む行)については欠損値`NA`に置き換えます。\
+
+　ディリクレ分布の等高線図を作成します。
+
+```{r, fig.width=8, fig.height=8}
+# ディリクレ分布の等高線図を作成
+ggplot() + 
+  geom_segment(data = ternary_grid_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50", linetype = "dashed") + # 三角図のグリッド線
+  geom_segment(data = ternary_axis_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50") + # 三角図の枠線
+  geom_text(data = ternary_ticklabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v, angle = angle)) + # 三角図の軸目盛ラベル
+  geom_text(data = ternary_axislabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v), 
+            parse = TRUE, size = 6) + # 三角図の軸ラベル
+  geom_contour_filled(data = dens_df, 
+                      mapping = aes(x = y_1, y = y_2, z = density, fill = ..level..), 
+                      alpha = 0.8) + # 確率密度の等高線
+  scale_x_continuous(breaks = c(0, 0.5, 1), labels = NULL) + # x軸
+  scale_y_continuous(breaks = c(0, 0.25*sqrt(3), 0.5*sqrt(3)), labels = NULL) + # y軸
+  coord_fixed(ratio = 1, clip = "off") + # アスペクト比
+  theme(axis.ticks = element_blank(), 
+        panel.grid.minor = element_blank()) + # 図の体裁
+  labs(title = "Dirichlet Distribution", 
+       #subtitle = paste0("beta=(", paste0(beta_v, collapse = ", "), ")"), # (文字列表示用)
+       subtitle = parse(text = paste0("beta==(list(", paste0(beta_v, collapse = ", "), "))")), # (数式表示用)
+       fill = "density", 
+       x = "", y = "")
+```
+
+　`geom_contour()`または`geom_contour_filled()`で等高線図を描画します。三角図外の点は欠損値`NA`なので描画されません(つまりデータの半分を捨てています)。\
+\
+
+
+### ヒートマップ
+
+　等高線図用のデータフレームを加工して、ヒートマップを作成します。\
+\
+
+　三角座標外の点(行)を削除します。
+
+```{r}
+# 範囲外の要素を除去
+dens_df <- dens_df |> 
+  dplyr::filter(fill_flg)
+dens_df
+```
+
+　`fill_flg`列が`FALSE`または`density`列が`NA`の行を`filter()`で取り除きます。\
+
+　ディリクレ分布のヒートマップを作成します。
+
+```{r, fig.width=8, fig.height=8}
+# ディリクレ分布のヒートマップを作成
+ggplot() + 
+  geom_tile(data = dens_df, 
+            mapping = aes(x = y_1, y = y_2, fill = density)) + # 確率密度のヒートマップ
+  geom_segment(data = ternary_grid_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50", linetype = "dashed") + # 三角図のグリッド線
+  geom_segment(data = ternary_axis_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50") + # 三角図の枠線
+  geom_text(data = ternary_ticklabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v, angle = angle)) + # 三角図の軸目盛ラベル
+  geom_text(data = ternary_axislabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v), 
+            parse = TRUE, size = 6) + # 三角図の軸ラベル
+  scale_fill_viridis_c() + # グラデーション
+  #scale_fill_gradientn(colors = c("blue", "green", "yellow", "orange")) + # グラデーション
+  scale_x_continuous(breaks = c(0, 0.5, 1), labels = NULL) + # x軸
+  scale_y_continuous(breaks = c(0, 0.25*sqrt(3), 0.5*sqrt(3)), labels = NULL) + # y軸
+  coord_fixed(ratio = 1, clip = "off") + # アスペクト比
+  theme(axis.ticks = element_blank(), 
+        panel.grid.minor = element_blank()) + # 図の体裁
+  labs(title = "Dirichlet Distribution", 
+       #subtitle = paste0("beta=(", paste0(beta_v, collapse = ", "), ")"), # (文字列表示用)
+       subtitle = parse(text = paste0("beta==(list(", paste0(beta_v, collapse = ", "), "))")), # (数式表示用)
+       fill = "density", 
+       x = "", y = "")
+```
+
+```{r, echo=FALSE, fig.width=8, fig.height=8}
+### 資料作成用:(再掲)
+
+# ディリクレ分布のヒートマップを作成
+ggplot() + 
+  geom_tile(data = dens_df, 
+            mapping = aes(x = y_1, y = y_2, fill = density)) + # 確率密度のヒートマップ
+  geom_segment(data = ternary_grid_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50", linetype = "dashed") + # 三角図のグリッド線
+  geom_segment(data = ternary_axis_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50") + # 三角図の枠線
+  geom_text(data = ternary_ticklabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v, angle = angle)) + # 三角図の軸目盛ラベル
+  geom_text(data = ternary_axislabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v), 
+            parse = TRUE, size = 6) + # 三角図の軸ラベル
+  #scale_fill_viridis_c() + # グラデーション
+  scale_fill_gradientn(colors = c("blue", "green", "yellow", "orange")) + # グラデーション
+  scale_x_continuous(breaks = c(0, 0.5, 1), labels = NULL) + # x軸
+  scale_y_continuous(breaks = c(0, 0.25*sqrt(3), 0.5*sqrt(3)), labels = NULL) + # y軸
+  coord_fixed(ratio = 1, clip = "off") + # アスペクト比
+  theme(axis.ticks = element_blank(), 
+        panel.grid.minor = element_blank()) + # 図の体裁
+  labs(title = "Dirichlet Distribution", 
+       #subtitle = paste0("beta=(", paste0(beta_v, collapse = ", "), ")"), # (文字列表示用)
+       subtitle = parse(text = paste0("beta==(list(", paste0(beta_v, collapse = ", "), "))")), # (数式表示用)
+       fill = "density", 
+       x = "", y = "")
+```
+
+　`geom_tile()`でヒートマップを描画します。\
+\
+
+　ディリクレ分布のグラフを描画できました。以降は、ここまでの作図処理を用いて、パラメータの影響を確認していきます。\
+\
+
+
+## パラメータと分布の形状の関係を並べて比較
+
+　複数のパラメータのグラフを比較することで、パラメータの値と分布の形状の関係を確認します。\
+\
+
+　複数のパラメータを設定します。
+
+```{r}
+# パラメータとして利用する値を指定
+beta_1_vals <- c(1, 0.9, 3, 10, 4, 3)
+beta_2_vals <- c(1, 0.9, 3, 10, 2, 0.9)
+beta_3_vals <- c(1, 0.9, 3, 10, 3, 2)
+```
+
+　$\beta_1, \beta_2, \beta_3$の値をそれぞれ`beta_*_vals`として、要素数が同じになるように値を指定します。\
+
+　パラメータごとに分布を計算します。
+
+```{r}
+# パラメータごとにディリクレ分布を計算
+res_dens_df <- tidyr::expand_grid(
+  param_i = seq(beta_1_vals), # パラメータ
+  phi_i = 1:nrow(y_mat) # 点番号
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(param_i) |> # 分布の計算用にグループ化
+  dplyr::mutate(
+    y_1 = y_mat[phi_i, 1], 
+    y_2 = y_mat[phi_i, 2], 
+    beta_1 = beta_1_vals[unique(param_i)], 
+    beta_2 = beta_2_vals[unique(param_i)], 
+    beta_3 = beta_3_vals[unique(param_i)], 
+    density = MCMCpack::ddirichlet(
+      x = phi_mat, alpha = c(unique(beta_1), unique(beta_2), unique(beta_3))
+    ), # 確率密度
+    beta = paste0("(", unique(beta_1), ", ", unique(beta_2), ", ", unique(beta_3), ")") |> 
+      factor(levels = paste0("(", beta_1_vals, ", ", beta_2_vals, ", ", beta_3_vals, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::mutate(
+    fill_flg = !is.na(rowSums(phi_mat)), 
+    density = dplyr::if_else(fill_flg, true = density, false = as.numeric(NA))
+  ) # 範囲外を非表示化
+res_dens_df
+```
+
+　パラメータ番号として`1`から`beta_*_vals`の要素数までの整数を作成し、`y_mat`の行番号との全ての組み合わせを`expand_grid()`で作成します。これにより、パラメータごとに`y_mat`を複製できます。\
+　パラメータ列`param_i`でグループ化することで、`phi_mat`ごとに確率密度を計算できます。\
+　`param_i`列をインデックスとして使って`beta_*_vals`から値を取り出して、`phi_mat`ごとに確率密度を計算できます。\
+
+　パラメータごとにグラフを分割してディリクレ分布を作図します。
+
+```{r, fig.width=15, fig.height=10}
+# パラメータごとにディリクレ分布の等高線図を作成
+ggplot() + 
+  geom_segment(data = ternary_grid_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50", linetype = "dashed") + # 三角図のグリッド線
+  geom_segment(data = ternary_axis_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50") + # 三角図の枠線
+  geom_text(data = ternary_ticklabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v, angle = angle)) + # 三角図の軸目盛ラベル
+  geom_text(data = ternary_axislabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v), 
+            parse = TRUE, size = 6) + # 三角図の軸ラベル
+  geom_contour_filled(data = res_dens_df, 
+                      mapping = aes(x = y_1, y = y_2, z = density, fill = ..level..), 
+                      alpha = 0.8) + # 確率密度の等高線
+  scale_x_continuous(breaks = c(0, 0.5, 1), labels = NULL) + # x軸
+  scale_y_continuous(breaks = c(0, 0.25*sqrt(3), 0.5*sqrt(3)), labels = NULL) + # y軸
+  facet_wrap(. ~ beta, nrow = 2, labeller = label_bquote(beta==.(as.character(beta)))) + # グラフを分割
+  coord_fixed(ratio = 1, clip = "off") + # アスペクト比
+  theme(axis.ticks = element_blank(), 
+        panel.grid.minor = element_blank()) + # 図の体裁
+  labs(title = "Dirichlet Distribution", 
+       fill = "density", 
+       x = "", y = "")
+```
+
+　`facet_wrap()`に列を指定すると、その列の値ごとにグラフを分割して描画できます。\
+\
+
+
+## パラメータと分布の形状の関係をアニメーションで可視化
+
+　前節では、複数のパラメータのグラフを並べて比較しました。次は、パラメータの値を少しずつ変化させて、分布の形状の変化をアニメーションで確認します。\
+\
+
+
+### 第1成分の影響
+
+　まずは、$\beta_1$の値を変化させ、$\beta_2, \beta_3$を固定します。
+
+```{r}
+# パラメータとして利用する値を指定
+beta_1_vals <- seq(from = 1, to = 10, by = 0.2) |> 
+  round(digits = 1)
+
+# 固定するパラメータを指定
+beta_2 <- 2
+beta_3 <- 3
+
+# フレーム数の設定
+frame_num <- length(beta_1_vals)
+frame_num
+```
+
+　値の間隔が一定になるように$\beta_1$の値を`beta_1_vals`として作成します。パラメータごとにフレームを切り替えるので、`beta_1_vals`の要素数がアニメーションのフレーム数になります。\
+　また$\beta_2, \beta_3$を`beta_2, beta_3`として値を指定します。\
+
+　パラメータごとに分布を計算します。
+
+```{r}
+# パラメータごとにディリクレ分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  beta_1 = beta_1_vals, # パラメータ
+  i = 1:nrow(y_mat) # 点番号
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(beta_1) |> # 分布の計算用にグループ化
+  dplyr::mutate(
+    y_1 = y_mat[i, 1], 
+    y_2 = y_mat[i, 2], 
+    density = MCMCpack::ddirichlet(
+      x = phi_mat, alpha = c(unique(beta_1), beta_2, beta_3)
+    ), # 確率密度
+    parameter = paste0("beta=(", unique(beta_1), ", ", beta_2, ", ", beta_3, ")") |> 
+      factor(levels = paste0("beta=(", beta_1_vals, ", ", beta_2, ", ", beta_3, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::mutate(
+    fill_flg = !is.na(rowSums(phi_mat)), 
+    density = dplyr::if_else(fill_flg, true = density, false = as.numeric(NA))
+  ) # 範囲外を非表示化
+anime_dens_df
+```
+
+　パラメータ`beta_1_vals`の要素と`y_mat`の行番号の全ての組み合わせを`expand_grid()`で作成します。これにより、パラメータごとに`y_mat`を複製できます。\
+　パラメータ列`beta_1`でグループ化することで、`phi_mat`ごとに確率密度を計算できます。\
+　パラメータごとにフレーム切替用のラベルを作成します。文字列型だと文字列の基準で順序が決まるので、因子型にしてパラメータに応じたレベル(順序)を設定します。\
+
+　ディリクレ分布のヒートマップのアニメーション(gif画像)を作成します。
+
+```{r}
+# ディリクレ分布のアニメーションを作成:ヒートマップ
+anime_dens_graph <- ggplot() + 
+  geom_segment(data = ternary_grid_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50", linetype = "dashed") + # 三角図のグリッド線
+  geom_segment(data = ternary_axis_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50") + # 三角図の枠線
+  geom_text(data = ternary_ticklabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v, angle = angle)) + # 三角図の軸目盛ラベル
+  geom_text(data = ternary_axislabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v), 
+            parse = TRUE, size = 6) + # 三角図の軸ラベル
+  geom_tile(data = anime_dens_df, 
+            mapping = aes(x = y_1, y = y_2, fill = density, alpha = fill_flg)) + # 確率密度のヒートマップ
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_alpha_manual(breaks = c(TRUE, FALSE), values = c(0.8, 0), guide = "none") + # 透過
+  scale_fill_viridis_c() + # グラデーション
+  #scale_fill_gradientn(colors = c("blue", "green", "yellow", "orange")) + # グラデーション
+  scale_x_continuous(breaks = c(0, 0.5, 1), labels = NULL) + # x軸
+  scale_y_continuous(breaks = c(0, 0.25*sqrt(3), 0.5*sqrt(3)), labels = NULL) + # y軸
+  coord_fixed(ratio = 1, clip = "off") + # アスペクト比
+  theme(axis.ticks = element_blank(), 
+        panel.grid.minor = element_blank()) + # 図の体裁
+  labs(title = "Dirichlet Distribution", 
+       subtitle = "{current_frame}", 
+       fill = "density", 
+       x = "", y = "")
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 10, width = 600, height = 600)
+```
+
+　`transition_manual()`にフレームの順序を表す列を指定します。この例では、因子型のラベルのレベルの順に描画されます。\
+　`animate()`のフレーム数の引数`nframes`にパラメータ数、フレームレートの引数`fps`に1秒当たりのフレーム数を指定します。`fps`引数の値が大きいほどフレームが早く切り替わります。ただし、値が大きいと意図通りに動作しません。\
+
+　同様に、ディリクレ分布の等高線図のアニメーションを作成します。
+
+```{r}
+# ディリクレ分布のアニメーションを作成:等高線図
+anime_dens_graph <- ggplot() + 
+  geom_segment(data = ternary_grid_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50", linetype = "dashed") + # 三角図のグリッド線
+  geom_segment(data = ternary_axis_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50") + # 三角図の枠線
+  geom_text(data = ternary_ticklabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v, angle = angle)) + # 三角図の軸目盛ラベル
+  geom_text(data = ternary_axislabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v), 
+            parse = TRUE, size = 6) + # 三角図の軸ラベル
+  geom_contour_filled(data = anime_dens_df, 
+                      mapping = aes(x = y_1, y = y_2, z = density, fill = ..level..), 
+                      alpha = 0.8) + # 確率密度の等高線
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_x_continuous(breaks = c(0, 0.5, 1), labels = NULL) + # x軸
+  scale_y_continuous(breaks = c(0, 0.25*sqrt(3), 0.5*sqrt(3)), labels = NULL) + # y軸
+  coord_fixed(ratio = 1, clip = "off") + # アスペクト比
+  theme(axis.ticks = element_blank(), 
+        panel.grid.minor = element_blank()) + # 図の体裁
+  labs(title = "Dirichlet Distribution", 
+       subtitle = "{current_frame}", 
+       fill = "density", 
+       x = "", y = "")
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 10, width = 600, height = 600)
+
+```
+
+
+
+
+### 第2成分の影響
+
+　続いて、$\beta_2$の値を変化させ、$\beta_1, \beta_3$を固定します。
+
+```{r}
+# パラメータとして利用する値を指定
+beta_2_vals <- seq(from = 1, to = 10, by = 0.2) |> 
+  round(digits = 1)
+
+# 固定するパラメータを指定
+beta_1 <- 2
+beta_3 <- 3
+
+# フレーム数の設定
+frame_num <- length(beta_2_vals)
+```
+
+　値の間隔が一定になるように$\beta_2$の値を`beta_2_vals`として作成し、$\beta_1, \beta_3$を`beta_1, beta_3`として値を指定します。\
+
+　パラメータごとに分布を計算します。
+
+```{r}
+# パラメータごとにディリクレ分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  beta_2 = beta_2_vals, # パラメータ
+  i = 1:nrow(y_mat) # 点番号
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(beta_2) |> # 分布の計算用にグループ化
+  dplyr::mutate(
+    y_1 = y_mat[i, 1], 
+    y_2 = y_mat[i, 2], 
+    density = MCMCpack::ddirichlet(
+      x = phi_mat, alpha = c(beta_1, unique(beta_2), beta_3)
+    ), # 確率密度
+    parameter = paste0("beta=(", beta_1, ", ", unique(beta_2), ", ", beta_3, ")") |> 
+      factor(levels = paste0("beta=(", beta_1, ", ", beta_2_vals, ", ", beta_3, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::mutate(
+    fill_flg = !is.na(rowSums(phi_mat)), 
+    density = dplyr::if_else(fill_flg, true = density, false = as.numeric(NA))
+  ) # 範囲外を非表示化
+anime_dens_df
+```
+
+　「第1成分の影響」の`beta_1, beta_1_vals`と`beta_2, beta_2_vals`を入れ換えるように処理します。\
+
+　「第1成分の影響」のコードで作図できます。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# ディリクレ分布のアニメーションを作成:ヒートマップ
+anime_dens_graph <- ggplot() + 
+  geom_segment(data = ternary_grid_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50", linetype = "dashed") + # 三角図のグリッド線
+  geom_segment(data = ternary_axis_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50") + # 三角図の枠線
+  geom_text(data = ternary_ticklabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v, angle = angle)) + # 三角図の軸目盛ラベル
+  geom_text(data = ternary_axislabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v), 
+            parse = TRUE, size = 6) + # 三角図の軸ラベル
+  geom_tile(data = anime_dens_df, 
+            mapping = aes(x = y_1, y = y_2, fill = density, alpha = fill_flg)) + # 確率密度のヒートマップ
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_alpha_manual(breaks = c(TRUE, FALSE), values = c(0.8, 0), guide = "none") + # 透過
+  scale_fill_viridis_c() + # グラデーション
+  #scale_fill_gradientn(colors = c("blue", "green", "yellow", "orange")) + # グラデーション
+  scale_x_continuous(breaks = c(0, 0.5, 1), labels = NULL) + # x軸
+  scale_y_continuous(breaks = c(0, 0.25*sqrt(3), 0.5*sqrt(3)), labels = NULL) + # y軸
+  coord_fixed(ratio = 1, clip = "off") + # アスペクト比
+  theme(axis.ticks = element_blank(), 
+        panel.grid.minor = element_blank()) + # 図の体裁
+  labs(title = "Dirichlet Distribution", 
+       subtitle = "{current_frame}", 
+       fill = "density", 
+       x = "", y = "")
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 10, width = 600, height = 600)
+```
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# ディリクレ分布のアニメーションを作成:等高線図
+anime_dens_graph <- ggplot() + 
+  geom_segment(data = ternary_grid_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50", linetype = "dashed") + # 三角図のグリッド線
+  geom_segment(data = ternary_axis_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50") + # 三角図の枠線
+  geom_text(data = ternary_ticklabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v, angle = angle)) + # 三角図の軸目盛ラベル
+  geom_text(data = ternary_axislabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v), 
+            parse = TRUE, size = 6) + # 三角図の軸ラベル
+  geom_contour_filled(data = anime_dens_df, 
+                      mapping = aes(x = y_1, y = y_2, z = density, fill = ..level..), 
+                      alpha = 0.8) + # 確率密度の等高線
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_x_continuous(breaks = c(0, 0.5, 1), labels = NULL) + # x軸
+  scale_y_continuous(breaks = c(0, 0.25*sqrt(3), 0.5*sqrt(3)), labels = NULL) + # y軸
+  coord_fixed(ratio = 1, clip = "off") + # アスペクト比
+  theme(axis.ticks = element_blank(), 
+        panel.grid.minor = element_blank()) + # 図の体裁
+  labs(title = "Dirichlet Distribution", 
+       subtitle = "{current_frame}", 
+       fill = "density", 
+       x = "", y = "")
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 10, width = 600, height = 600)
+```
+
+
+
+### 第3成分の影響
+
+　$\beta_1$の値を変化させ、$\beta_1, \beta_2$を固定します。
+
+```{r}
+# パラメータとして利用する値を指定
+beta_3_vals <- seq(from = 1, to = 10, by = 0.2) |> 
+  round(digits = 1)
+
+# 固定するパラメータを指定
+beta_1 <- 2
+beta_2 <- 3
+
+# フレーム数の設定
+frame_num <- length(beta_3_vals)
+```
+
+　同様に指定します。\
+
+　パラメータごとに分布を計算します。
+
+```{r}
+# パラメータごとにディリクレ分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  beta_3 = beta_3_vals, # パラメータ
+  i = 1:nrow(y_mat) # 点番号
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(beta_3) |> # 分布の計算用にグループ化
+  dplyr::mutate(
+    y_1 = y_mat[i, 1], 
+    y_2 = y_mat[i, 2], 
+    density = MCMCpack::ddirichlet(
+      x = phi_mat, alpha = c(beta_1, beta_2, unique(beta_3))
+    ), # 確率密度
+    parameter = paste0("beta=(", beta_1, ", ", beta_2, ", ", unique(beta_3), ")") |> 
+      factor(levels = paste0("beta=(", beta_1, ", ", beta_2, ", ", beta_3_vals, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::mutate(
+    fill_flg = !is.na(rowSums(phi_mat)), 
+    density = dplyr::if_else(fill_flg, true = density, false = as.numeric(NA))
+  ) # 範囲外を非表示化
+anime_dens_df
+```
+
+　「第1成分の影響」の`beta_1, beta_1_vals`と`beta_3, beta_3_vals`を入れ換えるように処理します。\
+
+　「第1成分の影響」のコードで作図できます。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# ディリクレ分布のアニメーションを作成:ヒートマップ
+anime_dens_graph <- ggplot() + 
+  geom_segment(data = ternary_grid_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50", linetype = "dashed") + # 三角図のグリッド線
+  geom_segment(data = ternary_axis_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50") + # 三角図の枠線
+  geom_text(data = ternary_ticklabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v, angle = angle)) + # 三角図の軸目盛ラベル
+  geom_text(data = ternary_axislabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v), 
+            parse = TRUE, size = 6) + # 三角図の軸ラベル
+  geom_tile(data = anime_dens_df, 
+            mapping = aes(x = y_1, y = y_2, fill = density, alpha = fill_flg)) + # 確率密度のヒートマップ
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_alpha_manual(breaks = c(TRUE, FALSE), values = c(0.8, 0), guide = "none") + # 透過
+  scale_fill_viridis_c() + # グラデーション
+  #scale_fill_gradientn(colors = c("blue", "green", "yellow", "orange")) + # グラデーション
+  scale_x_continuous(breaks = c(0, 0.5, 1), labels = NULL) + # x軸
+  scale_y_continuous(breaks = c(0, 0.25*sqrt(3), 0.5*sqrt(3)), labels = NULL) + # y軸
+  coord_fixed(ratio = 1, clip = "off") + # アスペクト比
+  theme(axis.ticks = element_blank(), 
+        panel.grid.minor = element_blank()) + # 図の体裁
+  labs(title = "Dirichlet Distribution", 
+       subtitle = "{current_frame}", 
+       fill = "density", 
+       x = "", y = "")
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 10, width = 600, height = 600)
+```
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# ディリクレ分布のアニメーションを作成:等高線図
+anime_dens_graph <- ggplot() + 
+  geom_segment(data = ternary_grid_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50", linetype = "dashed") + # 三角図のグリッド線
+  geom_segment(data = ternary_axis_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50") + # 三角図の枠線
+  geom_text(data = ternary_ticklabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v, angle = angle)) + # 三角図の軸目盛ラベル
+  geom_text(data = ternary_axislabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v), 
+            parse = TRUE, size = 6) + # 三角図の軸ラベル
+  geom_contour_filled(data = anime_dens_df, 
+                      mapping = aes(x = y_1, y = y_2, z = density, fill = ..level..), 
+                      alpha = 0.8) + # 確率密度の等高線
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_x_continuous(breaks = c(0, 0.5, 1), labels = NULL) + # x軸
+  scale_y_continuous(breaks = c(0, 0.25*sqrt(3), 0.5*sqrt(3)), labels = NULL) + # y軸
+  coord_fixed(ratio = 1, clip = "off") + # アスペクト比
+  theme(axis.ticks = element_blank(), 
+        panel.grid.minor = element_blank()) + # 図の体裁
+  labs(title = "Dirichlet Distribution", 
+       subtitle = "{current_frame}", 
+       fill = "density", 
+       x = "", y = "")
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 10, width = 600, height = 600)
+```
+
+
+
+### 3つの成分の影響
+
+　最後に、$\boldsymbol{\beta}$の値を変化させます。
+
+```{r}
+# フレーム番号を指定
+frame_num <- 51
+
+# パラメータとして利用する値を指定
+beta_1_vals <- seq(from = 1, to = 16, length.out = frame_num) |> 
+  round(digits = 2)
+beta_2_vals <- seq(from = 2, to = 10, length.out = frame_num) |> 
+  round(digits = 2)
+beta_3_vals <- seq(from = 3, to = 4, length.out = frame_num) |> 
+  round(digits = 2)
+```
+
+　3つの`beta_*_vals`の要素数が同じになるように値を指定します。\
+
+　パラメータごとに分布を計算します。
+
+```{r}
+# パラメータごとにディリクレ分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  param_i = 1:frame_num, # パラメータ
+  phi_i = 1:nrow(y_mat) # 点番号
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(param_i) |> # 分布の計算用にグループ化
+  dplyr::mutate(
+    y_1 = y_mat[phi_i, 1], 
+    y_2 = y_mat[phi_i, 2], 
+    beta_1 = beta_1_vals[unique(param_i)], 
+    beta_2 = beta_2_vals[unique(param_i)], 
+    beta_3 = beta_3_vals[unique(param_i)], 
+    density = MCMCpack::ddirichlet(
+      x = phi_mat, alpha = c(unique(beta_1), unique(beta_2), unique(beta_3))
+    ), # 確率密度
+    parameter = paste0("beta=(", unique(beta_1), ", ", unique(beta_2), ", ", unique(beta_3), ")") |> 
+      factor(levels = paste0("beta=(", beta_1_vals, ", ", beta_2_vals, ", ", beta_3_vals, ")")) # フレーム切替用ラベル
+  ) |> 
+  dplyr::mutate(
+    fill_flg = !is.na(rowSums(phi_mat)), 
+    density = dplyr::if_else(fill_flg, true = density, false = as.numeric(NA))
+  ) # 範囲外を非表示化
+anime_dens_df
+```
+
+　パラメータ番号として`1`から`frame_num`までの整数を作成し、`y_mat`の行番号との全ての組み合わせを作成します。\
+　パラメータ列`param_i`でグループ化し、`param_i`列をインデックスとして使って`beta_*_vals`から値を取り出して、`phi_mat`ごとに確率密度を計算できます。\
+
+　「第1成分の影響」のコードで作図できます。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# ディリクレ分布のアニメーションを作成:ヒートマップ
+anime_dens_graph <- ggplot() + 
+  geom_segment(data = ternary_grid_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50", linetype = "dashed") + # 三角図のグリッド線
+  geom_segment(data = ternary_axis_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50") + # 三角図の枠線
+  geom_text(data = ternary_ticklabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v, angle = angle)) + # 三角図の軸目盛ラベル
+  geom_text(data = ternary_axislabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v), 
+            parse = TRUE, size = 6) + # 三角図の軸ラベル
+  geom_tile(data = anime_dens_df, 
+            mapping = aes(x = y_1, y = y_2, fill = density, alpha = fill_flg)) + # 確率密度のヒートマップ
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_alpha_manual(breaks = c(TRUE, FALSE), values = c(0.8, 0), guide = "none") + # 透過
+  scale_fill_viridis_c() + # グラデーション
+  #scale_fill_gradientn(colors = c("blue", "green", "yellow", "orange")) + # グラデーション
+  scale_x_continuous(breaks = c(0, 0.5, 1), labels = NULL) + # x軸
+  scale_y_continuous(breaks = c(0, 0.25*sqrt(3), 0.5*sqrt(3)), labels = NULL) + # y軸
+  coord_fixed(ratio = 1, clip = "off") + # アスペクト比
+  theme(axis.ticks = element_blank(), 
+        panel.grid.minor = element_blank()) + # 図の体裁
+  labs(title = "Dirichlet Distribution", 
+       subtitle = "{current_frame}", 
+       fill = "density", 
+       x = "", y = "")
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 10, width = 600, height = 600)
+```
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# ディリクレ分布のアニメーションを作成:等高線図
+anime_dens_graph <- ggplot() + 
+  geom_segment(data = ternary_grid_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50", linetype = "dashed") + # 三角図のグリッド線
+  geom_segment(data = ternary_axis_df, 
+               mapping = aes(x = y_1_start, y = y_2_start, xend = y_1_end, yend = y_2_end), 
+               color = "gray50") + # 三角図の枠線
+  geom_text(data = ternary_ticklabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v, angle = angle)) + # 三角図の軸目盛ラベル
+  geom_text(data = ternary_axislabel_df, 
+            mapping = aes(x = y_1, y = y_2, label = label, hjust = h, vjust = v), 
+            parse = TRUE, size = 6) + # 三角図の軸ラベル
+  geom_contour_filled(data = anime_dens_df, 
+                      mapping = aes(x = y_1, y = y_2, z = density, fill = ..level..), 
+                      alpha = 0.8) + # 確率密度の等高線
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_x_continuous(breaks = c(0, 0.5, 1), labels = NULL) + # x軸
+  scale_y_continuous(breaks = c(0, 0.25*sqrt(3), 0.5*sqrt(3)), labels = NULL) + # y軸
+  coord_fixed(ratio = 1, clip = "off") + # アスペクト比
+  theme(axis.ticks = element_blank(), 
+        panel.grid.minor = element_blank()) + # 図の体裁
+  labs(title = "Dirichlet Distribution", 
+       subtitle = "{current_frame}", 
+       fill = "density", 
+       x = "", y = "")
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 10, width = 600, height = 600)
+```
+
+\ 
+
+　この記事では、ディリクレ分布のグラフを作成しました。次は、乱数を生成します。\
+\
+
