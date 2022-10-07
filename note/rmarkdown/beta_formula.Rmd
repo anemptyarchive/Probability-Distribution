@@ -32,7 +32,8 @@ knitr::opts_chunk$set(
 
 【編集履歴】
 
-- 2022/10045：「定義式」・「正規化項の導出」・「統計量の導出」を修正
+- 2022/10/04：「正規化項の導出」・「統計量の導出」を修正
+- 2022/10/06：「定義式」を修正
 
 ----
 
@@ -51,20 +52,69 @@ knitr::opts_chunk$set(
 
 $$
 \mathrm{Beta}(\phi | \alpha, \beta)
-  = \frac{
-        \Gamma(\alpha + \beta)
-    }{
-        \Gamma(\alpha)
-        \Gamma(\beta)
-    }
-    \phi^{\alpha-1}
-    (1 - \phi)^{\beta-1}
+    = \frac{
+          \Gamma(\alpha + \beta)
+      }{
+          \Gamma(\alpha)
+          \Gamma(\beta)
+      }
+      \phi^{\alpha-1}
+      (1 - \phi)^{\beta-1}
 $$
 
 　ここで、$\Gamma(x)$はガンマ関数です。正規化項とベータ関数については「正規化項の導出」、ガンマ関数については「ガンマ関数の性質の導出」を参照してください。\
 　確率変数は$0 < \phi < 1$の値をとり、2つのパラメータはそれぞれ非負の実数$\alpha > 0, \beta > 0$を満たす必要があります。\
 
-　ベータ分布は、ベルヌーイ分布と二項分布の共役事前分布であり、$\phi$はベルヌーイ分布・二項分布のパラメータ$\phi, 1 - \phi$の条件を満たします。\
+　ベータ分布は、ベルヌーイ分布と二項分布の共役事前分布であり、$\phi$はベルヌーイ分布と二項分布のパラメータ$\phi$の条件を満たします。\
+\
+
+　ベータ分布の対数をとると、次の式になります。
+
+$$
+\begin{aligned}
+\log \mathrm{Beta}(\phi | \alpha, \beta)
+   &= \log \Gamma(\alpha + \beta)
+      - \log \Gamma(\alpha)
+      - \log \Gamma(\beta) \\
+   &\quad
+      + (\alpha - 1)
+        \phi
+      + (\beta - 1)
+        \log (1 - \phi)
+\end{aligned}
+$$
+
+　対数の性質より$\log x^a = a \log x$、$\log (x y) = \log x + \log y$、$\log (x y) = \log x + \log y$です。\
+\
+
+
+## 一様分布との関係
+
+　2つパラメータがそれぞれ1のとき、ベータ分布は連続型の一様分布(Continuous Uniform Distribution)になります。\
+\
+
+　$\alpha = 1, \beta = 1$のときのベータ分布を考えます。ガンマ関数の性質$\Gamma(x) = (x - 1) \Gamma(x - 1)$、$\Gamma(1) = 1$、べき乗の性質$x^0 = 1$より、$\phi$の値に関わらず確率密度が1になります。
+
+$$
+\begin{aligned}
+\mathrm{Beta}(\phi | \alpha = 1, \beta = 1)
+   &= \frac{
+          \Gamma(1 + 1)
+      }{
+          \Gamma(1)
+          \Gamma(1)
+      }
+      \phi^{1-1}
+      (1 - \phi)^{1-1}
+\\
+   &= 1
+\\
+   &= \frac{1}{b - a}
+    = \mathrm{U}(\phi | a = 0, b = 1)
+\end{aligned}
+$$
+
+　確率変数が$0 < \phi < 1$の値をとる(パラメータが$a = 0, b = 1$の)連続一様分布と一致しました。\
 \
 
 
@@ -87,6 +137,8 @@ $$
 \\
 \mathrm{mode}[\phi]
    &= \frac{\alpha - 1}{\alpha + \beta - 2}
+    \qquad
+      (\alpha > 1, \beta > 1)
 \end{aligned}
 $$
 
@@ -160,6 +212,9 @@ $$
 
 　次は、ベータ関数の計算を行い(変形して)正規化項を導出します。\
 \
+
+
+### ベータ関数の性質
 
 　ベータ関数の計算を考えます。
 
@@ -872,7 +927,7 @@ $$
 \end{aligned}
 $$
 
-　分子を展開して、式を整理します。
+　通分して式を整理します。
 
 $$
 \begin{aligned}
@@ -927,7 +982,7 @@ $$
 
 ## 最頻値
 
-　連続値をとる確率分布の最頻値(mode)は、$x$についての確率密度関数$p(x)$の微分$\frac{\partial p(x)}{\partial x}$が0となる$x$です。\
+　連続値をとる確率分布の最頻値(mode)は、$x$についての確率密度関数$p(x)$の微分$\frac{d p(x)}{d x}$が0となる$x$です。\
 \
 
 　ベータ分布の確率密度関数$\mathrm{Beta}(\phi | \alpha, \beta)$を$\phi$で微分することを考えます。
@@ -1039,7 +1094,9 @@ $$
 \Rightarrow
 \phi
    &= \frac{\alpha - 1}{\alpha + \beta - 2}
-        = \mathrm{mode}[\phi]
+    = \mathrm{mode}[\phi]
+    \qquad
+      (\alpha > 1)
 \end{aligned}
 $$
 
