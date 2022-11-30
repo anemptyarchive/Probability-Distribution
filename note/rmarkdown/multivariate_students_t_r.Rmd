@@ -1,0 +1,1451 @@
+---
+title: "多次元スチューデントのt分布"
+author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M:%S')`"
+output:
+  html_document:
+    toc: TRUE       # 目次
+    toc_depth: 3    # 目次の見出しレベル
+    toc_float: TRUE # 目次のスクロール追跡
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, error = FALSE, warning = FALSE # メッセージを非表示
+)
+```
+
+----
+
+【編集履歴】
+
+- 2022/11/30：「分布の計算」「分布の作図」を追加
+
+----
+
+
+# 多次元スチューデントのt分布の計算
+
+　多次元スチューデントのt分布(Multivariate Student's t Distribution)の確率密度を計算します。多次元t分布については「分布の定義式」を参照してください。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r, eval=FALSE}
+# 利用パッケージ
+library(mvnfast)
+library(LaplacesDemon)
+```
+
+　この記事では、`パッケージ名::関数名()`の記法を使うので、パッケージを読み込む必要はありません。\
+　`magrittr`パッケージのパイプ演算子`%>%`ではなく、ベースパイプ(ネイティブパイプ)演算子`|>`を使っています。`%>%`に置き換えても処理できます。\
+\
+
+
+## 確率密度の計算
+
+　多次元スチューデントのt分布に従う確率密度を計算する方法をいくつか確認します。\
+\
+
+
+### スケール行列を使用
+
+　まずは、スケール行列を用いてt分布を計算します。\
+\
+
+
+#### パラメータの設定
+
+　t分布の次元数$D$とパラメータ$\boldsymbol{\mu}, \boldsymbol{\Sigma}$、確率変数の値$\mathbf{x}$を設定します。
+
+```{r}
+# 次元数を指定
+D <- 3
+
+# 自由度を指定
+nu <- 5
+
+# 位置ベクトルを指定
+mu_d <- c(10, -6, 1.5)
+
+# スケール行列を指定
+sigma_dd <- c(
+  4, 1.8, -0.1, 
+  1.8, 9, 2.4, 
+  -0.1, 2.4, 1
+) |> # 値を指定
+  matrix(nrow = D, ncol = D, byrow = TRUE) # マトリクスに変換
+
+# 確率変数の値を指定
+x_d = c(11.5, -5, 0)
+```
+
+　自由度(形状パラメータ)$\nu$、位置ベクトル$\boldsymbol{\mu}$、スケール行列$\boldsymbol{\Sigma}$、確率変数の値$\mathbf{x}$を指定します。$\boldsymbol{\mu}, \mathbf{x}$は$D$次元ベクトル、$\boldsymbol{\Sigma}$は$D \times D$の行列です。
+
+$$
+\boldsymbol{\mu}
+    = \begin{pmatrix}
+          \mu_1 \\
+          \mu_2 \\
+          \vdots \\
+          \mu_D
+      \end{pmatrix}
+,\ 
+\boldsymbol{\Sigma}
+    = \begin{pmatrix}
+          \sigma_{1,1} & \sigma_{1,2} & \cdots & \sigma_{1,D} \\
+          \sigma_{2,1} & \sigma_{2,2} & \cdots & \sigma_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \sigma_{D,1} & \sigma_{D,2} & \cdots & \sigma_{D,D}
+      \end{pmatrix}
+,\ 
+\mathbf{x}
+    = \begin{pmatrix}
+          x_1 \\
+          x_2 \\
+          \vdots \\
+          x_D
+      \end{pmatrix}
+$$
+
+　$x_d$は実数をとり、$\nu$は正の実数、$\mu_d$は実数、$\sigma_{d,d}$は正の実数、$\sigma_{i,j} = \sigma_{j,i}\ (i \neq j)$は実数、また$\boldsymbol{\Sigma}$は正定値行列を満たす必要があります。設定した値に従う確率密度を計算します。\
+\
+
+
+#### スクラッチで計算
+
+　定義式から計算します。
+
+```{r}
+# 定義式により確率密度を計算
+C_St1    <- gamma(0.5 * (nu + D)) / gamma(0.5 * nu)
+C_St2    <- 1 / sqrt(pi * nu)^D / sqrt(det(sigma_dd))
+tmp_term <- (t(x_d - mu_d) %*% solve(sigma_dd) %*% (x_d - mu_d)) |> 
+  as.numeric()
+term     <- 1 / sqrt(1 + tmp_term / nu)^(nu + D)
+dens     <- C_St1 * C_St2 * term
+dens
+```
+
+　t分布は、$\boldsymbol{\Sigma}$を用いて次の式で定義されます。
+
+$$
+\begin{aligned}
+C_{\mathrm{St}}(\nu, \boldsymbol{\Sigma})
+   &= \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          1
+      }{
+          (\pi \nu)^{\frac{D}{2}}
+          |\boldsymbol{\Sigma}|^{\frac{1}{2}}
+      }
+\\
+\mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Sigma})
+   &= C_{\mathrm{St}}(\nu, \boldsymbol{\Sigma})
+      \left\{
+          1
+          + \frac{1}{\nu}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Sigma}^{-1}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \right\}^{-\frac{\nu+D}{2}}
+\end{aligned}
+$$
+
+　ここで、$C_{\mathrm{St}}$はt分布の正規化係数、$\pi$は円周率、$\mathbf{A}^{\top}$は転置行列、$\mathbf{A}^{-1}$は逆行列、$|\mathbf{A}|$は行列式、2分の1乗は平方根$\sqrt{a} = a^{\frac{1}{2}}$です。\
+　円周率は`pi`、転置は`t()`、逆行列`solve()`、行列式は`det()`、行列の積は`%*%`演算子で計算できます。\
+
+　対数をとった定義式から計算します。
+
+```{r}
+# 対数をとった定義式により確率密度を計算
+log_C_St1 <- lgamma(0.5 * (nu + D)) - lgamma(0.5 * nu)
+log_C_St2 <- -D * 0.5 * log(pi * nu) - 0.5 * log(det(sigma_dd))
+tmp_term  <- (t(x_d - mu_d) %*% solve(sigma_dd) %*% (x_d - mu_d)) |> 
+  as.numeric()
+log_term  <- -(nu + D) * 0.5 * log(1 + tmp_term / nu)
+log_dens  <- log_C_St1 + log_C_St2 + log_term
+dens      <- exp(log_dens)
+dens; log_dens
+```
+
+　対数をとった定義式を計算します。
+
+$$
+\begin{aligned}
+\log C_{\mathrm{St}}(\nu, \boldsymbol{\Sigma})
+   &= \log \Gamma \Bigl(\frac{\nu + D}{2}\Bigr)
+      - \log \Gamma \Bigl(\frac{\nu}{2}\Bigr)
+      - \frac{D}{2}
+        \log (\pi \nu)
+      - \frac{1}{2}
+        \log |\boldsymbol{\Sigma}| \\
+\log \mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Sigma})
+   &= \log C_{\mathrm{St}}(\nu, \boldsymbol{\Sigma})
+      - \frac{\nu+D}{2}
+        \log \Bigl\{
+          1
+          + \frac{1}{\nu}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Sigma}^{-1}
+            (\mathbf{x} - \boldsymbol{\mu})
+        \Bigr\}
+\end{aligned}
+$$
+
+　計算結果の指数をとると確率密度が得られます。
+
+$$
+\mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Sigma})
+    = \exp \Bigr(
+          \log \mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Sigma})
+      \Bigr)
+$$
+
+　指数と対数の性質より$\exp(\log x) = x$です。\
+
+　次は、関数を使って確率密度を計算します。\
+\
+
+
+#### 関数で計算
+
+　`mvnfast`パッケージの多次元t分布の確率密度関数`dmvt()`で計算します。
+
+```{r}
+# 関数により確率密度を計算
+dens <- mvnfast::dmvt(X = x_d, mu = mu_d, sigma = sigma_dd, df = nu)
+dens
+```
+
+　確率変数の引数`X`に`x_d`、位置ベクトルの引数`mu`に`mu_d`、スケール行列の引数`sigma`に`sigma_dd`、自由度の引数`df`に`nu`を指定します。\
+
+　`log = TRUE`を指定すると対数をとった確率密度を返します。
+
+```{r}
+# 関数により確率密度を計算
+log_dens <- mvnfast::dmvt(X = x_d, mu = mu_d, sigma = sigma_dd, df = nu, log = TRUE)
+dens     <- exp(log_dens)
+dens; log_dens
+```
+
+　計算結果の指数をとると確率密度が得られます。\
+
+　`LaplacesDemon`パッケージの`dmvt()`でも計算できます。
+
+```{r}
+# 関数により確率密度を計算
+dens <- LaplacesDemon::dmvt(x = x_d, mu = mu_d, S = sigma_dd, df = nu)
+dens
+
+# 関数により確率密度を計算
+log_dens <- LaplacesDemon::dmvt(x = x_d, mu = mu_d, S = sigma_dd, df = nu)
+dens     <- exp(log_dens)
+dens; log_dens
+```
+
+　確率変数の引数`x`に`x_d`、位置ベクトルの引数`mu`に`mu_d`、スケール行列の引数`S`に`sigma_dd`、自由度の引数`df`に`nu`を指定します。\
+\
+
+
+### 逆スケール行列を使用
+
+　次は、逆スケール行列を用いてt分布を計算します。\
+\
+
+
+#### パラメータの設定
+
+　スケール行列$\boldsymbol{\Sigma}$の代わりに、逆スケール行列$\boldsymbol{\Lambda}$を指定します。\
+
+```{r}
+# 逆スケール行列を指定
+lambda_dd <- c(
+  4, 1.8, -0.1, 
+  1.8, 9, 2.4, 
+  -0.1, 2.4, 1
+) |> # 値を指定
+  matrix(nrow = D, ncol = D, byrow = TRUE) # マトリクスに変換
+```
+
+\ 
+
+　あるいは、$\boldsymbol{\Sigma}$を指定して$\boldsymbol{\Lambda}$を計算します。
+
+```{r}
+# 逆スケール行列を計算
+lambda_dd <- solve(sigma_dd)
+lambda_dd
+```
+
+　逆スケール行列は、スケール行列の逆行列$\boldsymbol{\Lambda} = \boldsymbol{\Sigma}^{-1}$です。\
+\
+
+
+#### スクラッチで計算
+
+　定義式から計算します。
+
+```{r}
+# 定義式により確率密度を計算
+C_St1    <- gamma(0.5 * (nu + D)) / gamma(0.5 * nu)
+C_St2    <- 1 / sqrt(pi * nu)^D / sqrt(det(solve(lambda_dd)))
+tmp_term <- (t(x_d - mu_d) %*% lambda_dd %*% (x_d - mu_d)) |> 
+  as.numeric()
+term     <- 1 / sqrt(1 + tmp_term / nu)^(nu + D)
+dens     <- C_St1 * C_St2 * term
+dens
+```
+
+　t分布は、$\boldsymbol{\Lambda}$を用いて次の式で定義されます。
+
+$$
+\begin{aligned}
+C_{\mathrm{St}}(\nu, \boldsymbol{\Lambda})
+   &= \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          |\boldsymbol{\Lambda}|^{\frac{1}{2}}
+      }{
+          (\pi \nu)^{\frac{D}{2}}
+      }
+\\
+\mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Lambda})
+   &= C_{\mathrm{St}}(\nu, \boldsymbol{\Lambda})
+      \left\{
+          1
+          + \frac{1}{\nu}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Lambda}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \right\}^{-\frac{\nu+D}{2}}
+\end{aligned}
+$$
+
+　対数をとった定義式から計算します。
+
+```{r}
+# 対数をとった定義式により確率密度を計算
+log_C_St1 <- lgamma(0.5 * (nu + D)) - lgamma(0.5 * nu)
+log_C_St2 <- -D * 0.5 * log(pi * nu) - 0.5 * log(det(solve(lambda_dd)))
+tmp_term  <- (t(x_d - mu_d) %*% lambda_dd %*% (x_d - mu_d)) |> 
+  as.numeric()
+term      <- -(nu + D) * 0.5 * log(1 + tmp_term / nu)
+log_dens  <- log_C_St1 + log_C_St2 + log_term
+dens      <- exp(log_dens)
+dens; log_dens
+```
+
+　対数をとった定義式を計算します。
+
+$$
+\begin{aligned}
+\log C_{\mathrm{St}}(\nu, \boldsymbol{\Lambda})
+   &= \log \Gamma \Bigl(\frac{\nu + D}{2}\Bigr)
+      - \log \Gamma \Bigl(\frac{\nu}{2}\Bigr)
+      - \frac{D}{2}
+        \log (\pi \nu)
+      + \frac{1}{2}
+        \log |\boldsymbol{\Lambda}| \\
+\log \mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Lambda})
+   &= \log C_{\mathrm{St}}(\nu, \boldsymbol{\Lambda})
+      - \frac{\nu+D}{2}
+        \log \Bigl\{
+          1
+          + \frac{1}{\nu}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Lambda}
+            (\mathbf{x} - \boldsymbol{\mu})
+        \Bigr\}
+\end{aligned}
+$$
+
+　計算結果の指数をとると確率密度が得られます。\
+\
+
+
+#### 関数で計算
+
+　`mvnfast`パッケージの`dmvt()`で計算します。
+
+```{r}
+# 関数により確率密度を計算
+dens <- mvnfast::dmvt(X = x_d, mu = mu_d, sigma = solve(lambda_dd), df = nu)
+dens
+```
+
+　スケール行列の引数`sigma`に`lambda_dd`の逆行列を指定します。\
+
+　`LaplacesDemon`パッケージの`dmvt()`で計算します。
+
+```{r}
+# 関数により確率密度を計算
+dens <- LaplacesDemon::dmvt(x = x_d, mu = mu_d, S = sigma_dd, df = nu)
+dens
+```
+
+　スケール行列の引数`S`に`lambda_dd`の逆行列を指定します。\
+\
+
+
+### 標準化t分布による計算
+
+　続いて、確率変数の値を変換しておき、標準化t分布により確率密度を計算します。スケール行列と固有値・固有ベクトルの関係については「分散共分散行列と固有値・固有ベクトルの関係の導出」を参照してください。\
+\
+
+　スケール行列の固有値と固有ベクトルを計算します。
+
+```{r}
+# 固有値・固有ベクトルを計算
+res_eigen <- eigen(sigma_dd)
+lambda_d <- res_eigen[["values"]]
+u_dd <- res_eigen[["vectors"]] |> 
+  t()
+lambda_d; u_dd
+```
+
+　固有値$\lambda_d$と固有ベクトル$\mathbf{u}_d = (u_{d,1}, \cdots, u_{d, D})$を`eigen()`で計算します。リストが出力されるので、`"values"`で固有値(をまとめたベクトル)、`"vectors"`で固有ベクトル(をまとめたマトリクス)を取り出します。数式での成分と合わせるために転置しておきます。\
+
+　確率変数の値を変換します。
+
+```{r}
+# 変数を変換
+y_d <- (u_dd %*% (x_d - mu_d) / sqrt(lambda_d)) |> 
+  as.vector()
+y_d
+```
+
+　$D$個の固有値$\lambda_d$を対角成分とする対角行列を$\mathbf{V}$(固有値の逆数$\frac{1}{\lambda_d}$を対角成分とする対角行列を$\mathbf{V}^{-1}$)、固有ベクトル$\mathbf{u}_d^{\top}$を行方向に並べた行列を$\mathbf{U}$として、次の式を計算します。
+
+$$
+\begin{aligned}
+\mathbf{y}
+   &= \mathbf{V}^{-\frac{1}{2}} \mathbf{U}
+      (\mathbf{x} - \boldsymbol{\mu})
+\\
+y_d
+   &= \frac{1}{\sqrt{\lambda_d}}
+      \mathbf{u}_d^{\top}
+      (\mathbf{x} - \boldsymbol{\mu})
+\end{aligned}
+$$
+
+　$\mathbf{x}$の確率密度を計算します。
+
+```{r}
+# Σを用いて標準化t分布により確率密度を計算
+tmp_dens <- mvnfast::dmvt(X = y_d, mu = rep(0, times = D), sigma = diag(D), df = nu)
+dens <- tmp_dens / sqrt(det(sigma_dd))
+dens
+```
+
+　標準化t分布に従う$\mathbf{y}$の確率密度を計算して、$\boldsymbol{\Sigma}$の行列式の平方根の逆数を掛けます。\
+
+$$
+\mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Sigma})
+    = \frac{
+          1
+      }{
+          |\boldsymbol{\Sigma}|^{\frac{1}{2}}
+      }
+      \mathrm{St}(\mathbf{y} | \nu)
+$$
+
+　標準化t分布に従う$\mathbf{y}$の確率密度を計算して、$\boldsymbol{\Sigma}$の行列式の平方根の逆数を掛けます。\
+　標準化t分布の計算は、`dmvt()`の位置ベクトルの引数`mu`に0ベクトル、スケール行列の引数`sigma`に単位行列を指定して計算できます。\
+
+　逆スケール行列を用いる場合は、次のように計算します。
+
+```{r}
+# Λを用いて標準化t分布により確率密度を計算
+tmp_dens <- mvnfast::dmvt(X = y_d, mu = rep(0, times = D), sigma = diag(D), df = nu)
+dens <- sqrt(det(lambda_dd)) * tmp_dens
+dens
+```
+
+　標準化t分布に従う$\mathbf{y}$の確率密度を計算して、$\boldsymbol{\Lambda}$の行列式の平方根を掛けます。\
+
+$$
+\mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Lambda})
+    = |\boldsymbol{\Lambda}|^{\frac{1}{2}}
+      \mathrm{St}(\mathbf{y} | \nu)
+$$
+
+\ 
+
+
+## 統計量の計算
+
+　最後に、多次元スチューデントのt分布の期待値・共分散・最頻値を計算します。\
+\
+
+　期待値を計算します。
+
+```{r}
+# 期待値を計算:(ν > 1)
+E_x_d <- mu_d
+E_x_d
+```
+
+　t分布の期待値は$\boldsymbol{\mu}$です。ただし、$\nu > 1$の場合に定義されます。\
+
+$$
+\mathbb{E}[\mathbf{x}]
+    = \boldsymbol{\mu}
+    \quad
+      (\nu > 1)
+$$
+
+　共分散を計算します。
+
+```{r}
+# Σを使って共分散を計算:(ν > 2)
+cov_x_dd <- nu / (nu - 2) * sigma_dd
+cov_x_dd
+
+# Λを使って共分散を計算:(ν > 2)
+cov_x_dd <- nu / (nu - 2) * solve(lambda_dd)
+cov_x_dd
+```
+
+　t分布の分散は、$\boldsymbol{\Sigma}$または$\boldsymbol{\Lambda}$を使って、次の式で計算できます。ただし、$\nu > 2$の場合に定義されます。
+
+$$
+\mathrm{Cov}[\mathbf{x}]
+    = \frac{\nu}{\nu - 2}
+      \boldsymbol{\Sigma}
+    = \frac{\nu}{\nu - 2}
+      \boldsymbol{\Lambda}^{-1}
+    \quad
+      (\nu > 2)
+$$
+
+　$\boldsymbol{\Sigma} = \boldsymbol{\Lambda}^{-1}$が成り立つのが分かります。\
+
+　最頻値を計算します。
+
+```{r}
+# 最頻値を計算
+mode_x_d <- mu_d
+mode_x_d
+```
+
+　t分布の最頻値は$\boldsymbol{\mu}$です。
+
+$$
+\mathrm{mode}[\mathbf{x}]
+    = \boldsymbol{\mu}
+$$
+
+\ 
+
+　この記事では、多次元t分布の計算を確認しました。次は、グラフを作成します。\
+\
+
+
+# 2次元スチューデントのt分布の作図
+
+　2次元スチューデントのt分布(Bivariate Student's t Distribution)のグラフを作成します。t分布については「定義式の確認」を参照してください。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r, eval=FALSE}
+# 利用パッケージ
+library(tidyverse)
+library(mvnfast)
+library(gganimate)
+```
+
+```{r, echo=FALSE}
+### 資料作成用
+
+# チェック用
+library(ggplot2)
+```
+
+　この記事では、基本的に`パッケージ名::関数名()`の記法を使うので、パッケージを読み込む必要はありません。ただし、作図コードがごちゃごちゃしないようにパッケージ名を省略しているため、`ggplot2`は読み込む必要があります。\
+　`magrittr`パッケージのパイプ演算子`%>%`ではなく、ベースパイプ(ネイティブパイプ)演算子`|>`を使っています。`%>%`に置き換えても処理できます。\
+　分布の変化をアニメーション(gif画像)で確認するのに`gganimate`パッケージを利用します。不要であれば省略してください。\
+\
+
+
+## 定義式の確認
+
+　まずは、多次元t分布の定義式を確認します。\
+\
+
+　t分布は、次の式で定義されます。
+
+$$
+\mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Sigma})
+    = \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          1
+      }{
+          (\pi \nu)^{\frac{D}{2}}
+          |\boldsymbol{\Sigma}|^{\frac{1}{2}}
+      }
+      \left\{
+          1
+          + \frac{1}{\nu}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Sigma}^{-1}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \right\}^{-\frac{\nu+D}{2}}
+$$
+
+　ここで、$\nu$は形状(自由度)パラメータ、$\boldsymbol{\mu}$は位置ベクトルパラメータ、$\boldsymbol{\Sigma}$はスケール行列パラメータ、$\boldsymbol{\Lambda}$は逆スケール行列パラメータです。また、$\mathbf{A}^{\top}$は行列$\mathbf{A}$の転置行列、$\mathbf{A}^{-1}$は逆行列、$|\mathbf{A}|$は行列式、2分の1乗は平方根$\sqrt{a} = a^{\frac{1}{2}}$です。\
+　$\mathbf{x}, \boldsymbol{\mu}$は$D$次元ベクトル、$\boldsymbol{\Sigma}$は$D \times D$の正定値行列です。
+
+$$
+\mathbf{x}
+    = \begin{pmatrix}
+          x_1 \\
+          x_2 \\
+          \vdots \\
+          x_D
+      \end{pmatrix}
+,\ 
+\boldsymbol{\mu}
+    = \begin{pmatrix}
+          \mu_1 \\
+          \mu_2 \\
+          \vdots \\
+          \mu_D
+      \end{pmatrix}
+,\ 
+\boldsymbol{\Sigma}
+    = \begin{pmatrix}
+          \sigma_{1,1} & \sigma_{1,2} & \cdots & \sigma_{1,D} \\
+          \sigma_{2,1} & \sigma_{2,2} & \cdots & \sigma_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \sigma_{D,1} & \sigma_{D,2} & \cdots & \sigma_{D,D}
+      \end{pmatrix}
+$$
+
+　$x_d$は実数をとり、$\nu$は正の実数、$\mu_d$は実数、$\sigma_{d,d}$は正の実数、$\sigma_{i,j} = \sigma_{j,i}\ (i \neq j)$は実数、また$\boldsymbol{\Sigma}$は正定値行列を満たす必要があります。\
+\
+
+
+## グラフの作成
+
+　`ggplot2`パッケージを利用して、2次元t分布のグラフを作成します。t分布の確率密度の計算については「分布の計算」を参照してください。\
+\
+
+　t分布のパラメータ$\nu, \boldsymbol{\mu}, \boldsymbol{\Sigma}$を設定します。この例では、2次元のグラフで描画するため、次元数を$D = 2$とします。
+
+```{r}
+# 次元数を設定
+D <- 2
+
+# 自由度を指定
+nu <- 3
+
+# 位置ベクトルを指定
+mu_d <- c(6, 10)
+
+# スケール行列を指定
+sigma_dd <- c(1, 0.6, 0.6, 4) |> # 値を指定
+  matrix(nrow = D, ncol = D) # マトリクスに変換
+```
+
+　位置ベクトル$\boldsymbol{\mu} = (\mu_1, \mu_2)$、スケール行列$\boldsymbol{\Sigma} = (\sigma_{1,1}, \sigma_{2,1}, \sigma_{1,2}, \sigma_{2,2})$を指定します。\
+
+　設定したパラメータに応じて、t分布の確率変数がとり得る値$\mathbf{x}$の成分$x_1, x_2$の値を作成します。
+
+```{r}
+# xの値を作成
+x_1_vals <- seq(
+  from = mu_d[1] - sqrt(sigma_dd[1, 1]) * 3, 
+  to = mu_d[1] + sqrt(sigma_dd[1, 1]) * 3, 
+  length.out = 101
+)
+x_2_vals <- seq(
+  from = mu_d[2] - sqrt(sigma_dd[2, 2]) * 3, 
+  to = mu_d[2] + sqrt(sigma_dd[2, 2]) * 3, 
+  length.out = 101
+)
+head(x_1_vals); head(x_2_vals)
+```
+
+　$x_1$(x軸)の値を`x_1_vals`、$x_2$(y軸)の値を`x_2_vals`とします。この例では、それぞれ$\mu_d$を中心に$\sqrt{\sigma_{d,d}}$の3倍を範囲とします。\
+
+　$\mathbf{x}$を作成します。
+
+```{r}
+# xの点を作成
+x_mat <- tidyr::expand_grid(
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # 格子点を作成
+  as.matrix() # マトリクスに変換
+head(x_mat)
+```
+
+　`x_1_vals`と`x_2_vals`の要素の全ての組み合わせ(格子状の点)を`expand_grid()`で作成します。データフレームが出力されるので、`as.matrix()`でマトリクスに変換して`x_mat`とします。`x_mat`の各行が点$\mathbf{x} = (x_1, x_2)$に対応します。\
+
+　$\mathbf{x}$の点ごとの確率密度を計算します。
+
+```{r}
+# 多次元t分布を計算
+dens_df <- tibble::tibble(
+  x_1 = x_mat[, 1], # x軸の値
+  x_2 = x_mat[, 2], # y軸の値
+  density = mvnfast::dmvt(X = x_mat, mu = mu_d, sigma = sigma_dd, df = nu) # 確率密度
+)
+dens_df
+```
+
+　多次元t分布の確率密度は、`mvnfast`パッケージの`dmvt()`で計算できます。確率変数の引数`X`に`x_mat`、位置ベクトルの引数`mu`に`mu_d`、スケール行列の引数`sigma`に`sigma_dd`、自由度の引数`df`に`nu`を指定します。\
+
+　パラメータの値を数式で表示するための文字列を作成します。
+
+```{r}
+# パラメータラベルを作成:(数式表示用)
+param_text <- paste0(
+  "list(", 
+  "mu==group('(', list(", paste0(mu_d, collapse = ", "), "), ')')", 
+  ", Sigma==group('(', list(", paste0(sigma_dd, collapse = ", "), "), ')')", 
+  ", nu==", nu, 
+  ")"
+)
+param_text
+```
+
+　ギリシャ文字などの記号を使った数式を表示する場合は、`expression()`の記法を使います。等号は`"=="`、複数の(数式上の)変数を並べるには`"list(変数1, 変数2)"`とします。(プログラム上の)変数の値を使う場合は、`parse()`の`text`引数に指定します。\
+
+　t分布の等高線図を作成します。
+
+```{r, fig.width=8, fig.height=6}
+# 2次元t分布のグラフを作成:等高線図
+ggplot() + 
+  geom_contour(data = dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 等高線
+  #geom_contour_filled(data = dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), alpha = 0.8) + # 塗りつぶし等高線
+  labs(
+    title ="Bivariate Student's t-Distribution", 
+    subtitle = paste0("mu=(", paste0(mu_d, collapse = ', '), "), Sigma=(", paste0(sigma_dd, collapse = ', '), "), nu=", nu), # (文字列表記用)
+    #subtitle = parse(text = param_text), # (数式表示用)
+    color = "density", # (等高線用)
+    fill = "density", # (塗りつぶし等高線用)
+    x = expression(x[1]), y = expression(x[2])
+  )
+```
+
+```{r, echo=FALSE, fig.width=8, fig.height=6}
+### 資料作成用:(再掲)
+
+# 2次元t分布のグラフを作成:等高線図
+ggplot() + 
+  #geom_contour(data = dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 等高線
+  geom_contour_filled(data = dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), alpha = 0.8) + # 塗りつぶし等高線
+  labs(
+    title ="Bivariate Student's t-Distribution", 
+    #subtitle = paste0("mu=(", paste0(mu_d, collapse = ', '), "), Sigma=(", paste0(sigma_dd, collapse = ', '), "), nu=", nu), # (文字列表記用)
+    subtitle = parse(text = param_text), # (数式表示用)
+    color = "density", # (等高線用)
+    fill = "density", # (塗りつぶし等高線用)
+    x = expression(x[1]), y = expression(x[2])
+  )
+```
+
+　等高線は`geom_contour()`、塗りつぶし等高線は`geom_contour_filled()`で描画できます。z軸の値の引数`z`に`density`を指定して、等高線の色の引数`color`または塗りつぶしの色の引数`fill`に`..level..`を指定すると、確率密度に応じてグラデーションが付けられます。\
+
+　確率密度の変化を細かく見るには、ヒートマップで可視化します。
+
+```{r, fig.width=8, fig.height=6}
+# 2次元t分布のグラフを作成:ヒートマップ
+ggplot() + 
+  geom_tile(data = dens_df, mapping = aes(x = x_1, y = x_2, fill = density, color = density), alpha = 0.8) + # ヒートマップ
+  scale_color_viridis_c(option = "D") + # タイルの色
+  scale_fill_viridis_c(option = "D") + # 枠線の色
+  #scale_fill_gradientn(colors = c("blue", "green", "yellow", "red")) + # タイルの色
+  #scale_color_gradientn(colors = c("blue", "green", "yellow", "red")) + # 枠線の色
+  labs(
+    title ="Bivariate Student's t-Distribution", 
+    #subtitle = paste0("mu=(", paste0(mu_d, collapse = ', '), "), Sigma=(", paste0(sigma_dd, collapse = ', '), "), nu=", nu), # (文字列表記用)
+    subtitle = parse(text = param_text), # (数式表示用)
+    fill = "density", color = "density", 
+    x = expression(x[1]), y = expression(x[2])
+  )
+```
+
+　ヒートマップは`geom_tile()`で描画できます。\
+　グラデーションは`scale_***_viridis_c()`や`scale_***_gradientn()`で設定できます。\
+\
+
+　t分布のグラフを描画できました。以降は、ここまでの作図処理を用いて、パラメータの影響を確認していきます。\
+\
+
+
+## パラメータと分布の形状の関係
+
+　パラメータの値を少しずつ変化させて、分布の形状の変化をアニメーションで確認します。\
+\
+
+
+### 自由度の影響
+
+　まずは、自由度$\nu$の値を変化させ、$\boldsymbol{\mu}, \boldsymbol{\Sigma}$を固定します。
+
+```{r}
+# 次元数を設定
+D <- 2
+
+# 自由度パラメータとして利用する値を指定
+nu_vals <- seq(from = 0.1, to = 15, by = 0.1) |> 
+  round(digits = 1)
+
+# 位置ベクトルを指定
+mu_d <- c(6, 10)
+
+# スケール行列を指定
+sigma_dd <- c(1, 0.6, 0.6, 4) |> # 値を指定
+  matrix(nrow = D, ncol = D) # マトリクスに変換
+
+# フレーム数を設定
+frame_num <- length(nu_vals)
+frame_num
+```
+
+　値の間隔が一定になるように$\nu$の値を`nu_vals`として作成します。パラメータごとにフレームを切り替えるので、`nu_vals`の要素数がアニメーションのフレーム数になります。\
+
+　設定したパラメータに応じて、確率変数の値$\mathbf{x}$の成分$x_1, x_2$の値を作成して、パラメータごとに確率密度を計算します。
+
+```{r}
+# xの値を作成
+x_1_vals <- seq(
+  from = mu_d[1] - sqrt(sigma_dd[1, 1]) * 3, 
+  to = mu_d[1] + sqrt(sigma_dd[1, 1]) * 3, 
+  length.out = 101
+)
+x_2_vals <- seq(
+  from = mu_d[2] - sqrt(sigma_dd[2, 2]) * 3, 
+  to = mu_d[2] + sqrt(sigma_dd[2, 2]) * 3, 
+  length.out = 101
+)
+
+# パラメータごとに多次元t分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  nu = nu_vals, 
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(nu) |> # 分布の計算用にグループ化
+  dplyr::mutate(
+    density = mvnfast::dmvt(
+      X = as.matrix(cbind(x_1, x_2)), 
+      mu = mu_d, 
+      sigma = sigma_dd, 
+      df = unique(nu)
+    ), # 確率密度
+    parameter = paste0("mu=(", paste0(mu_d, collapse = ", "), "), Sigma=(", paste0(sigma_dd, collapse = ", "), "), nu=", nu) |> 
+      factor(levels = paste0("mu=(", paste0(mu_d, collapse = ", "), "), Sigma=(", paste0(sigma_dd, collapse = ", "), "), nu=", nu_vals)) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_dens_df
+```
+
+　パラメータ`mu_1_vals`と確率変数`x_1_vals, x_2_vals`の要素の全ての組み合わせを`expand_grid()`を作成します。これにより、パラメータごとに`x_mat`を複製できます。\
+　パラメータ列`mu_1`でグループ化することで、`x_mat`ごとに確率密度を計算できます。(`as.matrix(cbind(x_1, x_2))`の処理は`x_mat`に置き換えられます。)\
+　パラメータごとにフレーム切替用のラベルを作成します。文字列型だと文字列の基準で順序が決まるので、因子型にしてパラメータに応じたレベル(順序)を設定します。\
+
+　等高線図のアニメーション(gif画像)を作成します。
+
+```{r}
+# 2次元t分布のアニメーションを作図:等高線図
+anime_dens_graph <- ggplot() + 
+  #geom_contour(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 等高線
+  geom_contour_filled(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), alpha = 0.8) + # 塗りつぶし等高線
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title ="Bivariate Student's t-Distribution", 
+       subtitle = "{current_frame}", 
+       color = "density", fill = "density", 
+       x = expression(x[1]), y = expression(x[2]))
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 10, width = 800, height = 600)
+```
+
+　`transition_manual()`にフレームの順序を表す列を指定します。この例では、因子型のラベルのレベルの順に描画されます。\
+　`animate()`のフレーム数の引数`nframes`にパラメータ数、フレームレートの引数`fps`に1秒当たりのフレーム数を指定します。`fps`引数の値が大きいほどフレームが早く切り替わります。ただし、値が大きいと意図通りに動作しません。\
+
+　同様に、ヒートマップのアニメーションを作成します。
+
+```{r}
+# 2次元t分布のアニメーションを作図:ヒートマップ
+anime_dens_graph <- ggplot() + 
+  geom_tile(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, fill = density), alpha = 0.8) + # ヒートマップ
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_fill_viridis_c(option = "D") + # 等高線の色
+  labs(title ="Bivariate Student's t-Distribution", 
+       subtitle = "{current_frame}", 
+       fill = "density", 
+       x = expression(x[1]), y = expression(x[2]))
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 10, width = 800, height = 600)
+```
+
+　$\nu$の値に応じて、形状が変化するのが分かります。\
+\
+
+
+### 位置ベクトル(1軸)の影響
+
+　次は、x軸方向の位置パラメータ$\mu_1$の値を変化させ、$\nu, \mu_2, \boldsymbol{\Sigma}$を固定します。
+
+```{r}
+# 次元数を設定
+D <- 2
+
+# 自由度を指定
+nu <- 3
+
+# x軸の位置パラメータとして利用する値を指定
+mu_1_vals <- seq(from = -2, to = 2, by = 0.04) |> 
+  round(digits = 2)
+
+# y軸の位置パラメータを指定
+mu_2 <- 10
+
+# スケール行列を指定
+sigma_dd <- matrix(c(1, 0.6, 0.6, 4), nrow = D, ncol = D)
+
+# フレーム数を設定
+frame_num <- length(mu_1_vals)
+frame_num
+```
+
+　値の間隔が一定になるように$\mu_1$の値を`mu_1_vals`として作成します。また、$\mu_2$を`mu_2`として値を指定します。\
+
+　パラメータごとに分布を計算します。
+
+```{r}
+# xの値を作成
+x_1_vals <- seq(
+  from = min(mu_1_vals) - sqrt(sigma_dd[1, 1]) * 2, 
+  to = max(mu_1_vals) + sqrt(sigma_dd[1, 1]) * 2, 
+  length.out = 101
+)
+x_2_vals <- seq(
+  from = mu_2 - sqrt(sigma_dd[2, 2]) * 3, 
+  to = mu_2 + sqrt(sigma_dd[2, 2]) * 3, 
+  length.out = 101
+)
+
+# パラメータごとに多次元t分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  mu_1 = mu_1_vals, 
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(mu_1) |> # 分布の計算用にグループ化
+  dplyr::mutate(
+    density = mvnfast::dmvt(
+      X = as.matrix(cbind(x_1, x_2)), 
+      mu = unique(cbind(mu_1, mu_2)), 
+      sigma = sigma_dd, 
+      df = nu
+    ), # 確率密度
+    parameter = paste0("mu=(", mu_1, ", ", mu_2, "), Sigma=(", paste0(sigma_dd, collapse = ", "), "), nu=", nu) |> 
+      factor(levels = paste0("mu=(", mu_1_vals, ", ", mu_2, "), Sigma=(", paste0(sigma_dd, collapse = ", "), "), nu=", nu)) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_dens_df
+```
+
+　「自由度の影響」の`nu, nu_vals`と`mu_1, mu_1_vals`を入れ換えるように処理します。\
+
+　「自由度の影響」のコードで作図できます。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 2次元t分布のアニメーションを作図:等高線図
+anime_dens_graph <- ggplot() + 
+  #geom_contour(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 等高線
+  geom_contour_filled(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), alpha = 0.8) + # 塗りつぶし等高線
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title ="Bivariate Student's t-Distribution", 
+       subtitle = "{current_frame}", 
+       color = "density", fill = "density", 
+       x = expression(x[1]), y = expression(x[2]))
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 10, width = 800, height = 600)
+```
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 2次元t分布のアニメーションを作図:ヒートマップ
+anime_dens_graph <- ggplot() + 
+  geom_tile(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, fill = density), alpha = 0.8) + # ヒートマップ
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_fill_viridis_c(option = "D") + # 等高線の色
+  labs(title ="Bivariate Student's t-Distribution", 
+       subtitle = "{current_frame}", 
+       fill = "density", 
+       x = expression(x[1]), y = expression(x[2]))
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 10, width = 800, height = 600)
+```
+
+　$\mu_1$の値に応じて、x軸方向に移動するのが分かります。\
+\
+
+
+### 位置ベクトル(2軸)の影響
+
+　y軸方向の位置パラメータ$\mu_2$の値を変化させ、$\nu, \mu_1, \boldsymbol{\Sigma}$を固定します。
+
+```{r}
+# 次元数を設定
+D <- 2
+
+# 自由度を指定
+nu <- 3
+
+# x軸の位置パラメータを指定
+mu_1 <- 6
+
+# y軸の位置パラメータとして利用する値を指定
+mu_2_vals <- seq(from = -2, to = 2, by = 0.04) |> 
+  round(digits = 2)
+
+# スケール行列を指定
+sigma_dd <- matrix(c(1, 0.6, 0.6, 4), nrow = D, ncol = D)
+
+# フレーム数を設定
+frame_num <- length(mu_2_vals)
+frame_num
+```
+
+　値の間隔が一定になるように$\mu_2$の値を`mu_2_vals`として作成します。また、$\mu_1$を`mu_1`として値を指定します。\
+
+　パラメータごとに分布を計算します。
+
+```{r}
+# xの値を作成
+x_1_vals <- seq(
+  from = mu_1 - sqrt(sigma_dd[1, 1]) * 3, 
+  to = mu_1 + sqrt(sigma_dd[1, 1]) * 3, 
+  length.out = 101
+)
+x_2_vals <- seq(
+  from = min(mu_2_vals) - sqrt(sigma_dd[2, 2]) * 2, 
+  to = max(mu_2_vals) + sqrt(sigma_dd[2, 2]) * 2, 
+  length.out = 101
+)
+
+# パラメータごとに多次元t分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  mu_2 = mu_2_vals, 
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(mu_2) |> # 分布の計算用にグループ化
+  dplyr::mutate(
+    density = mvnfast::dmvt(
+      X = as.matrix(cbind(x_1, x_2)), 
+      mu = unique(cbind(mu_1, mu_2)), 
+      sigma = sigma_dd, 
+      df = nu
+    ), # 確率密度
+    parameter = paste0("mu=(", mu_1, ", ", mu_2, "), Sigma=(", paste0(sigma_dd, collapse = ", "), "), nu=", nu) |> 
+      factor(levels = paste0("mu=(", mu_1, ", ", mu_2_vals, "), Sigma=(", paste0(sigma_dd, collapse = ", "), "), nu=", nu)) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_dens_df
+```
+
+　「自由度の影響」の`nu, nu_vals`と`mu_2, mu_2_vals`を入れ換えるように処理します。\
+
+　「自由度の影響」のコードで作図できます。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 2次元t分布のアニメーションを作図:等高線図
+anime_dens_graph <- ggplot() + 
+  #geom_contour(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 等高線
+  geom_contour_filled(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), alpha = 0.8) + # 塗りつぶし等高線
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title ="Bivariate Student's t-Distribution", 
+       subtitle = "{current_frame}", 
+       color = "density", fill = "density", 
+       x = expression(x[1]), y = expression(x[2]))
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 10, width = 800, height = 600)
+```
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 2次元t分布のアニメーションを作図:ヒートマップ
+anime_dens_graph <- ggplot() + 
+  geom_tile(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, fill = density), alpha = 0.8) + # ヒートマップ
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_fill_viridis_c(option = "D") + # 等高線の色
+  labs(title ="Bivariate Student's t-Distribution", 
+       subtitle = "{current_frame}", 
+       fill = "density", 
+       x = expression(x[1]), y = expression(x[2]))
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 10, width = 800, height = 600)
+```
+
+　$\mu_2$の値に応じて、y軸方向に移動するのが分かります。\
+\
+
+
+### スケール行列(1,1成分)の影響
+
+　続いて、x軸方向のスケール$\sigma_{1,1}$の値を変化させ、$\nu, \boldsymbol{\mu}, \sigma_{1,2}, \sigma_{2,1}, \sigma_{2,2}$を固定します。
+
+```{r}
+# 次元数を設定
+D <- 2
+
+# 自由度を指定
+nu <- 3
+
+# 位置ベクトルを指定
+mu_d <- c(6, 10)
+
+# x軸のスケールパラメータとして利用する値を指定
+sigma_11_vals <- seq(from = 0.5, to = 6, by = 0.1) |> 
+  round(digits = 1)
+
+# y軸のスケールパラメータを指定
+sigma_22 <- 4
+
+# x・y軸のスケールパラメータを指定
+sigma_12 <- 0.6
+
+# フレーム数を設定
+frame_num <- length(sigma_11_vals)
+frame_num
+```
+
+　値の間隔が一定になるように$\sigma_{1,1}$の値を`sigma_11_vals`として作成します。また、$\sigma_{1,2} = \sigma_{2,1}$を`sigma_12`、$\sigma_{2,2}$を`sigma_22`として値を指定します。\
+
+　パラメータごとに分布を計算します。
+
+```{r}
+# xの値を作成
+x_1_vals <- seq(
+  from = mu_d[1] - sqrt(max(sigma_11_vals)) * 2, 
+  to = mu_d[1] + sqrt(max(sigma_11_vals)) * 2, 
+  length.out = 101
+)
+x_2_vals <- seq(
+  from = mu_d[2] - sqrt(sigma_22) * 3, 
+  to = mu_d[2] + sqrt(sigma_22) * 3, 
+  length.out = 101
+)
+
+# パラメータごとに多次元t分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  sigma_11 = sigma_11_vals, # パラメータ
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(sigma_11) |> # 分布の計算用にグループ化
+  dplyr::mutate(
+    density = mvnfast::dmvt(
+      X = as.matrix(cbind(x_1, x_2)), 
+      mu = mu_d, 
+      sigma = matrix(c(unique(sigma_11), sigma_12, sigma_12, sigma_22), nrow = D, ncol = D), 
+      df = nu
+    ), # 確率密度
+    parameter = paste0("mu=(", mu_d[1], ", ", mu_d[2], "), Sigma=(", sigma_11, ", ", sigma_12, ", ", sigma_12, ", ", sigma_22, "), nu=", nu) |> 
+      factor(levels = paste0("mu=(", mu_d[1], ", ", mu_d[2], "), Sigma=(", sigma_11_vals, ", ", sigma_12, ", ", sigma_12, ", ", sigma_22, "), nu=", nu)) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_dens_df
+```
+
+　「自由度の影響」の`nu, nu_vals`と`sigma_11, sigma_11_vals`を入れ換えるように処理します。\
+
+　「自由度の影響」のコードで作図できます。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 2次元t分布のアニメーションを作図:等高線図
+anime_dens_graph <- ggplot() + 
+  #geom_contour(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 等高線
+  geom_contour_filled(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), alpha = 0.8) + # 塗りつぶし等高線
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title ="Bivariate Student's t-Distribution", 
+       subtitle = "{current_frame}", 
+       color = "density", fill = "density", 
+       x = expression(x[1]), y = expression(x[2]))
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 10, width = 800, height = 600)
+```
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 2次元t分布のアニメーションを作図:ヒートマップ
+anime_dens_graph <- ggplot() + 
+  geom_tile(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, fill = density), alpha = 0.8) + # ヒートマップ
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_fill_viridis_c(option = "D") + # 等高線の色
+  labs(title ="Bivariate Student's t-Distribution", 
+       subtitle = "{current_frame}", 
+       fill = "density", 
+       x = expression(x[1]), y = expression(x[2]))
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 10, width = 800, height = 600)
+```
+
+　$\sigma_{1,1}$の値に応じて、x軸方向に広がるのが分かります。\
+\
+
+
+### スケール行列(2,2成分)の影響
+
+　y軸方向のスケール$\sigma_{2,2}$の値を変化させ、$\nu, \boldsymbol{\mu}, \sigma_{1,1}, \sigma_{1,2}, \sigma_{2,1}$を固定します。
+
+```{r}
+# 次元数を設定
+D <- 2
+
+# 自由度を指定
+nu <- 3
+
+# 位置ベクトルを指定
+mu_d <- c(6, 10)
+
+# x軸のスケールパラメータを指定
+sigma_11 <- 1
+
+# y軸のスケールパラメータとして利用する値を指定
+sigma_22_vals <- seq(from = 0.5, to = 6, by = 0.1) |> 
+  round(digits = 1)
+
+# x・y軸のスケールパラメータを指定
+sigma_12 <- 0.6
+
+# フレーム数を設定
+frame_num <- length(sigma_22_vals)
+frame_num
+```
+
+　値の間隔が一定になるように$\sigma_{2,2}$の値を`sigma_22_vals`として作成します。また、$\sigma_{1,1}$を`sigma_11`、$\sigma_{1,2} = \sigma_{2,1}$を`sigma_12`として値を指定します。\
+
+　パラメータごとに分布を計算します。
+
+```{r}
+# xの値を作成
+x_1_vals <- seq(
+  from = mu_d[1] - sqrt(sigma_11) * 3, 
+  to = mu_d[1] + sqrt(sigma_11) * 3, 
+  length.out = 101
+)
+x_2_vals <- seq(
+  from = mu_d[2] - sqrt(max(sigma_22_vals)) * 2, 
+  to = mu_d[2] + sqrt(max(sigma_22_vals)) * 2, 
+  length.out = 101
+)
+
+# パラメータごとに多次元t分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  sigma_22 = sigma_22_vals, # パラメータ
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(sigma_22) |> # 分布の計算用にグループ化
+  dplyr::mutate(
+    density = mvnfast::dmvt(
+      X = as.matrix(cbind(x_1, x_2)), 
+      mu = mu_d, 
+      sigma = matrix(c(sigma_11, sigma_12, sigma_12, unique(sigma_22)), nrow = D, ncol = D), 
+      df = nu
+    ), # 確率密度
+    parameter = paste0("mu=(", mu_d[1], ", ", mu_d[2], "), Sigma=(", sigma_11, ", ", sigma_12, ", ", sigma_12, ", ", sigma_22, "), nu=", nu) |> 
+      factor(levels = paste0("mu=(", mu_d[1], ", ", mu_d[2], "), Sigma=(", sigma_11, ", ", sigma_12, ", ", sigma_12, ", ", sigma_22_vals, "), nu=", nu)) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_dens_df
+```
+
+　「自由度の影響」の`nu, nu_vals`と`sigma_22, sigma_22_vals`を入れ換えるように処理します。\
+
+　「自由度の影響」のコードで作図できます。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 2次元t分布のアニメーションを作図:等高線図
+anime_dens_graph <- ggplot() + 
+  #geom_contour(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 等高線
+  geom_contour_filled(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), alpha = 0.8) + # 塗りつぶし等高線
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title ="Bivariate Student's t-Distribution", 
+       subtitle = "{current_frame}", 
+       color = "density", fill = "density", 
+       x = expression(x[1]), y = expression(x[2]))
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 10, width = 800, height = 600)
+```
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 2次元t分布のアニメーションを作図:ヒートマップ
+anime_dens_graph <- ggplot() + 
+  geom_tile(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, fill = density), alpha = 0.8) + # ヒートマップ
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_fill_viridis_c(option = "D") + # 等高線の色
+  labs(title ="Bivariate Student's t-Distribution", 
+       subtitle = "{current_frame}", 
+       fill = "density", 
+       x = expression(x[1]), y = expression(x[2]))
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 10, width = 800, height = 600)
+```
+
+　$\sigma_{2,2}$の値に応じて、y軸方向に広がるのが分かります。\
+\
+
+
+### スケール行列(1,2成分)の影響
+
+　両軸のスケール$\sigma_{1,2}, \sigma_{2,1}$の値を変化させ、$\nu, \boldsymbol{\mu}, \sigma_{1,1}, \sigma_{2,2}$を固定します。
+
+```{r}
+# 次元数を設定
+D <- 2
+
+# 自由度を指定
+nu <- 3
+
+# 位置ベクトルを指定
+mu_d <- c(6, 10)
+
+# x軸・y軸のスケールパラメータを指定
+sigma_11 <- 4
+sigma_22 <- 10
+
+# x・y軸のスケールパラメータとして利用する値を指定
+sigma_12_vals <- seq(from = -5, to = 5, by = 0.1) |> 
+  round(digits = 1)
+
+# フレーム数を設定
+frame_num <- length(sigma_12_vals)
+frame_num
+```
+
+　値の間隔が一定になるように$\sigma_{1,2} = \sigma_{2,1}$の値を`sigma_12_vals`として作成します。また、$\sigma_{1,1}, \sigma_{2,2}$を`sigma_11, sigma_22`として値を指定します。\
+
+　パラメータごとに分布を計算します。
+
+```{r}
+# xの値を作成
+x_1_vals <- seq(
+  from = mu_d[1] - sqrt(sigma_11) * 3, 
+  to = mu_d[1] + sqrt(sigma_11) * 3, 
+  length.out = 101
+)
+x_2_vals <- seq(
+  from = mu_d[2] - sqrt(sigma_22) * 2, 
+  to = mu_d[2] + sqrt(sigma_22) * 2, 
+  length.out = 101
+)
+
+# パラメータごとに多次元t分布を計算
+anime_dens_df <- tidyr::expand_grid(
+  sigma_12 = sigma_12_vals, # パラメータ
+  x_1 = x_1_vals, 
+  x_2 = x_2_vals
+) |> # パラメータごとに格子点を複製
+  dplyr::group_by(sigma_12) |> # 分布の計算用にグループ化
+  dplyr::mutate(
+    density = mvnfast::dmvt(
+      X = as.matrix(cbind(x_1, x_2)), 
+      mu = mu_d, 
+      sigma = matrix(c(sigma_11, unique(sigma_12), unique(sigma_12), sigma_22), nrow = D, ncol = D), 
+      df = nu
+    ), # 確率密度
+    parameter = paste0("mu=(", mu_d[1], ", ", mu_d[2], "), Sigma=(", sigma_11, ", ", sigma_12, ", ", sigma_12, ", ", sigma_22, "), nu=", nu) |> 
+      factor(levels = paste0("mu=(", mu_d[1], ", ", mu_d[2], "), Sigma=(", sigma_11, ", ", sigma_12_vals, ", ", sigma_12_vals, ", ", sigma_22, "), nu=", nu)) # フレーム切替用ラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+anime_dens_df
+```
+
+　「自由度の影響」の`nu, nu_vals`と`sigma_12, sigma_12_vals`を入れ換えるように処理します。\
+
+　「自由度の影響」のコードで作図できます。
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 2次元t分布のアニメーションを作図:等高線図
+anime_dens_graph <- ggplot() + 
+  #geom_contour(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, color = ..level..)) + # 等高線
+  geom_contour_filled(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, z = density, fill = ..level..), alpha = 0.8) + # 塗りつぶし等高線
+  gganimate::transition_manual(parameter) + # フレーム
+  labs(title ="Bivariate Student's t-Distribution", 
+       subtitle = "{current_frame}", 
+       color = "density", fill = "density", 
+       x = expression(x[1]), y = expression(x[2]))
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 10, width = 800, height = 600)
+```
+
+```{r, echo=FALSE}
+### 資料作成用:(再掲)
+
+# 2次元t分布のアニメーションを作図:ヒートマップ
+anime_dens_graph <- ggplot() + 
+  geom_tile(data = anime_dens_df, mapping = aes(x = x_1, y = x_2, fill = density), alpha = 0.8) + # ヒートマップ
+  gganimate::transition_manual(parameter) + # フレーム
+  scale_fill_viridis_c(option = "D") + # 等高線の色
+  labs(title ="Bivariate Student's t-Distribution", 
+       subtitle = "{current_frame}", 
+       fill = "density", 
+       x = expression(x[1]), y = expression(x[2]))
+
+# gif画像を作成
+gganimate::animate(anime_dens_graph, nframes = frame_num, fps = 10, width = 800, height = 600)
+```
+
+　$\sigma_{1,2}$の値に応じて、x軸とy軸の広がる方向が変化するのが分かります。\
+\
+
+　この記事では、多次元スチューデントのt分布の作図を確認しました。\
+\
+
+
+# 参考書籍
+
+- 須山敦志『ベイズ推論による機械学習入門』(機械学習スタートアップシリーズ)杉山将監修,講談社,2017年.
+- C.M.ビショップ著,元田 浩・他訳『パターン認識と機械学習 上』丸善出版,2012年.
+
+
