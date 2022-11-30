@@ -1,0 +1,1021 @@
+---
+title: "多次元スチューデントのt分布"
+author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M:%S')`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_section: true
+    toc: true
+    toc_depth: 4
+    keep_tex: false
+header-includes:
+  - \usepackage{bookmark}
+  - \usepackage{xltxtra}
+  - \usepackage{zxjatype}
+  - \usepackage[ipa]{zxjafont}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, error = FALSE, warning = FALSE, # メッセージを非表示
+  fig.align = "center", # 画像を中央揃え
+  fig.width = 5, fig.height = 4, # 画像のサイズ
+  dev = "cairo_pdf", dev.args = list(family = "ipaexg"), # {ggplot2}に日本語を組み込む場合の対処
+  class.source = "numberLines lineAnchors", # ソースを番号付けする
+  class.output = "numberLines lineAnchors chunkout" # 出力を番号付けする
+)
+```
+
+----
+
+【編集履歴】
+
+- 2022/11/29：「定義式」を追加
+
+----
+
+\newpage
+
+
+# 多次元スチューデントのt分布の定義式
+
+　多次元スチューデントのt分布(Multivariate Student's t Distribution)の定義式を確認します。\
+\
+
+
+## 定義式
+
+　多次元t分布は、1次元t分布を多次元に拡張(一般化)した分布です。標準化されたt分布と一般化された(標準化されていない)t分布の定義式を確認します。(標準化・一般化という表現は雰囲気です。正しい言い方があれば教えてください。)1次元t分布については「1次元スチューデントのt分布の定義式」を参照してください。\
+\
+
+
+### 標準化t分布
+
+　標準化t分布は、自由度$\nu$を用いて、次の式で定義されます。
+
+$$
+\mathrm{St}(\mathbf{x} | \nu)
+    = \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          1
+      }{
+          (\pi \nu)^{\frac{D}{2}}
+      }
+      \left(
+          1
+          + \frac{\mathbf{x}^{\top} \mathbf{x}}{\nu}
+      \right)^{-\frac{\nu+D}{2}}
+\tag{1}
+$$
+
+　ここで、$D$は次元数、$\pi$は円周率、$\Gamma(x)$はガンマ関数です。\
+　$\mathbf{x}$は実数をとり、$\nu$は正の整数を満たす必要があります。\
+\
+
+　標準化t分布の対数をとると
+
+$$
+\begin{aligned}
+\log \mathrm{St}(\mathbf{x} | \nu)
+   &= \log \Gamma \Bigl(\frac{\nu + D}{2}\Bigr)
+      - \log \Gamma \Bigl(\frac{\nu}{2}\Bigr)
+      - \frac{D}{2}
+        \log (\pi \nu) \\
+   &\quad
+      - \frac{\nu+D}{2}
+        \log \Bigl(
+          1
+          + \frac{\mathbf{x}^{\top} \mathbf{x}}{\nu}
+        \Bigr)
+\end{aligned}
+$$
+
+となります。対数の性質より$\log x^a = a \log x$、$\log (x y) = \log x + \log y$、$\log \frac{x}{y} = \log x - \log y$です。また、2分の1乗は平方根$\sqrt{x} = x^{\frac{1}{2}}$です。\
+\
+
+
+### 一般化t分布
+
+　一般化t分布は、パラメータ$\nu, \boldsymbol{\mu}, \boldsymbol{\Sigma}$を用いて、次の式で定義されます。
+
+$$
+\mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Sigma})
+    = \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          1
+      }{
+          (\pi \nu)^{\frac{D}{2}}
+          |\boldsymbol{\Sigma}|^{\frac{1}{2}}
+      }
+      \left\{
+          1
+          + \frac{1}{\nu}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Sigma}^{-1}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \right\}^{-\frac{\nu+D}{2}}
+\tag{2}
+$$
+
+　または、$\boldsymbol{\Sigma}$の代わりに$\boldsymbol{\Lambda}$を用いて、次の式でも定義されます。
+
+$$
+\mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Lambda})
+    = \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          |\boldsymbol{\Lambda}|^{\frac{1}{2}}
+      }{
+          (\pi \nu)^{\frac{D}{2}}
+      }
+      \left\{
+          1
+          + \frac{1}{\nu}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Lambda}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \right\}^{-\frac{\nu+D}{2}}
+\tag{3}
+$$
+
+　ここで、$\nu$は形状(自由度)パラメータ、$\boldsymbol{\mu}$は位置ベクトルパラメータ、$\boldsymbol{\Sigma}$はスケール行列パラメータ、$\boldsymbol{\Lambda}$は逆スケール行列パラメータです。また、$\mathbf{A}^{\top}$は行列$\mathbf{A}$の転置行列、$\mathbf{A}^{-1}$は逆行列、$|\mathbf{A}|$は行列式です。\
+　$\mathbf{x}, \boldsymbol{\mu}$は$D$次元ベクトル、$\boldsymbol{\Sigma}$は$D \times D$の正定値行列です。
+
+$$
+\mathbf{x}
+    = \begin{pmatrix}
+          x_1 \\
+          x_2 \\
+          \vdots \\
+          x_D
+      \end{pmatrix}
+,\ 
+\boldsymbol{\mu}
+    = \begin{pmatrix}
+          \mu_1 \\
+          \mu_2 \\
+          \vdots \\
+          \mu_D
+      \end{pmatrix}
+,\ 
+\boldsymbol{\Sigma}
+    = \begin{pmatrix}
+          \sigma_{1,1} & \sigma_{1,2} & \cdots & \sigma_{1,D} \\
+          \sigma_{2,1} & \sigma_{2,2} & \cdots & \sigma_{2,D} \\
+          \vdots & \vdots & \ddots & \vdots \\
+          \sigma_{D,1} & \sigma_{D,2} & \cdots & \sigma_{D,D}
+      \end{pmatrix}
+$$
+
+　逆スケール行列は、スケール行列の逆行列で定義されます。
+
+$$
+\begin{aligned}
+\boldsymbol{\Lambda}
+   &= \boldsymbol{\Sigma}^{-1}
+\\
+\boldsymbol{\Sigma}
+   &= \boldsymbol{\Lambda}^{-1}
+\end{aligned}
+$$
+
+　逆スケール行列も$D \times D$の正定値行列を満たします。\
+\
+
+　t分布の対数をとると、それぞれ
+
+$$
+\begin{aligned}
+\log \mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Sigma})
+   &= \log \Gamma \Bigl(\frac{\nu + D}{2}\Bigr)
+      - \log \Gamma \Bigl(\frac{\nu}{2}\Bigr)
+      - \frac{D}{2}
+        \log (\pi \nu)
+      - \frac{1}{2}
+        \log |\boldsymbol{\Sigma}| \\
+   &\quad
+      - \frac{\nu+D}{2}
+        \log \Bigl\{
+          1
+          + \frac{1}{\nu}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Sigma}^{-1}
+            (\mathbf{x} - \boldsymbol{\mu})
+        \Bigr\}
+\\
+\log \mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Lambda})
+   &= \log \Gamma \Bigl(\frac{\nu + D}{2}\Bigr)
+      - \log \Gamma \Bigl(\frac{\nu}{2}\Bigr)
+      - \frac{D}{2}
+        \log (\pi \nu)
+      + \frac{1}{2}
+        \log |\boldsymbol{\Lambda}| \\
+   &\quad
+      - \frac{\nu+D}{2}
+        \log \Bigl\{
+          1
+          + \frac{1}{\nu}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Lambda}
+            (\mathbf{x} - \boldsymbol{\mu})
+        \Bigr\}
+\end{aligned}
+$$
+
+となります。\
+\
+
+
+## 定義式の関係
+
+　t分布の定義式に関して対応関係を導出します。\
+\
+
+
+### 一般化された式と標準化された式の関係
+
+　まずは、一般化した定義式と標準化した定義式の関係を考えます。\
+\
+
+　$\boldsymbol{\Sigma}$を用いた定義式(2)に、0ベクトル$\boldsymbol{\mu} = \mathbf{0}$と単位行列$\boldsymbol{\Sigma} = \mathbf{I}$を代入します。
+
+
+\begin{align*}
+\mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu} = \mathbf{0}, \boldsymbol{\Sigma} = \mathbf{I})
+   &= \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          1
+      }{
+          (\pi \nu)^{\frac{D}{2}}
+          |\mathbf{I}|^{\frac{1}{2}}
+      }
+      \left\{
+          1
+          + \frac{1}{\nu}
+            (\mathbf{x} - \mathbf{0})^{\top}
+            \mathbf{I}^{-1}
+            (\mathbf{x} - \mathbf{0})
+      \right\}^{-\frac{\nu+D}{2}}
+\tag{2'}\\
+   &= \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          1
+      }{
+          (\pi \nu)^{\frac{D}{2}}
+      }
+      \left\{
+          1
+          + \frac{1}{\nu}
+            \mathbf{x}^{\top} \mathbf{x}
+      \right\}^{-\frac{\nu+D}{2}}
+    = \mathrm{St}(\mathbf{x} | \nu)
+\tag{1}
+\end{align*}
+
+
+　単位行列の性質$\mathbf{I}^{-1} = \mathbf{I}$、$|\mathbf{I}| = 1$、また$1^{\frac{1}{2}} = \sqrt{1} = 1$です。\
+　標準化した定義式(1)が得られました。\
+\
+
+　同様に、$\boldsymbol{\Lambda}$を用いた定義式(3)に、$\boldsymbol{\mu} = \mathbf{0}$と$\boldsymbol{\Lambda} = \mathbf{I}$を代入します。
+
+
+\begin{align*}
+\mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu} = \mathbf{0}, \boldsymbol{\Lambda} = \mathbf{I})
+   &= \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          |\mathbf{I}|^{\frac{1}{2}}
+      }{
+          (\pi \nu)^{\frac{D}{2}}
+      }
+      \left\{
+          1
+          + \frac{1}{\nu}
+            (\mathbf{x} - \mathbf{0})^{\top}
+            \mathbf{I}
+            (\mathbf{x} - \mathbf{0})
+      \right\}^{-\frac{\nu+D}{2}}
+\tag{3'}\\
+   &= \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          1
+      }{
+          (\pi \nu)^{\frac{D}{2}}
+      }
+      \left\{
+          1
+          + \frac{1}{\nu}
+            \mathbf{x}^{\top} \mathbf{x}
+      \right\}^{-\frac{\nu+D}{2}}
+    = \mathrm{St}(\mathbf{x} | \nu)
+\tag{1}
+\end{align*}
+
+
+　標準化した定義式(1)が得られました。\
+\
+
+
+### 標準化t分布による計算
+
+　続いて、一般化t分布の計算を標準化t分布の計算で代用することを考えます。スケール行列と固有値・固有ベクトルの関係については「分散共分散行列と固有値・固有ベクトルの関係の導出」を参照してください。\
+\
+
+　$\boldsymbol{\Sigma}$を用いた定義式(2)を考えます。
+
+$$
+\mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Sigma})
+    = \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          1
+      }{
+          (\pi \nu)^{\frac{D}{2}}
+          |\boldsymbol{\Sigma}|^{\frac{1}{2}}
+      }
+      \left\{
+          1
+          + \frac{1}{\nu}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Sigma}^{-1}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \right\}^{-\frac{\nu+D}{2}}
+\tag{2}
+$$
+
+\ 
+
+　スケール行列$\boldsymbol{\Sigma}$について、$D$個の固有値$\lambda_d$を対角成分とする対角行列$\mathbf{V}$と固有ベクトル$\mathbf{u}_d^{\top}$を行方向に並べた行列$\mathbf{U}$に分解できます。(固有値と逆スケールパラメータとで記号がだだ被りしますが、固有値はここでしか登場しないのでこのまま表記します。)
+
+$$
+\begin{aligned}
+\boldsymbol{\Sigma}
+   &= \mathbf{U}^{\top} \mathbf{V} \mathbf{U}
+\\
+   &= \mathbf{U}^{\top}
+      \mathbf{V}^{\frac{1}{2}} \mathbf{V}^{\frac{1}{2}}
+      \mathbf{U}
+\end{aligned}
+$$
+
+　また、逆スケール行列は、$\mathbf{V}$の逆行列を用いて分解できます。
+
+$$
+\begin{aligned}
+\boldsymbol{\Sigma}^{-1}
+   &= \mathbf{U}^{\top} \mathbf{V}^{-1} \mathbf{U}
+\\
+   &= \mathbf{U}^{\top}
+      \mathbf{V}^{-\frac{1}{2}} \mathbf{V}^{-\frac{1}{2}}
+      \mathbf{U}
+\end{aligned}
+$$
+
+　$\mathbf{V}^{-1}$は、固有値の逆数$\frac{1}{\lambda_d}$を対角成分とする対角行列です。\
+
+　$\mathbf{x}$に関する因子(二次形式)について、$\boldsymbol{\Sigma}$を置き換えます。
+
+$$
+(\mathbf{x} - \boldsymbol{\mu})^{\top}
+\boldsymbol{\Sigma}^{-1}
+(\mathbf{x} - \boldsymbol{\mu})
+    = (\mathbf{x} - \boldsymbol{\mu})^{\top}
+      \mathbf{U}^{\top}
+      \mathbf{V}^{-\frac{1}{2}} \mathbf{V}^{-\frac{1}{2}}
+      \mathbf{U}
+      (\mathbf{x} - \boldsymbol{\mu})
+$$
+
+　さらに
+
+$$
+\begin{aligned}
+\mathbf{y}
+   &= \mathbf{V}^{-\frac{1}{2}} \mathbf{U}
+      (\mathbf{x} - \boldsymbol{\mu})
+\\
+\mathbf{y}^{\top}
+   &= \Bigl\{
+          \mathbf{V}^{-\frac{1}{2}} \mathbf{U}
+          (\mathbf{x} - \boldsymbol{\mu})
+      \Bigr\}^{\top}
+\\
+   &= (\mathbf{x} - \boldsymbol{\mu})^{\top}
+      \mathbf{U}^{\top}
+      \Bigl(
+          \mathbf{V}^{-\frac{1}{2}}
+      \Bigr)^{\top}
+\\
+   &= (\mathbf{x} - \boldsymbol{\mu})^{\top}
+      \mathbf{U}^{\top}
+      \mathbf{V}^{-\frac{1}{2}}
+\end{aligned}
+$$
+
+とおきます。転置の性質$(\mathbf{A} \mathbf{B})^{\top} = \mathbf{B}^{\top} \mathbf{A}^{\top}$より、変形しています。また、$\mathbf{V}$は対角行列なので、$(\mathbf{V}^{-\frac{1}{2}})^{\top} = \mathbf{V}^{-\frac{1}{2}}$です。
+
+$$
+(\mathbf{x} - \boldsymbol{\mu})^{\top}
+\boldsymbol{\Sigma}^{-1}
+(\mathbf{x} - \boldsymbol{\mu})
+    = \mathbf{y}^{\top} \mathbf{y}
+$$
+
+　式(2)の二次形式を置き換えます。
+
+$$
+\mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Sigma})
+    = \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          1
+      }{
+          (\pi \nu)^{\frac{D}{2}}
+          |\boldsymbol{\Sigma}|^{\frac{1}{2}}
+      }
+      \left\{
+          1
+          + \frac{\mathbf{\mathbf{y}^{\top} \mathbf{y}}}{\nu}
+      \right\}^{-\frac{\nu+D}{2}}
+$$
+
+　$\frac{1}{|\boldsymbol{\Sigma}|^{\frac{1}{2}}}$以外の項に注目すると、自由度$\nu$の$\mathbf{y}$の標準化t分布の式になっています。
+
+$$
+\begin{aligned}
+\mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Sigma})
+   &= \frac{
+          1
+      }{
+          |\boldsymbol{\Sigma}|^{\frac{1}{2}}
+      }
+      \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          1
+      }{
+          (\pi \nu)^{\frac{D}{2}}
+      }
+      \left\{
+          1
+          + \frac{\mathbf{y}^{\top} \mathbf{y}}{\nu}
+      \right\}^{-\frac{\nu+D}{2}}
+\\
+   &= \frac{
+          1
+      }{
+          |\boldsymbol{\Sigma}|^{\frac{1}{2}}
+      }
+      \mathrm{St}(\mathbf{y} | \nu)
+\end{aligned}
+$$
+
+　自由度$\nu$の$\mathbf{y}$の確率密度に$\boldsymbol{\Sigma}$の行列式の逆数を掛けて計算できます。\
+\
+
+　続いて、$\boldsymbol{\Lambda}$を用いた定義式(3)を考えます。
+
+$$
+\mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Lambda})
+    = \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          |\boldsymbol{\Lambda}|^{\frac{1}{2}}
+      }{
+          (\pi \nu)^{\frac{D}{2}}
+      }
+      \left\{
+          1
+          + \frac{1}{\nu}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Lambda}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \right\}^{-\frac{\nu+D}{2}}
+\tag{3}
+$$
+
+　$\boldsymbol{\Lambda} = \boldsymbol{\Sigma}^{-1}$なので、同様に置き換えます。
+
+$$
+\mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Lambda})
+    = \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          |\boldsymbol{\Lambda}|^{\frac{1}{2}}
+      }{
+          (\pi \nu)^{\frac{D}{2}}
+      }
+      \left\{
+          1
+          + \frac{\mathbf{y}^{\top} \mathbf{y}}{\nu}
+      \right\}^{-\frac{\nu+D}{2}}
+$$
+
+　$|\boldsymbol{\Lambda}|^{\frac{1}{2}}$以外の項に注目すると、自由度$\nu$の$\mathbf{y}$の標準化t分布の式になっています。
+
+$$
+\begin{aligned}
+\mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Lambda})
+   &= |\boldsymbol{\Lambda}|^{\frac{1}{2}}
+      \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          1
+      }{
+          (\pi \nu)^{\frac{D}{2}}
+      }
+      \left\{
+          1
+          + \frac{\mathbf{y}^{\top} \mathbf{y}}{\nu}
+      \right\}^{-\frac{\nu+D}{2}}
+\\
+   &= |\boldsymbol{\Lambda}|^{\frac{1}{2}}
+      \mathrm{St}(\mathbf{y} | \nu)
+\end{aligned}
+$$
+
+　自由度$\nu$の$\mathbf{y}$の確率密度に$\boldsymbol{\Lambda}$の行列式を掛けて計算できます。\
+　ちなみに、行列式の性質$|\mathbf{A}^{-1}| = |\mathbf{A}|^{-1}$より、$\frac{1}{|\boldsymbol{\Sigma}|^{\frac{1}{2}}} = |\boldsymbol{\Sigma}|^{-\frac{1}{2}} = |\boldsymbol{\Sigma}^{-1}|^{\frac{1}{2}} = |\boldsymbol{\Lambda}|^{\frac{1}{2}}$です。\
+\
+
+
+### スケール行列による式と逆スケール行列による式の変換
+
+　次は、$\boldsymbol{\Sigma}$を用いた定義式と$\boldsymbol{\Lambda}$を用いた定義式の関係を考えます。\
+\
+
+　$\boldsymbol{\Sigma}$を用いた定義式(2)を変形して、$\boldsymbol{\Lambda}$に置き換えます。
+
+
+\begin{align*}
+\mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Sigma})
+   &= \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          1
+      }{
+          (\pi \nu)^{\frac{D}{2}}
+          |\boldsymbol{\Sigma}|^{\frac{1}{2}}
+      }
+      \left\{
+          1
+          + \frac{1}{\nu}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Sigma}^{-1}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \right\}^{-\frac{\nu+D}{2}}
+\tag{2}\\
+   &= \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          1
+      }{
+          (\pi \nu)^{\frac{D}{2}}
+          |\boldsymbol{\Sigma}^{-1}|^{-\frac{1}{2}}
+      }
+      \left\{
+          1
+          + \frac{1}{\nu}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Sigma}^{-1}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \right\}^{-\frac{\nu+D}{2}}
+\\
+   &= \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          |\boldsymbol{\Sigma}^{-1}|^{\frac{1}{2}}
+      }{
+          (\pi \nu)^{\frac{D}{2}}
+      }
+      \left\{
+          1
+          + \frac{1}{\nu}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Sigma}^{-1}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \right\}^{-\frac{\nu+D}{2}}
+\\
+   &= \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          |\boldsymbol{\Lambda}|^{\frac{1}{2}}
+      }{
+          (\pi \nu)^{\frac{D}{2}}
+      }
+      \left\{
+          1
+          + \frac{1}{\nu}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Lambda}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \right\}^{-\frac{\nu+D}{2}}
+    = \mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Lambda})
+\tag{3}
+\end{align*}
+
+
+　行列式の性質$|\mathbf{A}^{-1}| = |\mathbf{A}|^{-1}$、指数の性質$(x^a)^b = x^{ab}$より、$|\boldsymbol{\Sigma}| = |\boldsymbol{\Sigma}^{-1}|^{-1}$です。また、逆数の定義$x^{-1} = \frac{1}{x}$より、変形しています。\
+　$\boldsymbol{\Lambda}$を用いた定義式(3)が得られました。\
+\
+
+
+### 1次元t分布との関係
+
+　1次元の場合を考えます。\
+\
+
+　1次元$D = 1$のとき、$\mathbf{x}, \boldsymbol{\mu}, \boldsymbol{\Sigma}$はそれぞれスカラになります。
+
+
+\begin{align*}
+\mathrm{St}(\mathbf{x} = x_1 | \nu, \boldsymbol{\mu} = \mu_1, \boldsymbol{\Sigma} = \sigma_{1,1})
+   &= \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          1
+      }{
+          (\pi \nu)^{\frac{1}{2}}
+          |\sigma_{1,1}|^{\frac{1}{2}}
+      }
+      \left\{
+          1
+          + \frac{1}{\nu}
+            (x_1 - \mu_1)^{\top}
+            \sigma_{1,1}^{-1}
+            (x_1 - \mu_1)
+      \right\}^{-\frac{\nu+1}{2}}
+\tag{2'}\\
+   &= \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          1
+      }{
+          \sqrt{\pi \nu}
+          \sigma_{1,1}^{\frac{1}{2}}
+      }
+      \left\{
+          1
+          + \frac{1}{\nu}
+            \frac{(x_1 - \mu_1)^2}{\sigma_{1,1}}
+      \right\}^{-\frac{\nu+1}{2}}
+\end{align*}
+
+
+　スカラなので、転置と行列式はそのまま$x^{\top} = x, |x| = x$、逆行列は逆数$x^{-1} = \frac{1}{x}$になります。\
+　スケールパラメータを$\sigma_{1,1} = \sigma_1^2$とおきます。
+
+$$
+\begin{aligned}
+\mathrm{St}(\mathbf{x} = x_1 | \nu, \boldsymbol{\mu} = \mu_1, \boldsymbol{\Sigma} = \sigma_1^2)
+   &= \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          1
+      }{
+          \sqrt{\pi \nu}
+          (\sigma_1^2)^{\frac{1}{2}}
+      }
+      \left\{
+          1
+          + \frac{1}{\nu}
+            \frac{(x_1 - \mu_1)^2}{\sigma_1^2}
+      \right\}^{-\frac{\nu+1}{2}}
+\\
+   &= \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          1
+      }{
+          \sqrt{\pi \nu}
+          \sigma_1
+      }
+      \left\{
+          1
+          + \frac{1}{\nu} \left(
+              \frac{x_1 - \mu_1}{\sigma_1}
+            \right)^2
+      \right\}^{-\frac{\nu+1}{2}}
+    = \mathrm{St}(x = x_1 | \nu, \mu = \mu_1, \sigma = \sigma_1)
+\end{aligned}
+$$
+
+　指数の性質$(x^a)^b = x^{ab}$より、変形しています。\
+
+　$\boldsymbol{\Lambda}$を用いる場合も同様です。
+
+
+\begin{align*}
+\mathrm{St}(\mathbf{x} = x_1 | \nu, \boldsymbol{\mu} = \mu_1, \boldsymbol{\Lambda} = \lambda_{1,1})
+   &= \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          |\lambda_{1,1}|^{\frac{1}{2}}
+      }{
+          (\pi \nu)^{\frac{1}{2}}
+      }
+      \left\{
+          1
+          + \frac{1}{\nu}
+            (x_1 - \mu_1)^{\top}
+            \lambda_{1,1}
+            (x_1 - \mu_1)
+      \right\}^{-\frac{\nu+1}{2}}
+\tag{3'}\\
+   &= \frac{
+          \Gamma(\frac{\nu + 1}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \left(
+          \frac{
+              \lambda_{1,1}
+          }{
+              \pi \nu
+          }
+      \right)^{\frac{1}{2}}
+      \left\{
+          1
+          + \frac{\lambda_{1,1} (x_1 - \mu_1)^2}{\nu}
+      \right\}^{-\frac{\nu+1}{2}}
+    = \mathrm{St}(x = x_1 | \nu, \mu = \mu_1, \lambda = \lambda_{1,1})
+\end{align*}
+
+
+　それぞれ1次元t分布の定義式が得られました。\
+\
+
+
+### 変数間に相関がない場合
+
+　スケール行列が対角行列の場合を考えます。\
+\
+
+　スケール行列を対角行列とします。
+
+$$
+\boldsymbol{\Sigma}
+    = \begin{pmatrix}
+          \sigma_{1,1} & 0 & \cdots & 0 \\
+          0 & \sigma_{2,2} & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & \sigma_{D,D}
+      \end{pmatrix}
+$$
+
+　対角行列の逆行列は、対角成分の逆数を対角成分とする対角行列になります。
+
+$$
+\boldsymbol{\Sigma}^{-1}
+    = \begin{pmatrix}
+          \frac{1}{\sigma_{1,1}} & 0 & \cdots & 0 \\
+          0 & \frac{1}{\sigma_{2,2}} & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & \frac{1}{\sigma_{D,D}}
+      \end{pmatrix}
+$$
+
+\ 
+
+　$\boldsymbol{\Sigma}$を用いた定義式(2)の各因子を変形していきます。
+
+$$
+\mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Sigma})
+    = \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \frac{
+          1
+      }{
+          (\pi \nu)^{\frac{D}{2}}
+          |\boldsymbol{\Sigma}|^{\frac{1}{2}}
+      }
+      \left\{
+          1
+          + \frac{1}{\nu}
+            (\mathbf{x} - \boldsymbol{\mu})^{\top}
+            \boldsymbol{\Sigma}^{-1}
+            (\mathbf{x} - \boldsymbol{\mu})
+      \right\}^{-\frac{\nu+D}{2}}
+\tag{2}
+$$
+
+　$(\pi \nu)^{-\frac{D}{2}}$は、$D$個の$2 \pi$の積で表せます。
+
+$$
+\frac{1}{(\pi \nu)^{\frac{D}{2}}}
+    = \prod_{d=1}^D
+          \frac{1}{(\pi \nu)^{\frac{1}{2}}}
+$$
+
+　スケール行列の行列式$|\boldsymbol{\Sigma}|$は、対角行列の行列式は対角成分の積になるので、$D$個の対角要素の積になります。
+
+$$
+\begin{aligned}
+|\boldsymbol{\Sigma}|
+   &= \left|
+          \begin{pmatrix}
+              \sigma_{1,1} & 0 & \cdots & 0 \\
+              0 & \sigma_{2,2} & \cdots & 0 \\
+              \vdots & \vdots & \ddots & \vdots \\
+              0 & 0 & \cdots & \sigma_{D,D}
+          \end{pmatrix}
+      \right|
+\\
+   &= \sigma_{1,1}
+      \sigma_{2,2}
+      \cdots
+      \sigma_{D,D}
+\\
+   &= \prod_{d=1}^D
+          \sigma_{d,d}
+\end{aligned}
+$$
+
+　続いて、二次形式を計算します。
+
+$$
+\begin{aligned}
+(\mathbf{x} - \boldsymbol{\mu})^{\top}
+\boldsymbol{\Sigma}^{-1}
+(\mathbf{x} - \boldsymbol{\mu})
+   &= \begin{pmatrix}
+          x_1 - \mu_1 & 
+          x_2 - \mu_2 & 
+          \cdots & 
+          x_D - \mu_D
+      \end{pmatrix}
+      \begin{pmatrix}
+          \frac{1}{\sigma_{1,1}} & 0 & \cdots & 0 \\
+          0 & \frac{1}{\sigma_{2,2}} & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & \frac{1}{\sigma_{D,D}}
+      \end{pmatrix}
+      \begin{pmatrix}
+          x_1 - \mu_1 \\
+          x_2 - \mu_2 \\
+          \vdots \\
+          x_D - \mu_D
+      \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          \frac{x_1 - \mu_1}{\sigma_{1,1}} & 
+          \frac{x_2 - \mu_2}{\sigma_{2,2}} & 
+          \cdots & 
+          \frac{x_D - \mu_D}{\sigma_{D,D}}
+      \end{pmatrix}
+      \begin{pmatrix}
+          x_1 - \mu_1 \\
+          x_2 - \mu_2 \\
+          \vdots \\
+          x_D - \mu_D
+      \end{pmatrix}
+\\
+   &= \frac{(x_1 - \mu_1)^2}{\sigma_{1,1}}
+      + \frac{(x_2 - \mu_2)^2}{\sigma_{2,2}}
+      + \cdots
+      + \frac{(x_D - \mu_D)^2}{\sigma_{D,D}}
+\\
+   &= \sum_{d=1}^D
+          \frac{(x_d - \mu_d)^2}{\sigma_{d,d}}
+\end{aligned}
+$$
+
+　それぞれ置き換えます。
+
+$$
+\mathrm{St}(\mathbf{x} | \nu, \boldsymbol{\mu}, \boldsymbol{\Sigma})
+    = \frac{
+          \Gamma(\frac{\nu + D}{2})
+      }{
+          \Gamma(\frac{\nu}{2})
+      }
+      \prod_{d=1}^D
+          \frac{1}{(\pi \nu)^{\frac{1}{2}} \sigma_{d,d}}
+      \left\{
+          1
+          + \frac{1}{\nu}
+            \sum_{d'=1}^D
+              \frac{(x_{d'} - \mu_{d'})^2}{\sigma_{d',d'}}
+      \right\}^{-\frac{\nu+D}{2}}
+$$
+
+　スケール行列は変数間の相関を表すので、対角行列のとき変数間に相関がありませんが、(多次元ガウス分布のように)変数間が独立になりません。\
+\
+
+
+## 統計量の計算式
+
+　t分布の期待値・共分散・最頻値は、次の式で計算できます。
+
+$$
+\begin{aligned}
+\mathbb{E}[\mathbf{x}]
+   &= \boldsymbol{\mu}
+    \quad
+      (\nu > 1)
+\\
+\mathrm{Cov}[\mathbf{x}]
+   &= \frac{\nu}{\nu - 2}
+      \boldsymbol{\Sigma}
+    \quad
+      (\nu > 2)
+\\
+   &= \frac{\nu}{\nu - 2}
+      \boldsymbol{\Lambda}^{-1}
+    \quad
+      (\nu > 2)
+\\
+\mathrm{mode}[\mathbf{x}]
+   &= \boldsymbol{\mu}
+\end{aligned}
+$$
+
+　$\nu$が1未満の場合は期待値が定義されません。また、2未満の場合は共分散が定義されません。\
+　スケール行列$\boldsymbol{\Sigma}$が分散共分散行列ではない(逆スケール行列$\boldsymbol{\Lambda}$が精度行列ではない)ことが分かります。\
+\
+
+
+# 参考書籍
+
+- 須山敦志『ベイズ推論による機械学習入門』(機械学習スタートアップシリーズ)杉山将監修,講談社,2017年.
+- C.M.ビショップ著,元田 浩・他訳『パターン認識と機械学習 上』丸善出版,2012年.
+
+
+
