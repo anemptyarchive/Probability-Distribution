@@ -64,7 +64,7 @@ $$
 \tag{1}
 $$
 
-　または、$\boldsymbol{\Lambda}$を用いて、次の式でも定義されます。
+　または、$\boldsymbol{\Sigma}$の代わりに$\boldsymbol{\Lambda}$を用いて、次の式でも定義されます。
 
 $$
 \mathcal{N}(\mathbf{x} | \boldsymbol{\mu}, \boldsymbol{\Lambda}^{-1})
@@ -275,7 +275,7 @@ $$
       \exp \left\{
           - \frac{\lambda_1 (x_1 - \mu_1)^2}{2}
       \right\}
-    = \mathcal{N}(x = x_1 | \mu = \mu_1, \lambda^{-1} = \lambda_1^{-1})
+    = \mathcal{N}(x = x_1 | \mu = \mu_1, \sigma^2 = \lambda_1^{-1})
 \end{align*}
 
 
@@ -283,14 +283,12 @@ $$
 \
 
 
-### 変数間に依存関係がない場合
+### 変数間に相関関係がない場合
 
-　続いて、変数間に依存関係がない(独立である)場合のガウス分布を考えます。\
+　続いて、分散共分散行列が対角行列の場合を考えます。\
 \
 
-　まずは、分散共分散行列について確認します。\
-
-　各変数が独立のとき全ての共分散が0になります。
+　分散共分散行列を対角行列とします。
 
 $$
 \boldsymbol{\Sigma}
@@ -302,24 +300,31 @@ $$
       \end{pmatrix}
 $$
 
-　各変数$x_d$の分散$\sigma_d^2$を対角成分とする対角行列になります。\
-
 　対角行列の逆行列は、対角成分の逆数を対角成分とする対角行列になります。
 
 $$
+\begin{aligned}
 \boldsymbol{\Sigma}^{-1}
-    = \begin{pmatrix}
+   &= \begin{pmatrix}
           \frac{1}{\sigma_1^2} & 0 & \cdots & 0 \\
           0 & \frac{1}{\sigma_2^2} & \cdots & 0 \\
           \vdots & \vdots & \ddots & \vdots \\
           0 & 0 & \cdots & \frac{1}{\sigma_D^2}
       \end{pmatrix}
+\\
+   &= \begin{pmatrix}
+          \lambda_{1,1} & 0 & \cdots & 0 \\
+          0 & \lambda_{2,2} & \cdots & 0 \\
+          \vdots & \vdots & \ddots & \vdots \\
+          0 & 0 & \cdots & \lambda_{D,D}
+      \end{pmatrix}
+    = \boldsymbol{\Lambda}
+\end{aligned}
 $$
 
-　各変数$x_d$の分散$\sigma_d^2$の逆数$\frac{1}{\sigma_d^2} = \sigma_d^{-2}$を対角成分とする対角行列になります。\
-\
+　各変数$x_d$の分散$\sigma_d^2$の逆数$\sigma_d^{-2} = \frac{1}{\sigma_d^2}$(精度$\lambda_{d,d}$)を対角成分とする対角行列になります。\
 
-　次に、定義式(1)の各因子を変形します。
+　定義式(1)の各因子を変形していきます。
 
 $$
 \mathcal{N}(\mathbf{x} | \boldsymbol{\mu}, \boldsymbol{\Sigma})
