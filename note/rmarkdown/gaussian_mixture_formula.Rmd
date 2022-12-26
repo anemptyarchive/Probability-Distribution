@@ -1,0 +1,382 @@
+---
+title: "1次元混合ガウス分布"
+author: "@anemptyarchive\\thanks{\\url{https://www.anarchive-beta.com/}}"
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M:%S')`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_section: true
+    toc: true
+    toc_depth: 4
+    keep_tex: false
+header-includes:
+  - \usepackage{bookmark}
+  - \usepackage{xltxtra}
+  - \usepackage{zxjatype}
+  - \usepackage[ipa]{zxjafont}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, error = FALSE, warning = FALSE, # メッセージを非表示
+  fig.align = "center", # 画像を中央揃え
+  fig.width = 5, fig.height = 4, # 画像のサイズ
+  dev = "cairo_pdf", dev.args = list(family = "ipaexg"), # {ggplot2}に日本語を組み込む場合の対処
+  class.source = "numberLines lineAnchors", # ソースを番号付けする
+  class.output = "numberLines lineAnchors chunkout" # 出力を番号付けする
+)
+```
+
+----
+
+【編集履歴】
+
+- 2022/12/27：「定義式」を追加
+
+----
+
+\newpage
+
+
+# 1次元混合ガウス分布の定義式
+
+　1次元混合ガウス分布(Gaussian Mixture Distribution)・一変量混合正規分布(Normal Mixture Distribution)の定義を確認します。\
+\
+
+
+## 定義式
+
+　混合ガウス分布は、複数のガウス分布を線形結合した分布です。ガウス分布については「分布の定義式」を参照してください。\
+\
+
+　1次元混合ガウス分布は、パラメータ$\boldsymbol{\pi}, \boldsymbol{\mu}, \boldsymbol{\sigma}$を用いて、次の式で定義されます。
+
+$$
+p(x)
+    = \sum_{k=1}^K
+          \pi_k
+          \mathcal{N}(x | \mu_k, \sigma_k^2)
+$$
+
+　ここで、$K$はクラスタ数、$\pi_k$はクラスタ$k$となる確率、$\mu_k$はクラスタ$k$の平均パラメータ、$\sigma_k$は標準偏差パラメータ、$\sigma_k^2$は分散パラメータです。\
+　各クラスとなる確率をまとめたベクトル$\boldsymbol{\pi} = (\pi_1, \pi_2, \cdots, \pi_K)$を混合比率(混合パラメータ)と言います。各成分は0から1の値で、全ての成分の和が1になる必要があります。この条件を数式で表すと、$0 \leq \pi_k \leq 1$または$\pi_k \in (0, 1)$、$\sum_{k=1}^K \pi_k = 1$です。\
+　全てのクラスタの平均パラメータをまとめて$\boldsymbol{\mu} = \{\mu_1, \mu_2, \cdots, \mu_K\}$、標準偏差パラメータをまとめて$\boldsymbol{\sigma} = \{\sigma_1, \sigma_2, \cdots, \sigma_K\}$で表します。$\mu_k$は実数、$\sigma_k, \sigma_k^2$は正の実数を満たす必要があります。\
+
+　混合ガウス分布は、混合比率$\boldsymbol{\pi}$を用いて$K$個のガウス分布の加重平均で定義されています。\
+
+　1次元混合ガウス分布の確率変数$x$は、割り当てられたクラスタを潜在変数$\mathbf{s}$で表すことで、次の式でも定義できます。
+
+$$
+\begin{aligned}
+\mathbf{s}
+   &\sim
+      \mathrm{Cat}(\mathbf{s} | \boldsymbol{\pi})
+\\
+x
+   &\sim
+      \prod_{k=1}^K
+          \mathcal{N}(x | \mu_k, \sigma_k^2)^{s_k}
+\end{aligned}
+$$
+
+　1 of K表現(one-hotベクトル)の潜在変数$\mathbf{s} = (s_1, s_2, \cdots, s_K)$を導入します。割り当てられたクラスタに対応する成分が1で、それ以外の成分が0である$K$次元ベクトル$\mathbf{s}$によってクラスタを表します。各成分が0か1の値をとり、(値が1なのは1つだけなので)全ての成分の和が1になる条件を数式で表すと、$s_k \in \{0, 1\}$、$\sum_{k=1}^K s_k = 1$です。\
+　$\mathbf{s}$は、パラメータ$\boldsymbol{\pi}$を持つカテゴリ分布の確率変数として定義できます。確率$\pi_k$で$s_k = 1$(クラスタが$k$)になります。カテゴリ分布については「分布の定義式」を参照してください。\
+
+　0乗は1なので($a^0 = 1$なので)、$s_k\ (k = 1, \dots, K)$を指数として用いて総乗$\prod_k$の形にすることで、割り当てられたクラスタの分布のみを取り出すことができます。\
+　クラスタが$k$のとき($s_k = 1$のとき)
+
+$$
+\begin{aligned}
+\prod_{k=1}^K
+    \mathcal{N}(x | \mu_k, \sigma_k^2)^{s_k}
+   &= \mathcal{N}(x | \mu_1, \sigma_1^2)^{s_1}
+      \mathcal{N}(x | \mu_2, \sigma_2^2)^{s_2}
+      \cdots
+      \mathcal{N}(x | \mu_k, \sigma_k^2)^{s_k}
+      \cdots
+      \mathcal{N}(x | \mu_K, \sigma_K^2)^{s_K}
+\\
+   &= \mathcal{N}(x | \mu_1, \sigma_1^2)^0
+      \mathcal{N}(x | \mu_2, \sigma_2^2)^0
+      \cdots
+      \mathcal{N}(x | \mu_k, \sigma_k^2)^1
+      \cdots
+      \mathcal{N}(x | \mu_K, \sigma_K^2)^1
+\\
+   &= 1 * 1
+      * \cdots
+      * \mathcal{N}(x | \mu_k, \sigma_k^2)
+      * \cdots
+      * 1
+\\
+   &= \mathcal{N}(x | \mu_k, \sigma_k^2)
+    \qquad
+      (s_k = 1)
+\end{aligned}
+$$
+
+となります。\
+　つまり、クラスタが$k$のとき($s_k = 1$のとき)、$x$はクラスタ$k$の分布に従います。
+
+$$
+x
+   \sim
+      \mathcal{N}(x | \mu_k, \sigma_k^2)
+    \qquad
+      (s_k = 1)
+$$
+
+　混合分布は複数の分布を用いて定義されていますが、確率変数は1つのクラスタに従うように設計されています。\
+\
+
+　ここまでは、混合ガウス分布の定義を数式から確認しました。次は、グラフから確認します。\
+\
+
+
+## グラフの確認
+
+　「K個のガウス分布」と「クラスタ数がKの混合ガウス分布」の関係をグラフで確認します。混合ガウス分布のグラフ作成については「分布の作図」を参照してください。\
+\
+
+　利用するパッケージを読み込みます。
+
+```{r, eval=FALSE}
+# 利用パッケージ
+library(tidyverse)
+```
+
+```{r, echo=FALSE}
+### 資料作成用
+
+# チェック用
+library(ggplot2)
+```
+
+　この記事では、基本的に`パッケージ名::関数名()`の記法を使うので、パッケージを読み込む必要はありません。ただし、作図コードがごちゃごちゃしないようにパッケージ名を省略しているため、`ggplot2`は読み込む必要があります。\
+　`magrittr`パッケージのパイプ演算子`%>%`ではなく、ベースパイプ(ネイティブパイプ)演算子`|>`を使っています。`%>%`に置き換えても処理できます。\
+\
+
+　混合ガウス分布のパラメータ$\boldsymbol{\pi}, \boldsymbol{\mu}, \boldsymbol{\sigma}$を指定します。
+
+```{r}
+# クラスタ数を指定
+K <- 3
+
+# 混合比率を指定
+pi_k <- c(0.45, 0.25, 0.3)
+
+# K個の平均パラメータを指定
+mu_k <- c(-4, 0, 2.6)
+
+# K個の標準偏差パラメータを指定
+sigma_k <- c(1, 1.2, 0.8)
+```
+
+　クラスタ数`K`と各パラメータの値を指定します。\
+
+　設定したパラメータに応じて、混合ガウス分布の確率変数$x$がとり得る値を作成します。
+
+```{r}
+# 確率変数の値を作成
+x_vals <- seq(
+  from = min(mu_k - sigma_k*3), 
+  to = max(mu_k + sigma_k*3), 
+  length.out = 401
+)
+head(x_vals)
+```
+
+　$x$の値(x軸の値)を`x_vals`とします。この例では、クラスタごとに平均を中心に標準偏差の3倍を範囲としたときの最小値から最大値を範囲とします。\
+
+　クラスタごとに、$\mathbf{x}$の点ごとの確率密度を計算して、混合比率を掛けます。
+
+```{r}
+# クラスタごとにガウス分布を計算
+dens_cluster_df <- tidyr::expand_grid(
+  k = 1:K, # クラスタ番号
+  x = x_vals # x軸の値
+) |> # クラスタごとに確率変数の値を複製
+  dplyr::group_by(k) |> # クラスタごとの計算用にグループ化
+  dplyr::mutate(
+    dens_k = dnorm(x = x_vals, mean = mu_k[unique(k)], sd = sigma_k[unique(k)]), # クラスタごとの確率密度
+    dens_k_weighted = pi_k[unique(k)] * dens_k, # 重み付け確率密度
+    k = factor(k, levels = 1:K), # 色分け用に因子化
+    param_label_cluster = paste0(
+      "list(", 
+      "k==", unique(k), 
+      ", mu==", mu_k[unique(k)], 
+      ", sigma==", sigma_k[unique(k)], 
+      ")"
+    ), # パラメータラベル
+    param_label_weighted = paste0(
+      "list(", 
+      "k==", unique(k), 
+      ", pi==", pi_k[unique(k)], 
+      ", mu==", mu_k[unique(k)], 
+      ", sigma==", sigma_k[unique(k)], 
+      ")"
+    ) # パラメータラベル
+  ) |> 
+  dplyr::ungroup() # グループ化を解除
+dens_cluster_df
+```
+
+　クラスタごとに、確率密度と混合比率によって重み付けした確率密度を計算します。ガウス分布の確率密度は、`dnorm()`で計算できます。\
+　また、パラメータを表示するためのラベル(`expression()`の記法の文字列)を作成しておきます。\
+
+　パラメータの値を数式で表示するための文字列ベクトルを作成します。
+
+```{r}
+# パラメータラベルを作成
+param_label_cluster <- dens_cluster_df[["param_label_cluster"]] |> # ラベル列を抽出
+  unique() # 重複を削除
+param_label_cluster
+```
+
+　データフレームからラベル列を取り出して、`unique()`で重複を削除します。\
+
+　$K$個のガウス分布のグラフを作成します。
+
+```{r, fig.width=8, fig.height=6}
+# 混合ガウス分布を作図
+ggplot() + 
+  geom_line(data = dens_cluster_df, 
+            mapping = aes(x = x, y = dens_k, color = k, linetype = "cluster"), 
+            size = 1) + # クラスタごとの確率密度
+  scale_color_hue(breaks = 1:K, labels = parse(text = param_label_cluster), name = "cluster") + # 色の凡例ラベル
+  scale_linetype_manual(breaks = "cluster", values = "solid", labels = "cluster k distribution", name = "density") + # 線の種類
+  theme(legend.text.align = 0) + # 図の体裁
+  guides(linetype = guide_legend(override.aes = list(size = 0.5))) + # 凡例の体裁
+  labs(title = "Gaussian Distribution", 
+       subtitle = parse(text = paste0("K==", K)), 
+       x = "x", y = "density")
+```
+
+　クラスタごとに色分けして描画します。\
+　クラスタごとに1つの山になります。それぞれの面積が1(それぞれ積分すると1)になります。\
+
+　同様に、パラメータラベルを取り出します。
+
+```{r}
+# パラメータラベルを作成
+param_label_weighted <- dens_cluster_df[["param_label_weighted"]] |> # ラベル列を抽出
+  unique() # 重複を削除
+param_label_weighted
+```
+
+\ 
+
+　$K$個の重み付けしたガウス分布のグラフを、元の分布と重ねて作成します。
+
+```{r, fig.width=8, fig.height=6}
+# 混合ガウス分布を作図
+ggplot() + 
+  geom_line(data = dens_cluster_df, 
+            mapping = aes(x = x, y = dens_k_weighted, color = k, linetype = "weighted"), 
+            size = 1) + # クラスタごとの割り引き確率密度
+  geom_line(data = dens_cluster_df, 
+            mapping = aes(x = x, y = dens_k, color = k, linetype = "cluster"), 
+            size = 1) + # クラスタごとの確率密度
+  scale_color_hue(breaks = 1:K, labels = parse(text = param_label_weighted), name = "cluster") + # 色の凡例ラベル
+  scale_linetype_manual(breaks = c("cluster", "weighted"), 
+                        values = c("dotdash", "solid"), 
+                        labels = c("cluster k distribution", "weighted distribution"), 
+                        name = "density") + # 線の種類
+  theme(legend.text.align = 0) + # 図の体裁
+  guides(linetype = guide_legend(override.aes = list(size = 0.5))) + # 凡例の体裁
+  labs(title = "Gaussian Mixture Distribution", 
+       subtitle = parse(text = paste0("K==", K)), 
+       x = "x", y = "density")
+```
+
+　クラスタごとに色分けして、元の分布を点入りの破線で示します。\
+　混合比率(各分布の重み)は0から1の値なので、それぞれ山が小さくなります。値を掛けただけなので、横軸方向には変化しません。\
+　混合比率を掛けたことで、各山の面積が混合比率に一致し、全ての山の面積の合計が1になります。\
+
+　混合ガウス分布の確率密度を計算します。
+
+```{r}
+# 混合ガウス分布を計算
+dens_mixture_df <- dens_cluster_df |> 
+  dplyr::group_by(x) |> # 点ごとの計算用にグループ化
+  dplyr::summarise(density = sum(dens_k_weighted), .groups = "drop") # K個の分布の加重平均を計算
+dens_mixture_df
+```
+
+　`x`列でグループ化することで`x_vals`の値($\mathbf{x}$の点)ごとに、重み付けした確率密度を合計します。\
+
+　混合ガウス分布のパラメータラベルを作成します。
+
+```{r}
+# パラメータラベルを作成
+param_label_mixture <- paste0(
+  "list(", 
+  "K==", K, 
+  ", pi==(list(", paste0(pi_k, collapse = ", "), "))", 
+  ", mu==(list(", paste0(mu_k, collapse = ", "), "))", 
+  ", sigma==(list(", paste0(sigma_k, collapse = ", "), "))", 
+  ")"
+)
+param_label_mixture
+```
+
+\ 
+
+　混合ガウス分布のグラフを、$K$個のガウス分布と重ねて作成します。
+
+```{r, fig.width=8, fig.height=6}
+# 混合ガウス分布を作図
+ggplot() + 
+  geom_line(data = dens_mixture_df, 
+            mapping = aes(x = x, y = density, linetype = "mixture"), 
+            color = "hotpink", size = 1) + # 混合分布の確率密度
+  geom_line(data = dens_cluster_df, 
+            mapping = aes(x = x, y = dens_k_weighted, color = k, linetype = "weighted"), 
+            size = 1) + # クラスタごとの割り引き確率密度
+  geom_line(data = dens_cluster_df, 
+            mapping = aes(x = x, y = dens_k, color = k, linetype = "cluster"), 
+            size = 1) + # クラスタごとの確率密度
+  scale_color_hue(breaks = 1:K, labels = parse(text = param_label_weighted), name = "cluster") + # 色の凡例ラベル
+  scale_linetype_manual(breaks = c("cluster", "weighted", "mixture"), 
+                        values = c("dotdash", "dashed", "solid"), 
+                        labels = c("cluster k distribution", "weighted distribution", "mixture distribution"), 
+                        name = "density") + # 線の種類
+  theme(legend.text.align = 0) + # 図の体裁
+  guides(linetype = guide_legend(override.aes = list(size = 0.5))) + # 凡例の体裁
+  labs(title = "Gaussian Mixture Distribution", 
+       subtitle = parse(text = param_label_mixture), 
+       x = "x", y = "density")
+```
+
+　元の分布を点入りの破線、重み付けした分布を破線で示します。\
+　$K$個の重み付けした分布に関して、x軸の値ごとに積み上げた形になります。\
+
+　最後に、混合ガウス分布だけのグラフを確認します。
+
+```{r, fig.width=8, fig.height=6}
+# 混合ガウス分布を作図
+ggplot() + 
+  geom_line(data = dens_mixture_df, 
+            mapping = aes(x = x, y = density, linetype = "mixture"), 
+            color = "hotpink", size = 1) + # 混合分布の確率密度
+  scale_linetype_manual(breaks = "mixture", values = "solid", labels = "mixture distribution", name = "density") + # 線の種類
+  guides(linetype = guide_legend(override.aes = list(size = 0.5))) + # 凡例の体裁
+  labs(title = "Gaussian Mixture Distribution", 
+       subtitle = parse(text = param_label_mixture), 
+       x = "x", y = "density")
+```
+
+　$K$個の山を持つ分布なのが分かります。ただし、クラスタ間において平均が近い場合は、$K$個以下の山になることもあります。\
+\
+
+　この記事では、1次元混合ガウス分布の定義を確認しました。\
+\
+
+
+# 参考書籍
+
+- 須山敦志『ベイズ推論による機械学習入門』(機械学習スタートアップシリーズ)杉山将監修,講談社,2017年.
+- C.M.ビショップ著,元田 浩・他訳『パターン認識と機械学習 上』,丸善出版,2012年.
+
+

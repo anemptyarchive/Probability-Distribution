@@ -67,8 +67,8 @@ dens_mixture_df
 ### ・分布の作図 -----
 
 # パラメータラベルを作成
-param_label_cluster <- dens_cluster_df[["param_label"]] |> 
-  unique() |> 
+param_label_cluster <- dens_cluster_df[["param_label"]] |> # ラベル列を抽出
+  unique() # 重複を削除
   parse(text = _)
 param_label_mixture <- paste0(
   "list(", 
@@ -105,6 +105,9 @@ ggplot() +
 # 確率密度の計算 -----------------------------------------------------------------
 
 
+
+
+# 分布の作図 -----------------------------------------------------------------
 
 
 
