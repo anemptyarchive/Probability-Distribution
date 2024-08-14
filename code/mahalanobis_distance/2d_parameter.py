@@ -270,7 +270,7 @@ def update(frame_i):
     sigma_dd = trace_sigma_lt[frame_i]
 
     # 標準偏差を抽出
-    x_d = np.sqrt(np.diag(sigma_dd))
+    sigma_d = np.sqrt(np.diag(sigma_dd))
     
     # ラベル用の文字列を作成
     mu_str    = '(' + ', '.join(str(val.round(2)) for val in mu_d) + ')'
@@ -280,9 +280,9 @@ def update(frame_i):
     param_label += '$\\Sigma = ' + sigma_str + '$'
     
     # 2Dマハラノビス距離を作図
-    ax.plot([mu_d[0], mu_d[0]+x_d[0]], [mu_d[1], mu_d[1]], 
+    ax.plot([mu_d[0], mu_d[0]+sigma_d[0]], [mu_d[1], mu_d[1]], 
             color='C1', label=f'$\\sigma_0 = {np.sqrt(sigma_dd[0, 0]):.2f}$') # 0軸方向の標準偏差1の線分
-    ax.plot([mu_d[0], mu_d[0]], [mu_d[1], mu_d[1]+x_d[1]], 
+    ax.plot([mu_d[0], mu_d[0]], [mu_d[1], mu_d[1]+sigma_d[1]], 
             color='C2', label=f'$\\sigma_1 = {np.sqrt(sigma_dd[1, 1]):.2f}$') # 1軸方向の標準偏差1の線分
     ax.plot(euclid_x0, euclid_x1, 
             color='C0') # ユークリッド距離

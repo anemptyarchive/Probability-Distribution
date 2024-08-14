@@ -100,7 +100,7 @@ dist_max = np.ceil(max([arr.max() for arr in trace_dist_lt]))
 dist_levels = np.linspace(start=dist_min, stop=dist_max, num=11) # 線の数を指定
 print(dist_levels)
 
-# グラフサイズを設定
+# 軸サイズを設定
 x0_size = x0_max - x0_min
 x1_size = x1_max - x1_min
 x2_size = x2_max - x2_min
@@ -131,9 +131,6 @@ def update(frame_i):
     # 平均ベクトルを取得
     mu_d = trace_mu_lt[frame_i]
 
-    # 中心の推移を取得
-    trace_mu_arr = np.array(trace_mu_lt[:(frame_i+1)]).T
-    
     # ラベル用の文字列を作成
     mu_str    = '(' + ', '.join(str(val.round(2)) for val in mu_d) + ')'
     sigma_str = '(' + ', '.join('(' + ', '.join(str(val.round(2)) for val in vec) + ')' for vec in sigma_dd) + ')'
@@ -142,15 +139,14 @@ def update(frame_i):
     param_label += '$\\Sigma = ' + sigma_str + '$'
     
     # 3Dマハラノビス距離を作図
-    ax.scatter(*mu_d, color='red', s=100, marker='x') # 中心
+    ax.scatter(*mu_d, 
+               color='red', s=100, marker='x', label='$\\mu$') # 中心
     ax.plot([mu_d[0], x0_min], [mu_d[1], mu_d[1]], [mu_d[2], mu_d[2]], 
             color='black', linestyle='dotted') # 中心の0軸座標
     ax.plot([mu_d[0], mu_d[0]], [mu_d[1], x1_max], [mu_d[2], mu_d[2]], 
             color='black', linestyle='dotted') # 中心の1軸座標
     ax.plot([mu_d[0], mu_d[0]], [mu_d[1], mu_d[1]], [mu_d[2], x2_min], 
             color='black', linestyle='dotted') # 中心の2軸座標
-    ax.plot(*trace_mu_arr, 
-            color='red', linestyle='dashed') # 中心の推移
     for i in range(x2.size):
         ax.contour(X0, X1, trace_dist_lt[frame_i][i].reshape(grid_shape), offset=x2[i], 
                    cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels, alpha=0.5, 
@@ -162,6 +158,7 @@ def update(frame_i):
     ax.set_ylabel('$x_1$')
     ax.set_zlabel('$x_2$')
     ax.set_title(param_label, loc='left')
+    ax.legend(loc='upper right')
     ax.set_box_aspect([1.0, x1_size/x0_size, x2_size/x0_size])
     #ax.view_init(elev=90, azim=270) # 0・1軸平面
     #ax.view_init(elev=0, azim=270) # 0・2軸平面
@@ -172,7 +169,7 @@ ani = FuncAnimation(fig=fig, func=update, frames=frame_num, interval=100)
 
 # 動画を書出
 ani.save(
-    filename='../figure/mahalanobis_distance/3d_mu_axis012.mp4', 
+    filename='../figure/mahalanobis_distance/3d_mu.mp4', 
     progress_callback = lambda i, n: print(f'frame: {i} / {n}')
 )
 
@@ -187,7 +184,7 @@ ani.save(
 frame_num = 100
 
 # 平均ベクトルを指定
-mu_d = np.array([0.0, 0.0, 0.0])
+mu_d = np.zeros(3)
 
 # 分散共分散行列を指定
 sigma_dd     = np.diag(np.ones(3))
@@ -273,7 +270,7 @@ dist_val = 1.0
 dist_levels = np.array([dist_min, dist_val, dist_max])
 print(dist_levels)
 
-# グラフサイズを設定
+# 軸サイズを設定
 x0_size = x0_max - x0_min
 x1_size = x1_max - x1_min
 x2_size = x2_max - x2_min
@@ -283,14 +280,14 @@ print(x2_size)
 
 # %%
 
-# ユークリッド(球面の座標)を計算
+# ユークリッド距離(球面の座標)を計算
 T, U = np.meshgrid(
     np.linspace(start=0.0, stop=2.0*np.pi, num=61), 
     np.linspace(start=0.0, stop=2.0*np.pi, num=61)
 ) # ラジアン
-sX0 = mu_d[0] + dist_val * np.sin(T) * np.cos(U)
-sX1 = mu_d[1] + dist_val * np.sin(T) * np.sin(U)
-sX2 = mu_d[2] + dist_val * np.cos(T)
+euclid_X0 = mu_d[0] + dist_val * np.sin(T) * np.cos(U)
+euclid_X1 = mu_d[1] + dist_val * np.sin(T) * np.sin(U)
+euclid_X2 = mu_d[2] + dist_val * np.cos(T)
 
 # ラベル用の文字列を作成
 def_label = '$\\Delta = \\sqrt{(x - \\mu)^{T} \\Sigma^{-1} (x - \\mu)}$'
@@ -314,7 +311,7 @@ def update(frame_i):
     sigma_dd = trace_sigma_lt[frame_i]
 
     # 標準偏差を抽出
-    x_d = np.sqrt(np.diag(sigma_dd))
+    sigma_d = np.sqrt(np.diag(sigma_dd))
     
     # ラベル用の文字列を作成
     mu_str    = '(' + ', '.join(str(val.round(2)) for val in mu_d) + ')'
@@ -324,14 +321,14 @@ def update(frame_i):
     param_label += '$\\Sigma = ' + sigma_str + '$'
     
     # 3Dマハラノビス距離を作図
-    ax.plot([mu_d[0], mu_d[0]+x_d[0]], [mu_d[1], mu_d[1]], [mu_d[2], mu_d[2]], 
+    ax.plot([mu_d[0], mu_d[0]+sigma_d[0]], [mu_d[1], mu_d[1]], [mu_d[2], mu_d[2]], 
             color='C1', label=f'$\\sigma_0 = {np.sqrt(sigma_dd[0, 0]):.2f}$') # 0軸方向の標準偏差1の線分
-    ax.plot([mu_d[0], mu_d[0]], [mu_d[1], mu_d[1]+x_d[1]], [mu_d[2], mu_d[2]], 
+    ax.plot([mu_d[0], mu_d[0]], [mu_d[1], mu_d[1]+sigma_d[1]], [mu_d[2], mu_d[2]], 
             color='C2', label=f'$\\sigma_1 = {np.sqrt(sigma_dd[1, 1]):.2f}$') # 1軸方向の標準偏差1の線分
-    ax.plot([mu_d[0], mu_d[0]], [mu_d[1], mu_d[1]], [mu_d[2], mu_d[2]+x_d[2]], 
+    ax.plot([mu_d[0], mu_d[0]], [mu_d[1], mu_d[1]], [mu_d[2], mu_d[2]+sigma_d[2]], 
             color='C3', label=f'$\\sigma_2 = {np.sqrt(sigma_dd[2, 2]):.2f}$') # 2軸方向の標準偏差1の線分
-    ax.plot_wireframe(sX0, sX1, sX2, alpha=0.2, 
-                      color='C0', linewidth=1) # ユークリッド距離
+    ax.plot_wireframe(euclid_X0, euclid_X1, euclid_X2, 
+                      color='C0', alpha=0.2, linewidth=1) # ユークリッド距離
     for i in range(x2.size):
         ax.contour(X0, X1, trace_dist_lt[frame_i][i].reshape(grid_shape), offset=x2[i], 
                    cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels, alpha=0.5, 
@@ -369,13 +366,15 @@ ani.save(
 frame_num = 100
 
 # 平均ベクトルを指定
-mu_d = np.array([0.0, 0.0, 0.0])
+mu_d = np.zeros(3)
 
 # 分散共分散行列を指定
 sigma_dd     = np.diag(np.ones(3)) * 4.0
 sigma01_vals = np.linspace(start=0.0, stop=3.0, num=frame_num)
 sigma02_vals = np.linspace(start=-2.5, stop=2.5, num=frame_num)
 sigma12_vals = np.linspace(start=0.0, stop=0.0, num=frame_num)
+
+# %%
 
 ## 座標の作成
 
@@ -456,7 +455,7 @@ dist_val = 1.0
 dist_levels = np.array([dist_min, dist_val, dist_max])
 print(dist_levels)
 
-# グラフサイズを設定
+# 軸サイズを設定
 x0_size = x0_max - x0_min
 x1_size = x1_max - x1_min
 x2_size = x2_max - x2_min
@@ -466,14 +465,14 @@ print(x2_size)
 
 # %%
 
-# ユークリッド(球面の座標)を計算
+# ユークリッド距離(球面の座標)を計算
 T, U = np.meshgrid(
     np.linspace(start=0.0, stop=2.0*np.pi, num=61), 
     np.linspace(start=0.0, stop=2.0*np.pi, num=61)
 ) # ラジアン
-sX0 = mu_d[0] + dist_val * np.sin(T) * np.cos(U)
-sX1 = mu_d[1] + dist_val * np.sin(T) * np.sin(U)
-sX2 = mu_d[2] + dist_val * np.cos(T)
+euclid_X0 = mu_d[0] + dist_val * np.sin(T) * np.cos(U)
+euclid_X1 = mu_d[1] + dist_val * np.sin(T) * np.sin(U)
+euclid_X2 = mu_d[2] + dist_val * np.cos(T)
 
 # ラベル用の文字列を作成
 def_label = '$\\Delta = \\sqrt{(x - \\mu)^{T} \\Sigma^{-1} (x - \\mu)}$'
@@ -530,7 +529,8 @@ def update(frame_i):
             [mu_d[1]-tmp_eigen_d[1], mu_d[1]+tmp_eigen_d[1]], 
             [mu_d[2]-tmp_eigen_d[2], mu_d[2]+tmp_eigen_d[2]], 
             color='C3', label=tmp_eigen_label) # 楕円体の2軸方向の距離1の線分
-    ax.plot_wireframe(sX0, sX1, sX2, alpha=0.2, linewidth=1) # ユークリッド距離
+    ax.plot_wireframe(euclid_X0, euclid_X1, euclid_X2, 
+                      color='C0', alpha=0.2, linewidth=1) # ユークリッド距離
     for i in range(x2.size):
         ax.contour(X0, X1, trace_dist_lt[frame_i][i].reshape(grid_shape), offset=x2[i], 
                    cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels, alpha=0.5, 
