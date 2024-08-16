@@ -1,5 +1,7 @@
 
-# 3次元マハラノビス距離の作図
+# マハラノビス距離の作図
+# 3次元変数の場合
+# パラメータと形状の関係
 
 # %%
 
@@ -114,8 +116,7 @@ print(x2_size)
 def_label = '$\\Delta = \\sqrt{(x - \\mu)^{T} \\Sigma^{-1} (x - \\mu)}$'
 
 # グラフオブジェクトを初期化
-fig, ax = plt.subplots(nrows=1, ncols=1, constrained_layout=True, 
-                       figsize=(8, 8), dpi=100, facecolor='white', 
+fig, ax = plt.subplots(figsize=(8, 8), dpi=100, facecolor='white', constrained_layout=True, 
                        subplot_kw={'projection': '3d'})
 fig.suptitle("Mahalanobis' Distance", fontsize=20)
 cs = ax.contour(X0, X1, np.linspace(dist_min, dist_max, num=grid_size).reshape(grid_shape), 
@@ -293,8 +294,7 @@ euclid_X2 = mu_d[2] + dist_val * np.cos(T)
 def_label = '$\\Delta = \\sqrt{(x - \\mu)^{T} \\Sigma^{-1} (x - \\mu)}$'
 
 # グラフオブジェクトを初期化
-fig, ax = plt.subplots(nrows=1, ncols=1, constrained_layout=True, 
-                       figsize=(8, 8), dpi=100, facecolor='white', 
+fig, ax = plt.subplots(figsize=(8, 8), dpi=100, facecolor='white', constrained_layout=True, 
                        subplot_kw={'projection': '3d'})
 fig.suptitle("Mahalanobis' Distance", fontsize=20)
 cs = ax.contour(X0, X1, np.linspace(dist_min, dist_max, num=grid_size).reshape(grid_shape), 
@@ -478,8 +478,7 @@ euclid_X2 = mu_d[2] + dist_val * np.cos(T)
 def_label = '$\\Delta = \\sqrt{(x - \\mu)^{T} \\Sigma^{-1} (x - \\mu)}$'
 
 # グラフオブジェクトを初期化
-fig, ax = plt.subplots(nrows=1, ncols=1, constrained_layout=True, 
-                       figsize=(8, 8), dpi=100, facecolor='white', 
+fig, ax = plt.subplots(figsize=(8, 8), dpi=100, facecolor='white', constrained_layout=True, 
                        subplot_kw={'projection': '3d'})
 fig.suptitle("Mahalanobis' Distance", fontsize=20)
 cs = ax.contour(X0, X1, np.linspace(dist_min, dist_max, num=grid_size).reshape(grid_shape), 
