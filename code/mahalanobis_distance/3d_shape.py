@@ -151,7 +151,6 @@ ani.save(
     progress_callback = lambda i, n: print(f'frame: {i} / {n}')
 )
 
-
 # %%
 
 

@@ -1,5 +1,6 @@
-
-# 2次元マハラノビス距離の作図
+# マハラノビス距離の作図
+# 2次元変数の場合
+# パラメータと形状の関係
 
 # %%
 
@@ -7,6 +8,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from matplotlib import cm
+
 
 # %%
 
@@ -52,6 +55,7 @@ X0, X1 = np.meshgrid(x0, x1)
 # 格子点の形状を設定
 grid_shape = X0.shape
 grid_size  = X0.size
+print(grid_shape)
 print(grid_size)
 
 # 座標を作成
@@ -95,14 +99,15 @@ dist_max = np.ceil(max([arr.max() for arr in trace_dist_lt]))
 dist_levels = np.linspace(start=dist_min, stop=dist_max, num=11) # 線の数を指定
 print(dist_levels)
 
-# %% 
-
 # ラベル用の文字列を作成
 def_label = '$\\Delta = \\sqrt{(x - \\mu)^{T} \\Sigma^{-1} (x - \\mu)}$'
 
+# %%
+
+## 等高線図の作成
+
 # グラフオブジェクトを初期化
-fig, ax = plt.subplots(nrows=1, ncols=1, constrained_layout=True, 
-                       figsize=(8, 8), dpi=100, facecolor='white')
+fig, ax = plt.subplots(figsize=(9, 8), dpi=100, facecolor='white', constrained_layout=True)
 fig.suptitle("Mahalanobis' Distance", fontsize=20)
 cs = ax.contour(X0, X1, np.linspace(dist_min, dist_max, num=grid_size).reshape(grid_shape), 
                 cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels) # カラーバー表示用のダミー
@@ -124,7 +129,7 @@ def update(frame_i):
     param_label += '$\\mu = ' + mu_str + '$\n'
     param_label += '$\\Sigma = ' + sigma_str + '$'
     
-    # 2Dマハラノビス距離を作図
+    # 2Dマハラノビス距離を描画
     ax.scatter(*mu_d, 
                color='red', s=100, marker='x', label='$\\mu$') # 中心
     ax.plot([mu_d[0], x0_min], [mu_d[1], mu_d[1]], 
@@ -132,14 +137,14 @@ def update(frame_i):
     ax.plot([mu_d[0], mu_d[0]], [mu_d[1], x1_min], 
             color='black', linestyle='dotted') # 中心の1軸座標
     ax.contour(X0, X1, trace_dist_lt[frame_i].reshape(grid_shape), 
-               cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels) # マハラノビス距離
+               cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels) # 等高線
     ax.set_xlim(xmin=x0_min, xmax=x0_max)
     ax.set_ylim(ymin=x1_min, ymax=x1_max)
     ax.set_xlabel('$x_0$')
     ax.set_ylabel('$x_1$')
     ax.set_title(param_label, loc='left')
     ax.grid()
-    ax.legend()
+    ax.legend(loc='upper right')
     ax.set_aspect('equal', adjustable='box')
 
 # 動画を作成
@@ -147,7 +152,69 @@ ani = FuncAnimation(fig=fig, func=update, frames=frame_num, interval=100)
 
 # 動画を書出
 ani.save(
-    filename='../figure/mahalanobis_distance/2d_mu.mp4', 
+    filename='../figure/mahalanobis_distance/2d_parameter/2d_mu_contour.mp4', 
+    progress_callback = lambda i, n: print(f'frame: {i} / {n}')
+)
+
+# %% 
+
+## 曲面図の作成
+
+# 軸サイズを設定
+x0_size = x0_max - x0_min
+x1_size = x1_max - x1_min
+
+# グラフオブジェクトを初期化
+fig, ax = plt.subplots(figsize=(9, 8), dpi=100, facecolor='white', constrained_layout=True, 
+                       subplot_kw={'projection': '3d'})
+fig.suptitle("Mahalanobis' Distance", fontsize=20)
+
+# 作図処理を定義
+def update(frame_i):
+    
+    # 前フレームのグラフを初期化
+    ax.cla()
+
+    # 平均ベクトルを取得
+    mu_d = trace_mu_lt[frame_i]
+
+    # ラベル用の文字列を作成
+    mu_str    = '(' + ', '.join(str(val.round(2)) for val in mu_d) + ')'
+    sigma_str = '(' + ', '.join('(' + ', '.join(str(val.round(2)) for val in vec) + ')' for vec in sigma_dd) + ')'
+    param_label  = '$D = 2$\n'
+    param_label += '$\\mu = ' + mu_str + '$\n'
+    param_label += '$\\Sigma = ' + sigma_str + '$'
+    
+    # 2Dマハラノビス距離を描画
+    ax.scatter(*mu_d, 
+               color='red', s=100, marker='x', label='$\\mu$') # 中心
+    ax.plot([mu_d[0], x0_max], [mu_d[1], mu_d[1]], 
+            color='black', linestyle='dotted') # 中心の0軸座標
+    ax.plot([mu_d[0], mu_d[0]], [mu_d[1], x1_min], 
+            color='black', linestyle='dotted') # 中心の1軸座標
+    ax.contour(X0, X1, trace_dist_lt[frame_i].reshape(grid_shape), offset=0.0, 
+               cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels) # 等高線(座標平面上)
+    ax.contour(X0, X1, trace_dist_lt[frame_i].reshape(grid_shape), 
+               cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels, 
+               linestyles='dotted') # 等高線(曲面上)
+    ax.plot_surface(X0, X1, trace_dist_lt[frame_i].reshape(grid_shape), 
+                    cmap='viridis', vmin=dist_min, vmax=dist_max, alpha=0.9) # 曲面
+    ax.set_xlim(xmin=x0_min, xmax=x0_max)
+    ax.set_ylim(ymin=x1_min, ymax=x1_max)
+    ax.set_zlim(zmin=dist_min ,zmax=dist_max)
+    ax.set_xlabel('$x_0$')
+    ax.set_ylabel('$x_1$')
+    ax.set_zlabel(def_label)
+    ax.set_title(param_label, loc='left')
+    ax.legend(loc='upper right')
+    ax.set_box_aspect([1.0, x1_size/x0_size, 1.2]) # 高さ(横サイズに対する比)を指定
+
+# 動画を作成
+ani = FuncAnimation(fig=fig, func=update, frames=frame_num, interval=100)
+
+# 動画を書出
+ani.save(
+    filename='../figure/mahalanobis_distance/2d_parameter/2d_mu_surface.mp4', 
     progress_callback = lambda i, n: print(f'frame: {i} / {n}')
 )
 
@@ -194,6 +261,7 @@ X0, X1 = np.meshgrid(x0, x1)
 # 格子点の形状を設定
 grid_shape = X0.shape
 grid_size  = X0.size
+print(grid_shape)
 print(grid_size)
 
 # 座標を作成
@@ -227,6 +295,9 @@ for frame_i in range(frame_num):
     # 途中経過を表示
     print(f'frame: {frame_i+1} / {frame_num}')
 
+# ユークリッド距離を計算
+euclid_vec = np.sqrt(np.sum((X - mu_d)**2, axis=1))
+
 # %%
 
 ## アニメーションの作成
@@ -239,22 +310,20 @@ dist_max = np.ceil(max([arr.max() for arr in trace_dist_lt]))
 dist_val = 1.0
 
 # 等高線の位置を設定
-dist_levels = np.array([dist_min, dist_val, dist_max])
+#dist_levels = np.array([dist_min, dist_val, dist_max]) # 任意の1線の場合
+dist_levels = np.linspace(start=dist_min, stop=dist_max, num=11) # 線の数を指定
 print(dist_levels)
+
+# ラベル用の文字列を作成
+def_label  = '$\\Delta_{mahal} = \\sqrt{(x - \\mu)^{T} \\Sigma^{-1} (x - \\mu)}$\n'
+def_label += '$\\Delta_{euclid} = \\sqrt{(x - \\mu)^{T} (x - \\mu)}$'
 
 # %%
 
-# ユークリッド距離(円周の座標)を計算
-t = np.linspace(start=0.0, stop=2.0*np.pi, num=61) # ラジアン
-euclid_x0 = mu_d[0] + dist_val * np.cos(t)
-euclid_x1 = mu_d[1] + dist_val * np.sin(t)
-
-# ラベル用の文字列を作成
-def_label = '$\\Delta = \\sqrt{(x - \\mu)^{T} \\Sigma^{-1} (x - \\mu)}$'
+## 等高線図の作成
 
 # グラフオブジェクトを初期化
-fig, ax = plt.subplots(nrows=1, ncols=1, constrained_layout=True, 
-                       figsize=(8, 8), dpi=100, facecolor='white')
+fig, ax = plt.subplots(figsize=(9, 8), dpi=100, facecolor='white', constrained_layout=True)
 fig.suptitle("Mahalanobis' Distance", fontsize=20)
 cs = ax.contour(X0, X1, np.linspace(dist_min, dist_max, num=grid_size).reshape(grid_shape), 
                 cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels) # カラーバー表示用のダミー
@@ -279,13 +348,14 @@ def update(frame_i):
     param_label += '$\\mu = ' + mu_str + '$\n'
     param_label += '$\\Sigma = ' + sigma_str + '$'
     
-    # 2Dマハラノビス距離を作図
+    # 2Dマハラノビス距離を描画
     ax.plot([mu_d[0], mu_d[0]+sigma_d[0]], [mu_d[1], mu_d[1]], 
             color='C1', label=f'$\\sigma_0 = {np.sqrt(sigma_dd[0, 0]):.2f}$') # 0軸方向の標準偏差1の線分
     ax.plot([mu_d[0], mu_d[0]], [mu_d[1], mu_d[1]+sigma_d[1]], 
             color='C2', label=f'$\\sigma_1 = {np.sqrt(sigma_dd[1, 1]):.2f}$') # 1軸方向の標準偏差1の線分
-    ax.plot(euclid_x0, euclid_x1, 
-            color='C0') # ユークリッド距離
+    ax.contour(X0, X1, euclid_vec.reshape(grid_shape), 
+               cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels, 
+               linestyles='dashed') # ユークリッド距離
     ax.contour(X0, X1, trace_dist_lt[frame_i].reshape(grid_shape), 
                cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels) # マハラノビス距離
     ax.set_xlim(xmin=x0_min, xmax=x0_max)
@@ -302,7 +372,81 @@ ani = FuncAnimation(fig=fig, func=update, frames=frame_num, interval=100)
 
 # 動画を書出
 ani.save(
-    filename='../figure/mahalanobis_distance/2d_sigma2.mp4', 
+    filename='../figure/mahalanobis_distance/2d_parameter/2d_sigma2_contour.mp4', 
+    progress_callback = lambda i, n: print(f'frame: {i} / {n}')
+)
+
+# %%
+
+## 曲面図の作成
+
+# 軸サイズを設定
+x0_size = x0_max - x0_min
+x1_size = x1_max - x1_min
+
+# グラフオブジェクトを初期化
+fig, ax = plt.subplots(figsize=(9, 8), dpi=100, facecolor='white', constrained_layout=True, 
+                       subplot_kw={'projection': '3d'})
+fig.suptitle("Mahalanobis' Distance", fontsize=20)
+
+# 作図処理を定義
+def update(frame_i):
+    
+    # 前フレームのグラフを初期化
+    ax.cla()
+
+    # 分散共分散行列を取得
+    sigma_dd = trace_sigma_lt[frame_i]
+
+    # 標準偏差を抽出
+    sigma_d = np.sqrt(np.diag(sigma_dd))
+    
+    # ラベル用の文字列を作成
+    mu_str    = '(' + ', '.join(str(val.round(2)) for val in mu_d) + ')'
+    sigma_str = '(' + ', '.join('(' + ', '.join(str(val.round(2)) for val in vec) + ')' for vec in sigma_dd) + ')'
+    param_label  = '$D = 2$\n'
+    param_label += '$\\mu = ' + mu_str + '$\n'
+    param_label += '$\\Sigma = ' + sigma_str + '$'
+    
+    # 2Dマハラノビス距離を描画
+    ax.plot([mu_d[0], mu_d[0]+sigma_d[0]], [mu_d[1], mu_d[1]], [0.0, 0.0], 
+            color='C1', label=f'$\\sigma_0 = {np.sqrt(sigma_dd[0, 0]):.2f}$') # 0軸方向の標準偏差1の線分
+    ax.plot([mu_d[0], mu_d[0]], [mu_d[1], mu_d[1]+sigma_d[1]], [0.0, 0.0], 
+            color='C2', label=f'$\\sigma_1 = {np.sqrt(sigma_dd[1, 1]):.2f}$') # 1軸方向の標準偏差1の線分
+    ax.contour(X0, X1, euclid_vec.reshape(grid_shape), offset=0.0, 
+               cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels, 
+               linestyles='dashed') # ユークリッド距離の等高線(座標平面上)
+    ax.contour(X0, X1, euclid_vec.reshape(grid_shape), 
+               cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels, 
+               linestyles='dotted') # ユークリッド距離の等高線(曲面上)
+    ax.contour(X0, X1, trace_dist_lt[frame_i].reshape(grid_shape), offset=0.0, 
+               cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels) # マハラノビス距離の等高線(座標平面上)
+    ax.contour(X0, X1, trace_dist_lt[frame_i].reshape(grid_shape), 
+               cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels, 
+               linestyles='dotted') # マハラノビス距離の等高線(曲面上)
+    surf = ax.plot_surface(X0, X1, euclid_vec.reshape(grid_shape), 
+                           facecolors=cm.viridis(euclid_vec.reshape(grid_shape)/dist_max), shade=False, 
+                           linewidth=0.2) # ユークリッド距離の曲面
+    surf.set_facecolor((0, 0, 0, 0)) # くり抜き
+    ax.plot_surface(X0, X1, trace_dist_lt[frame_i].reshape(grid_shape), 
+                    cmap='viridis', vmin=dist_min, vmax=dist_max, alpha=0.8) # マハラノビス距離の曲面
+    ax.set_xlim(xmin=x0_min, xmax=x0_max)
+    ax.set_ylim(ymin=x1_min, ymax=x1_max)
+    ax.set_zlim(zmin=dist_min, zmax=dist_max)
+    ax.set_xlabel('$x_0$')
+    ax.set_ylabel('$x_1$')
+    ax.set_zlabel(def_label, labelpad=15.0)
+    ax.set_title(param_label, loc='left')
+    ax.grid()
+    ax.legend(loc='upper left')
+    ax.set_box_aspect([1.0, x1_size/x0_size, 1.2]) # 高さ(横サイズに対する比)を指定
+
+# 動画を作成
+ani = FuncAnimation(fig=fig, func=update, frames=frame_num, interval=100)
+
+# 動画を書出
+ani.save(
+    filename='../figure/mahalanobis_distance/2d_parameter/2d_sigma2_surface.mp4', 
     progress_callback = lambda i, n: print(f'frame: {i} / {n}')
 )
 
@@ -348,6 +492,7 @@ X0, X1 = np.meshgrid(x0, x1)
 # 格子点の形状を設定
 grid_shape = X0.shape
 grid_size  = X0.size
+print(grid_shape)
 print(grid_size)
 
 # 座標を作成
@@ -381,6 +526,9 @@ for frame_i in range(frame_num):
     # 途中経過を表示
     print(f'frame: {frame_i+1} / {frame_num}')
 
+# ユークリッド距離を計算
+euclid_vec = np.sqrt(np.sum((X - mu_d)**2, axis=1))
+
 # %%
 
 ## アニメーションの作成
@@ -393,22 +541,21 @@ dist_max = np.ceil(max([arr.max() for arr in trace_dist_lt]))
 dist_val = 1.0
 
 # 等高線の位置を設定
-dist_levels = np.array([dist_min, dist_val, dist_max])
+#dist_levels = np.array([dist_min, dist_val, dist_max]) # 任意の1線の場合
+dist_levels = np.linspace(start=dist_min, stop=dist_max, num=7) # 線の数を指定
 print(dist_levels)
+
+# ラベル用の文字列を作成
+def_label  = '$\\Delta_{mahal} = \\sqrt{(x - \\mu)^{T} \\Sigma^{-1} (x - \\mu)}$\n'
+def_label += '$\\Delta_{euclid} = \\sqrt{(x - \\mu)^{T} (x - \\mu)}$'
 
 # %%
 
-# ユークリッド距離(円周の座標)を計算
-t = np.linspace(start=0.0, stop=2.0*np.pi, num=61) # ラジアン
-euclid_x0 = mu_d[0] + dist_val * np.cos(t)
-euclid_x1 = mu_d[1] + dist_val * np.sin(t)
-
-# ラベル用の文字列を作成
-def_label = '$\\Delta = \\sqrt{(x - \\mu)^{T} \\Sigma^{-1} (x - \\mu)}$'
+## 等高線図の作成
 
 # グラフオブジェクトを初期化
 fig, ax = plt.subplots(nrows=1, ncols=1, constrained_layout=True, 
-                       figsize=(8, 8), dpi=100, facecolor='white')
+                       figsize=(9, 8), dpi=100, facecolor='white')
 fig.suptitle("Mahalanobis' Distance", fontsize=20)
 cs = ax.contour(X0, X1, np.linspace(dist_min, dist_max, num=grid_size).reshape(grid_shape), 
                 cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels) # カラーバー表示用のダミー
@@ -435,7 +582,7 @@ def update(frame_i):
     param_label += '$\\mu = ' + mu_str + '$\n'
     param_label += '$\\Sigma = ' + sigma_str + '$'
     
-    # 2Dマハラノビス距離を作図
+    # 2Dマハラノビス距離を描画
     tmp_u_str       = '(' + ', '.join(str(val.round(2)) for val in u_dd[0]) + ')'
     tmp_eigen_label = f'$\\lambda_0 = {lambda_d[0]:.2f}, u_0 = ' + tmp_u_str + '$'
     tmp_eigen_d = u_dd[0] * np.sqrt(lambda_d[0])
@@ -448,8 +595,9 @@ def update(frame_i):
     ax.plot([mu_d[0]-tmp_eigen_d[0], mu_d[0]+tmp_eigen_d[0]], 
             [mu_d[1]-tmp_eigen_d[1], mu_d[1]+tmp_eigen_d[1]], 
             color='C2', label=tmp_eigen_label) # 楕円体の1軸方向の距離1の線分
-    ax.plot(euclid_x0, euclid_x1, 
-            color='C0') # ユークリッド距離
+    ax.contour(X0, X1, euclid_vec.reshape(grid_shape), 
+               cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels, 
+               linestyles='dashed') # ユークリッド距離
     ax.contour(X0, X1, trace_dist_lt[frame_i].reshape(grid_shape), 
                cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels) # マハラノビス距離
     ax.set_xlim(xmin=x0_min, xmax=x0_max)
@@ -466,7 +614,93 @@ ani = FuncAnimation(fig=fig, func=update, frames=frame_num, interval=100)
 
 # 動画を書出
 ani.save(
-    filename='../figure/mahalanobis_distance/2d_cosigma.mp4', 
+    filename='../figure/mahalanobis_distance/2d_parameter/2d_cosigma_contour.mp4', 
+    progress_callback = lambda i, n: print(f'frame: {i} / {n}')
+)
+
+# %%
+
+## 曲面図の作成
+
+# 軸サイズを設定
+x0_size = x0_max - x0_min
+x1_size = x1_max - x1_min
+
+# グラフオブジェクトを初期化
+fig, ax = plt.subplots(figsize=(9, 8), dpi=100, facecolor='white', constrained_layout=True, 
+                       subplot_kw={'projection': '3d'})
+fig.suptitle("Mahalanobis' Distance", fontsize=20)
+
+# 作図処理を定義
+def update(frame_i):
+    
+    # 前フレームのグラフを初期化
+    ax.cla()
+
+    # 分散共分散行列を取得
+    sigma_dd = trace_sigma_lt[frame_i]
+
+    # 固有値・固有ベクトルを計算
+    res_eigen = np.linalg.eig(sigma_dd)
+    lambda_d  = res_eigen[0]
+    u_dd      = res_eigen[1].T
+    
+    # ラベル用の文字列を作成
+    mu_str    = '(' + ', '.join(str(val.round(2)) for val in mu_d) + ')'
+    sigma_str = '(' + ', '.join('(' + ', '.join(str(val.round(2)) for val in vec) + ')' for vec in sigma_dd) + ')'
+    param_label  = '$D = 2$\n'
+    param_label += '$\\mu = ' + mu_str + '$\n'
+    param_label += '$\\Sigma = ' + sigma_str + '$'
+    
+    # 2Dマハラノビス距離を描画
+    tmp_u_str       = '(' + ', '.join(str(val.round(2)) for val in u_dd[0]) + ')'
+    tmp_eigen_label = f'$\\lambda_0 = {lambda_d[0]:.2f}, u_0 = ' + tmp_u_str + '$'
+    tmp_eigen_d = u_dd[0] * np.sqrt(lambda_d[0])
+    ax.plot([mu_d[0]-tmp_eigen_d[0], mu_d[0]+tmp_eigen_d[0]], 
+            [mu_d[1]-tmp_eigen_d[1], mu_d[1]+tmp_eigen_d[1]], 
+            [0.0, 0.0], 
+            color='C1', label=tmp_eigen_label) # 楕円体の0軸方向の距離1の線分
+    tmp_u_str       = '(' + ', '.join(str(val.round(2)) for val in u_dd[1]) + ')'
+    tmp_eigen_label = f'$\\lambda_1 = {lambda_d[1]:.2f}, u_1 = ' + tmp_u_str + '$'
+    tmp_eigen_d = u_dd[1] * np.sqrt(lambda_d[1])
+    ax.plot([mu_d[0]-tmp_eigen_d[0], mu_d[0]+tmp_eigen_d[0]], 
+            [mu_d[1]-tmp_eigen_d[1], mu_d[1]+tmp_eigen_d[1]], 
+            [0.0, 0.0], 
+            color='C2', label=tmp_eigen_label) # 楕円体の1軸方向の距離1の線分
+    ax.contour(X0, X1, euclid_vec.reshape(grid_shape), offset=0.0, 
+               cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels, 
+               linestyles='dashed') # ユークリッド距離の等高線(座標平面上)
+    ax.contour(X0, X1, euclid_vec.reshape(grid_shape), 
+               cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels, 
+               linestyles='dotted') # ユークリッド距離の等高線(曲面上)
+    ax.contour(X0, X1, trace_dist_lt[frame_i].reshape(grid_shape), offset=0.0, 
+               cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels) # マハラノビス距離の等高線(座標平面上)
+    ax.contour(X0, X1, trace_dist_lt[frame_i].reshape(grid_shape), 
+               cmap='viridis', vmin=dist_min, vmax=dist_max, levels=dist_levels, 
+               linestyles='dotted') # マハラノビス距離の等高線(曲面上)
+    surf = ax.plot_surface(X0, X1, euclid_vec.reshape(grid_shape), 
+                           facecolors=cm.viridis(euclid_vec.reshape(grid_shape)/dist_max), shade=False, 
+                           linewidth=0.2) # ユークリッド距離の曲面
+    surf.set_facecolor((0, 0, 0, 0)) # くり抜き
+    ax.plot_surface(X0, X1, trace_dist_lt[frame_i].reshape(grid_shape), 
+                    cmap='viridis', vmin=dist_min, vmax=dist_max, alpha=0.8) # マハラノビス距離の曲面
+    ax.set_xlim(xmin=x0_min, xmax=x0_max)
+    ax.set_ylim(ymin=x1_min, ymax=x1_max)
+    ax.set_zlim(zmin=dist_min, zmax=dist_max)
+    ax.set_xlabel('$x_0$')
+    ax.set_ylabel('$x_1$')
+    ax.set_zlabel(def_label, labelpad=15.0)
+    ax.set_title(param_label, loc='left')
+    ax.grid()
+    ax.legend(loc='upper left')
+    ax.set_box_aspect([1.0, x1_size/x0_size, 1.2]) # 高さ(横サイズに対する比)を指定
+
+# 動画を作成
+ani = FuncAnimation(fig=fig, func=update, frames=frame_num, interval=100)
+
+# 動画を書出
+ani.save(
+    filename='../figure/mahalanobis_distance/2d_parameter/2d_cosigma_surface.mp4', 
     progress_callback = lambda i, n: print(f'frame: {i} / {n}')
 )
 
