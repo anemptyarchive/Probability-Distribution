@@ -14,6 +14,8 @@ library(MCMCpack)
 library(ggplot2)
 
 
+# パラメータの影響 ----------------------------------------------------------------
+
 ### パラメータの設定 -----
 
 # フレーム数を指定
@@ -86,7 +88,7 @@ anim_param_df <- tidyr::expand_grid(
     param_lbl = paste0(
       "list(", 
       "K == ", K, ", ", 
-      "lambda == (list(", paste0(lambda, collapse = ", "), ")), ", 
+      "lambda == (list(", paste0(round(lambda, digits = 2), collapse = ", "), ")), ", 
       "pi == (list(", paste0(round(pi, digits = 2), collapse = ", "), "))", 
       ")"
     ), # パラメータラベル

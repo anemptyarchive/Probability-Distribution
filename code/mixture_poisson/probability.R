@@ -1,7 +1,7 @@
 
 # 混合ポアソン分布 --------------------------------------------------------------
 
-# 分布の作図
+# 確率分布の作図
 
 
 # ライブラリの読込 ----------------------------------------------------------------
@@ -13,6 +13,8 @@ library(MCMCpack)
 # パッケージ名の省略用
 library(ggplot2)
 
+
+# 分布の作図 -------------------------------------------------------------------
 
 ### パラメータの設定 -----
 
@@ -48,8 +50,8 @@ cluster_prob_df <- tidyr::expand_grid(
 
 # 確率を計算
 prob_df <- cluster_prob_df |> 
-  dplyr::reframe(
-    prob = prob, # 混合確率
+  dplyr::summarise(
+    prob = sum(prob), # 混合確率
     .by = x
   )
 
@@ -60,7 +62,7 @@ prob_df <- cluster_prob_df |>
 param_lbl <- paste0(
   "list(", 
   "K == ", K, ", ", 
-  "lambda == (list(", paste0(lambda_k, collapse = ", "), ")), ", 
+  "lambda == (list(", paste0(round(lambda_k, digits = 2), collapse = ", "), ")), ", 
   "pi == (list(", paste0(round(pi_k, digits = 2), collapse = ", "), "))", 
   ")"
 )
