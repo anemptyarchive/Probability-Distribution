@@ -1,10 +1,10 @@
 
-# ポアソン分布 ------------------------------------------------------------------
+# ポアソン分布 -----------------------------------------------------------------
 
 # パラメータの影響の可視化
 
 
-# ライブラリの読込 ----------------------------------------------------------------
+# ライブラリの読込 -------------------------------------------------------------
 
 # 利用パッケージ
 library(tidyverse)
@@ -14,118 +14,348 @@ library(gganimate)
 library(ggplot2)
 
 
-# パラメータと分布の関係：アニメーションによる可視化 ----------------------------
+# パラメータの設定 -------------------------------------------------------------
 
-# パラメータとして利用する値を指定
+# フレームごとのパラメータを指定
 lambda_vals <- seq(from = 0, to = 10, by = 0.1)
-length(lambda_vals) # フレーム数
+
+# フレーム数を取得
+frame_num <- length(lambda_vals)
 
 
-# xの値を作成
-x_vals <- seq(from = 0, to = ceiling(max(lambda_vals)) * 2)
+# x軸の範囲を指定
+x_min <-  # (基本的に固定)
+x_max <- ceiling(max(lambda_vals)) * 2
 
-# パラメータごとにポアソン分布を計算
+# x軸の値を作成
+x_vec <- seq(from = x_min, to = x_max, by = 1)
+
+
+# ポアソン分布を計算
 anime_prob_df <- tidyr::expand_grid(
-  x = x_vals, 
-  lambda = lambda_vals
-) |> # 全ての組み合わせを作成
-  dplyr::arrange(lambda, x) |> # パラメータごとに並べ替え
+  frame_i = 1:frame_num, # フレーム数
+  x       = x_vec # 確率変数
+) |> # フレームごとに複製
   dplyr::mutate(
-    probability = dpois(x = x, lambda = lambda), 
-    parameter = paste0("lambda=", lambda) |> 
-      factor(levels = paste0("lambda=", sort(lambda_vals))) # フレーム切替用ラベル
-  ) # 確率を計算
+    lambda = lambda_vals[frame_i], # パラメータ
+    prob   = dpois(x = x, lambda = lambda) # 確率
+  )
+
+
+
+# パラメータと形状の関係 -------------------------------------------------------
+
+# ラベル用の設定を作成
+anime_label_df <- tibble::tibble(
+  frame_i = 1:frame_num, 
+  lambda  = lambda_vals, 
+  param_lbl = paste0("lambda == ", round(lambda, digits = 2))
+)
+
+# ポアソン分布にアニメーションを作図
+graph <- ggplot() + 
+  geom_bar(
+    data    = anime_prob_df, 
+    mapping = aes(x = x, y = prob), 
+    stat = "identity", position = "identity", 
+    fill = "#00A968"
+  ) + # 確率
+  geom_text(
+    data    = anime_label_df, 
+    mapping = aes(x = -Inf, y = Inf, label = param_lbl), 
+    parse = TRUE, hjust = 0, vjust = -0.5
+  ) + # パラメータラベル
+  gganimate::transition_manual(frames = frame_i) + # フレーム制御
+  scale_x_continuous(breaks = x_vec, minor_breaks = FALSE) + # x軸目盛
+  theme(
+    plot.subtitle = element_text(size = 50) # (パラメータラベル用の空行サイズ)
+  ) + # 図の体裁
+  coord_cartesian(clip = "off") + # (パラメータラベル用の枠外表示設定)
+  labs(
+    title = "Poisson Distribution", 
+    subtitle = "", # (パラメータラベル用の空行)
+    x = expression(x), 
+    y = "probability"
+  )
+
+# 動画を作成
+gganimate::animate(
+  plot = graph, 
+  nframes = frame_num, fps = 10, 
+  width = 12, height = 8, units = "in", res = 100, 
+  renderer = gganimate::av_renderer(file = "figure/poisson/parameter/paramter.mp4")
+)
+
+
+# パラメータと統計量の関係 -----------------------------------------------------
+
+# ラベル用の設定を作成
+anim_label_df <- tibble::tibble(
+  frame_i = 1:frame_num, 
+  lambda  = lambda_vals,   # パラメータ
+  mu      = lambda,        # 期待値
+  sigma   = sqrt(lambda),  # 標準偏差
+  mode    = floor(lambda), # 最頻値
+  param_lbl = paste0("lambda == ", round(lambda, digits = 2)), 
+  stat_lbl  = paste0(
+    "mean: ", sprintf(fmt = '%.02f', domain = mu), "\n", 
+    "sd:      ", sprintf(fmt = '%.02f', domain = sigma), "\n", # (スペースによる文字位置調整)
+    "mode: ", sprintf(fmt = '%.02f', domain = mode)
+  )
+)
+
+# 標準偏差の範囲用の設定を作成
+anim_sd_df <- tidyr::expand_grid(
+  frame_i = 1:frame_num, 
+  sign    = c(-1, 1) # 符号
+) |> 
+  dplyr::mutate(
+    lambda  = lambda_vals[frame_i], # パラメータ
+    mu      = lambda,       # 期待値
+    sigma   = sqrt(lambda), # 標準偏差
+    label_x = mu + sign*sigma, # 描画位置
+    sd_lbl = dplyr::if_else(
+      condition = sign == 1, 
+      true      = "+ sigma", 
+      false     = "- sigma"
+    )
+  )
+
+
+# ラベル用の文字列を作成
+label_vec    <- c(
+  mean = expression(E(x)), 
+  sd   = expression(E(x) %+-% sqrt(V(x))), 
+  mode = expression(mode(x))
+)
+
+# ポアソン分布にアニメーションを作図
+graph <- ggplot() + 
+  geom_bar(
+    data    = anime_prob_df, 
+    mapping = aes(x = x, y = prob), 
+    stat = "identity", position = "identity", 
+    fill = "#00A968"
+  ) + # ポアソン分布の確率
+  geom_vline(
+    data    = anim_label_df, 
+    mapping = aes(xintercept = mode, linetype = "mode"), 
+    linewidth = 1
+  ) + # 最頻値の位置
+  geom_vline(
+    data    = anim_label_df, 
+    mapping = aes(xintercept = mu, linetype = "mean"), 
+    linewidth = 1
+  ) + # 期待値の位置
+  geom_vline(
+    data    = anim_sd_df, 
+    mapping = aes(xintercept = label_x, linetype = "sd"), 
+    linewidth = 1
+  ) + # 標準偏差の位置
+  geom_segment(
+    data    = anim_label_df, 
+    mapping = aes(x = mu-sigma, y = -Inf, xend = mu+sigma, yend = -Inf), 
+    linewidth = 1
+  ) + # 標準偏差の範囲
+  geom_text(
+    data    = anim_sd_df,
+    mapping = aes(x = label_x, y = -Inf, label = "|")
+  ) + # 標準偏差の指示線
+  geom_text(
+    data    = anim_label_df, 　
+    mapping = aes(x = -Inf, y = Inf, label = param_lbl), 
+    parse = TRUE, hjust = 0, vjust = -0.5
+  ) + # パラメータのラベル
+  geom_label(
+    data    = anim_label_df, 
+    mapping = aes(x = -Inf, y = Inf, label = stat_lbl), 
+    hjust = 0, vjust = 1, alpha = 0.5
+  ) + # 統計量のラベル
+  gganimate::transition_manual(frames = frame_i) + # フレーム制御
+  scale_x_continuous(breaks = x_vec, minor_breaks = FALSE) + # x軸目盛
+  scale_linetype_manual(
+    breaks = c("mean", "sd", "mode"), 
+    values = c("dashed", "dotted", "dotdash"), 
+    labels = c("mean", "sd", "mode"), 
+    name   = "statistics"
+  ) + # (凡例表示用)
+  guides(
+    linetype = guide_legend(override.aes = list(linewidth = 0.5))
+  ) + # 凡例の体裁
+  theme(
+    plot.subtitle = element_text(size = 50) # (パラメータラベル用の空行サイズ)
+  ) + # 図の体裁
+  coord_cartesian(clip = "off") + # (パラメータラベル用の枠外描画設定)
+  labs(
+    title = "Poisson distribution", 
+    subtitle = "", # (パラメータラベル用の空行)
+    x = expression(x), 
+    y = "probability"
+  )
+
+# 動画を作成
+gganimate::animate(
+  plot = graph, 
+  nframes = frame_num, fps = 10, 
+  width = 12, height = 8, units = "in", res = 100, 
+  renderer = gganimate::av_renderer(file = "figure/poisson/parameter/stats.mp4")
+)
+
+
+# パラメータとモーメントの関係 -------------------------------------------------
+
+# ガウス分布を計算
+anime_norm_df <- tidyr::expand_grid(
+  frame_i = 1:frame_num, 
+  x       = seq(from = min(x_vec), to = max(x_vec), length.out = 1001)
+) |> # フレームごとに複製
+  dplyr::mutate(
+    lambda = lambda_vals[frame_i], # パラメータ
+    mu     = lambda,       # 期待値
+    sigma  = sqrt(lambda), # 標準偏差
+    dens   = dnorm(x = x, mean = mu, sd = sigma) # 確率密度
+  )
+
+
+# ラベル用の設定を作成
+anim_label_df <- tibble::tibble(
+  frame_i = 1:frame_num, 
+  lambda  = lambda_vals,    # パラメータ
+  mu      = lambda,         # 期待値
+  sigma   = sqrt(lambda),   # 標準偏差
+  mode    = floor(lambda),  # 最頻値
+  skew    = 1/sqrt(lambda), # 歪度
+  kurt    = 1/lambda,       # 尖度
+  param_lbl = paste0(
+    "list(", 
+    "lambda == ", round(lambda, digits = 2), ", ", 
+    "mu == ", round(mu, digits = 2), ", ", 
+    "sigma == ", round(sigma, digits = 2), 
+    ")"
+  ), 
+  moment_lbl = paste0(
+    "skewness: ", sprintf(fmt = '%.03f', domain = skew), "\n", 
+    "kurtosis:     ", sprintf(fmt = '%.03f', domain = kurt) # (スペースによる文字位置調整)
+  )
+)
+
+# 標準偏差の範囲用の設定を作成
+anim_sd_df <- tidyr::expand_grid(
+  frame_i = 1:frame_num, 
+  sign    = c(-1, 1) # 符号
+) |> 
+  dplyr::mutate(
+    lambda  = lambda_vals[frame_i], # パラメータ
+    mu      = lambda,       # 期待値
+    sigma   = sqrt(lambda), # 標準偏差
+    label_x = mu + sign*sigma, # 描画位置
+    sd_lbl = dplyr::if_else(
+      condition = sign == 1, 
+      true      = "+ sigma", 
+      false     = "- sigma"
+    )
+  )
 
 
 # ポアソン分布にアニメーションを作図
-anime_prob_graph <- ggplot(data = anime_prob_df, mapping = aes(x = x, y = probability)) + # データ
-  geom_bar(stat = "identity", fill = "#00A968") + # 棒グラフ
-  gganimate::transition_manual(parameter) + # フレーム
-  scale_x_continuous(breaks = x_vals, minor_breaks = FALSE) + # x軸目盛
-  coord_cartesian(ylim = c(0, 0.5)) + # 軸の表示範囲
-  labs(title = "Poisson Distribution", 
-       subtitle = "{current_frame}", 
-       x = "x", y = "probability") # ラベル
+graph <- ggplot() + 
+  geom_segment(
+    data    = anim_label_df, 
+    mapping = aes(x = mode, y = 0, xend = mode, yend = Inf, linetype = "mode"), 
+    linewidth = 0.8, color = "#00A968"
+  ) + # 最頻値の位置
+  geom_segment(
+    data    = anim_label_df, 
+    mapping = aes(x = mu, y = 0, xend = mu, yend = Inf, linetype = "mean"), 
+    linewidth = 0.8
+  ) + # 期待値の位置
+  geom_segment(
+    data    = anim_label_df, 
+    mapping = aes(x = mu-sigma, y = -Inf, xend = mu+sigma, yend = -Inf, linetype = "sd"), 
+    linewidth = 0.8
+  ) + # 標準偏差の範囲
+  geom_text(
+    data    = anim_sd_df,
+    mapping = aes(x = label_x, y = -Inf, label = "|")
+  ) + # 標準偏差の指示線
+  geom_text(
+    data    = anim_label_df, 
+    mapping = aes(x = mu, y = -Inf, label = "mu"), 
+    parse = TRUE, hjust = 0.5, vjust = -0.5, 
+    size = 4
+  ) + # 期待値のラベル
+  geom_text(
+    data    = anim_sd_df, 
+    mapping = aes(x = label_x, y = -Inf, label = sd_lbl), 
+    parse = TRUE, hjust = 0.5, vjust = -0.5, 
+    size = 4
+  ) + # 標準偏差のラベル
+  geom_bar(
+    data    = anime_prob_df, 
+    mapping = aes(x = x, y = prob), 
+    stat = "identity", position = "identity", 
+    fill = "#00A968", alpha = 0.5
+  ) + # ポアソン分布の確率
+  geom_point(
+    data    = anime_prob_df, 
+    mapping = aes(x = x, y = prob), 
+    color = "#00A968", size = 2.5
+  ) + # ポアソン分布の確率
+  geom_line(
+    data    = anime_norm_df, 
+    mapping = aes(x = x, y = dens, color = "norm"), 
+    linewidth = 1, linetype = "dashed"
+  ) + # ガウス分布の確率密度
+  geom_line(
+    data    = anime_prob_df, 
+    mapping = aes(x = x, y = prob, color = "pois"), 
+    linewidth = 1
+  ) + # ポアソン分布の確率
+  geom_text(
+    data    = anim_label_df, 
+    mapping = aes(x = -Inf, y = Inf, label = param_lbl), 
+    parse = TRUE, hjust = 0, vjust = -0.5
+  ) + # パラメータのラベル
+  geom_label(
+    data    = anim_label_df, 
+    mapping = aes(x = -Inf, y = Inf, label = moment_lbl), 
+    hjust = 0, vjust = 1, alpha = 0.5
+  ) + # モーメントのラベル
+  gganimate::transition_manual(frames = frame_i) + # フレーム制御
+  #scale_x_continuous(breaks = x_vec, minor_breaks = FALSE) + # x軸目盛
+  scale_color_manual(
+    breaks = c("norm", "pois"), 
+    values = c("red", "#00A968"), 
+    labels = c("Gaussian", "Poisson"), 
+    name   = "distribution"
+  ) + # (凡例の表示用)
+  scale_linetype_manual(
+    breaks = c("mean", "sd", "mode"), 
+    values = c("dashed", "solid", "dotdash"), 
+    labels = c("mean", "sd", "mode"), 
+    name   = "statistics"
+  ) + # (凡例の表示用)
+  guides(
+    color    = guide_legend(override.aes = list(linewidth = 0.5)), 
+    linetype = guide_legend(override.aes = list(linewidth = 0.5))
+  ) + # 凡例の体裁
+  theme(
+    plot.subtitle = element_text(size = 50) # (パラメータラベル用の空行サイズ)
+  ) + # 図の体裁
+  coord_cartesian(clip = "off") + # (パラメータラベル用の枠外描画設定)
+  labs(
+    title = "Poisson distribution", 
+    subtitle = "", # (パラメータラベル用の空行)
+    x = expression(x), 
+    y = "probability, density"
+  )
 
-# gif画像を作成
-gganimate::animate(anime_prob_graph, nframes = length(lambda_vals), fps = 10, width = 800, height = 600)
-
-
-# パラメータと統計量の関係：アニメーションによる可視化 ----------------------------
-
-# パラメータとして利用する値を指定
-lambda_vals <- seq(from = 0, to = 10, by = 0.1)
-length(lambda_vals) # フレーム数
-
-
-# xの値を作成
-x_vals <- seq(from = 0, to = ceiling(max(lambda_vals)) * 2)
-
-# 歪度を計算
-skewness_vec <- 1 / sqrt(lambda_vals)
-
-# 尖度を計算
-kurtosis_vec <- 1 / lambda_vals
-
-# ラベル用のテキストを作成
-label_vec <- paste0(
-  "lambda=", lambda_vals, ", skewness=", round(skewness_vec, 3), ", kurtosis=", round(kurtosis_vec, 3)
+# 動画を作成
+gganimate::animate(
+  plot = graph, 
+  nframes = frame_num, fps = 10, 
+  width = 12, height = 8, units = "in", res = 100, 
+  renderer = gganimate::av_renderer(file = "figure/poisson/parameter/moment.mp4")
 )
 
-# パラメータごとにポアソン分布を計算
-anime_prob_df <- tidyr::expand_grid(
-  x = x_vals, 
-  lambda = lambda_vals
-) |> # 全ての組み合わせを作成
-  dplyr::arrange(lambda, x) |> # パラメータごとに並べ替え
-  dplyr::mutate(
-    probability = dpois(x = x, lambda = lambda), 
-    parameter = rep(label_vec, each = length(x_vals)) |> 
-      factor(levels = label_vec) # フレーム切替用ラベル
-  ) # 確率を計算
-
-# パラメータごとに統計量を計算
-anime_stat_df <- tibble::tibble(
-  mean = lambda_vals, # 期待値
-  sd = sqrt(lambda_vals), # 標準偏差
-  mode = floor(lambda_vals), # 最頻値
-  parameter = factor(label_vec, levels = label_vec) # フレーム切替用のラベル
-) |> # 統計量を計算
-  dplyr::mutate(
-    sd_minus = mean - sd, 
-    sd_plus = mean + sd
-  ) |> # 期待値±標準偏差を計算
-  dplyr::select(!sd) |> # 不要な列を削除
-  tidyr::pivot_longer(
-    cols = !parameter, 
-    names_to = "type", 
-    values_to = "statistic"
-  ) |> # 統計量の列をまとめる
-  dplyr::mutate(
-    type = stringr::str_replace(type, pattern = "sd_.*", replacement = "sd")) # 期待値±標準偏差のカテゴリを統一
-
-# 凡例用の設定を作成:(数式表示用)
-color_vec    <- c(mean = "blue", sd = "orange", mode = "chocolate")
-linetype_vec <- c(mean = "dashed", sd = "dotted", mode = "dashed")
-label_vec    <- c(mean = expression(E(x)), sd = expression(E(x) %+-% sqrt(V(x))), mode = expression(mode(x)))
-
-
-# 統計量を重ねたポアソン分布のアニメーションを作図
-anime_prob_graph <- ggplot() + 
-  geom_bar(data = anime_prob_df, mapping = aes(x = x, y = probability), 
-           stat = "identity", fill = "#00A968", color = "#00A968") + # 分布
-  geom_vline(data = anime_stat_df, mapping = aes(xintercept = statistic, color = type, linetype = type), 
-             size = 1) + # 統計量
-  gganimate::transition_manual(parameter) + # フレーム
-  scale_x_continuous(breaks = x_vals, minor_breaks = FALSE) + # x軸目盛
-  scale_linetype_manual(values = linetype_vec, labels = label_vec, name = "statistic") + # 線の種類:(線指定と数式表示用)
-  scale_color_manual(values = color_vec, labels = label_vec, name = "statistic") + # 線の色:(色指定と数式表示用)
-  coord_cartesian(ylim = c(0, 0.5)) + # 軸の表示範囲
-  theme(legend.text.align = 0) + # 図の体裁:凡例
-  labs(title = "Poisson Distribution", 
-       subtitle = "{current_frame}", 
-       x = "x", y = "probability") # ラベル
-
-# gif画像を作成
-gganimate::animate(anime_prob_graph, nframes = length(lambda_vals), fps = 10, width = 800, height = 600)
 
