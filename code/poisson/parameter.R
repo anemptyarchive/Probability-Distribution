@@ -14,7 +14,9 @@ library(gganimate)
 library(ggplot2)
 
 
-# パラメータの設定 -------------------------------------------------------------
+# パラメータの影響 -------------------------------------------------------------
+
+### パラメータの設定 -----
 
 # フレームごとのパラメータを指定
 lambda_vals <- seq(from = 0, to = 10, by = 0.1)
@@ -24,26 +26,27 @@ frame_num <- length(lambda_vals)
 
 
 # x軸の範囲を指定
-x_min <-  # (基本的に固定)
+x_min <- 0 # (基本的に固定)
 x_max <- ceiling(max(lambda_vals)) * 2
 
 # x軸の値を作成
 x_vec <- seq(from = x_min, to = x_max, by = 1)
 
 
-# ポアソン分布を計算
+### 分布の計算 -----
+
+# 確率を計算
 anime_prob_df <- tidyr::expand_grid(
-  frame_i = 1:frame_num, # フレーム数
+  frame_i = 1:frame_num, # フレーム番号
   x       = x_vec # 確率変数
-) |> # フレームごとに複製
+) |> # フレームごとに変数を複製
   dplyr::mutate(
     lambda = lambda_vals[frame_i], # パラメータ
     prob   = dpois(x = x, lambda = lambda) # 確率
   )
 
 
-
-# パラメータと形状の関係 -------------------------------------------------------
+### パラメータと形状の関係 -----
 
 # ラベル用の設定を作成
 anime_label_df <- tibble::tibble(
@@ -52,7 +55,7 @@ anime_label_df <- tibble::tibble(
   param_lbl = paste0("lambda == ", round(lambda, digits = 2))
 )
 
-# ポアソン分布にアニメーションを作図
+# ポアソン分布のアニメーションを作図
 graph <- ggplot() + 
   geom_bar(
     data    = anime_prob_df, 
@@ -64,7 +67,7 @@ graph <- ggplot() +
     data    = anime_label_df, 
     mapping = aes(x = -Inf, y = Inf, label = param_lbl), 
     parse = TRUE, hjust = 0, vjust = -0.5
-  ) + # パラメータラベル
+  ) + # パラメータのラベル
   gganimate::transition_manual(frames = frame_i) + # フレーム制御
   scale_x_continuous(breaks = x_vec, minor_breaks = FALSE) + # x軸目盛
   theme(
@@ -87,11 +90,11 @@ gganimate::animate(
 )
 
 
-# パラメータと統計量の関係 -----------------------------------------------------
+### パラメータと統計量の関係 -----
 
-# ラベル用の設定を作成
-anim_label_df <- tibble::tibble(
-  frame_i = 1:frame_num, 
+# パラメータを格納
+anim_param_df <- tibble::tibble(
+  frame_i = 1:frame_num,   # フレーム番号
   lambda  = lambda_vals,   # パラメータ
   mu      = lambda,        # 期待値
   sigma   = sqrt(lambda),  # 標準偏差
@@ -124,26 +127,26 @@ anim_sd_df <- tidyr::expand_grid(
 
 # ラベル用の文字列を作成
 label_vec    <- c(
-  mean = expression(E(x)), 
-  sd   = expression(E(x) %+-% sqrt(V(x))), 
-  mode = expression(mode(x))
+  mean = expression(E(x) == lambda), 
+  sd   = expression(sqrt(V(x)) == sqrt(lambda)), 
+  mode = expression(mode(x) == group(lfloor, lambda, rfloor))
 )
 
-# ポアソン分布にアニメーションを作図
+# ポアソン分布のアニメーションを作図
 graph <- ggplot() + 
   geom_bar(
     data    = anime_prob_df, 
     mapping = aes(x = x, y = prob), 
     stat = "identity", position = "identity", 
     fill = "#00A968"
-  ) + # ポアソン分布の確率
+  ) + # 確率
   geom_vline(
-    data    = anim_label_df, 
+    data    = anim_param_df, 
     mapping = aes(xintercept = mode, linetype = "mode"), 
     linewidth = 1
   ) + # 最頻値の位置
   geom_vline(
-    data    = anim_label_df, 
+    data    = anim_param_df, 
     mapping = aes(xintercept = mu, linetype = "mean"), 
     linewidth = 1
   ) + # 期待値の位置
@@ -153,21 +156,36 @@ graph <- ggplot() +
     linewidth = 1
   ) + # 標準偏差の位置
   geom_segment(
-    data    = anim_label_df, 
+    data    = anim_param_df, 
     mapping = aes(x = mu-sigma, y = -Inf, xend = mu+sigma, yend = -Inf), 
     linewidth = 1
   ) + # 標準偏差の範囲
   geom_text(
     data    = anim_sd_df,
-    mapping = aes(x = label_x, y = -Inf, label = "|")
+    mapping = aes(x = label_x, y = -Inf), 
+    label = "|", size = 3
   ) + # 標準偏差の指示線
+  geom_label(
+    data    = anim_param_df, 　
+    mapping = aes(x = lambda, y = Inf, label = "lambda"), 
+    parse = TRUE, hjust = 0.5, vjust = 1.5, 
+    fill = "gray92", label.padding = unit(0, units = "lines"), label.size = 0, 
+    size = 4
+  ) + # パラメータのラベル
+  geom_label(
+    data    = anim_param_df, 　
+    mapping = aes(x = mu, y = -Inf, label = "E(x) %+-% sqrt(V(x))"), 
+    parse = TRUE, hjust = 0.5, vjust = -0.2, 
+    fill = "gray92", label.padding = unit(0, units = "lines"), label.size = 0, 
+    size = 3
+  ) + # 統計量のラベル
   geom_text(
-    data    = anim_label_df, 　
+    data    = anim_param_df, 　
     mapping = aes(x = -Inf, y = Inf, label = param_lbl), 
     parse = TRUE, hjust = 0, vjust = -0.5
   ) + # パラメータのラベル
   geom_label(
-    data    = anim_label_df, 
+    data    = anim_param_df, 
     mapping = aes(x = -Inf, y = Inf, label = stat_lbl), 
     hjust = 0, vjust = 1, alpha = 0.5
   ) + # 統計量のラベル
@@ -176,14 +194,14 @@ graph <- ggplot() +
   scale_linetype_manual(
     breaks = c("mean", "sd", "mode"), 
     values = c("dashed", "dotted", "dotdash"), 
-    labels = c("mean", "sd", "mode"), 
+    labels = label_vec, 
     name   = "statistics"
   ) + # (凡例表示用)
   guides(
     linetype = guide_legend(override.aes = list(linewidth = 0.5))
   ) + # 凡例の体裁
   theme(
-    plot.subtitle = element_text(size = 50) # (パラメータラベル用の空行サイズ)
+    plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
   ) + # 図の体裁
   coord_cartesian(clip = "off") + # (パラメータラベル用の枠外描画設定)
   labs(
@@ -202,7 +220,7 @@ gganimate::animate(
 )
 
 
-# パラメータとモーメントの関係 -------------------------------------------------
+### パラメータとモーメントの関係 -----
 
 # ガウス分布を計算
 anime_norm_df <- tidyr::expand_grid(
@@ -217,8 +235,8 @@ anime_norm_df <- tidyr::expand_grid(
   )
 
 
-# ラベル用の設定を作成
-anim_label_df <- tibble::tibble(
+# パラメータを格納
+anim_param_df <- tibble::tibble(
   frame_i = 1:frame_num, 
   lambda  = lambda_vals,    # パラメータ
   mu      = lambda,         # 期待値
@@ -257,20 +275,20 @@ anim_sd_df <- tidyr::expand_grid(
   )
 
 
-# ポアソン分布にアニメーションを作図
+# ポアソン分布のアニメーションを作図
 graph <- ggplot() + 
   geom_segment(
-    data    = anim_label_df, 
+    data    = anim_param_df, 
     mapping = aes(x = mode, y = 0, xend = mode, yend = Inf, linetype = "mode"), 
     linewidth = 0.8, color = "#00A968"
   ) + # 最頻値の位置
   geom_segment(
-    data    = anim_label_df, 
+    data    = anim_param_df, 
     mapping = aes(x = mu, y = 0, xend = mu, yend = Inf, linetype = "mean"), 
     linewidth = 0.8
   ) + # 期待値の位置
   geom_segment(
-    data    = anim_label_df, 
+    data    = anim_param_df, 
     mapping = aes(x = mu-sigma, y = -Inf, xend = mu+sigma, yend = -Inf, linetype = "sd"), 
     linewidth = 0.8
   ) + # 標準偏差の範囲
@@ -279,15 +297,15 @@ graph <- ggplot() +
     mapping = aes(x = label_x, y = -Inf, label = "|")
   ) + # 標準偏差の指示線
   geom_text(
-    data    = anim_label_df, 
+    data    = anim_param_df, 
     mapping = aes(x = mu, y = -Inf, label = "mu"), 
-    parse = TRUE, hjust = 0.5, vjust = -0.5, 
+    parse = TRUE, hjust = 0.5, vjust = -0.7, 
     size = 4
   ) + # 期待値のラベル
   geom_text(
     data    = anim_sd_df, 
     mapping = aes(x = label_x, y = -Inf, label = sd_lbl), 
-    parse = TRUE, hjust = 0.5, vjust = -0.5, 
+    parse = TRUE, hjust = 0.5, vjust = -0.7, 
     size = 4
   ) + # 標準偏差のラベル
   geom_bar(
@@ -312,12 +330,12 @@ graph <- ggplot() +
     linewidth = 1
   ) + # ポアソン分布の確率
   geom_text(
-    data    = anim_label_df, 
+    data    = anim_param_df, 
     mapping = aes(x = -Inf, y = Inf, label = param_lbl), 
     parse = TRUE, hjust = 0, vjust = -0.5
   ) + # パラメータのラベル
   geom_label(
-    data    = anim_label_df, 
+    data    = anim_param_df, 
     mapping = aes(x = -Inf, y = Inf, label = moment_lbl), 
     hjust = 0, vjust = 1, alpha = 0.5
   ) + # モーメントのラベル
@@ -340,7 +358,7 @@ graph <- ggplot() +
     linetype = guide_legend(override.aes = list(linewidth = 0.5))
   ) + # 凡例の体裁
   theme(
-    plot.subtitle = element_text(size = 50) # (パラメータラベル用の空行サイズ)
+    plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
   ) + # 図の体裁
   coord_cartesian(clip = "off") + # (パラメータラベル用の枠外描画設定)
   labs(
