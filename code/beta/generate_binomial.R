@@ -9,6 +9,7 @@
 # 利用パッケージ
 library(tidyverse)
 library(patchwork)
+library(magick)
 
 # パッケージ名の省略用
 library(ggplot2)
@@ -22,7 +23,7 @@ library(ggplot2)
 frame_num <- 100
 
 # ハイパーパラメータを指定
-alpha_vals <- seq(from = 0.1, to = 10, length.out = frame_num)
+alpha_vals <- seq(from = 0, to = 10, length.out = frame_num+1)[-1]
 beta_vals  <- seq(from = 2, to = 1, length.out = frame_num)
 
 # 試行回数を指定
@@ -46,12 +47,11 @@ dir_path <- "figure/tmp_folder"
 
 
 # 確率密度軸の範囲を設定
-dens_max <- dbeta(
-  x = (alpha_vals-1) / (alpha_vals+beta_vals-2), 
-  shape1 = alpha_vals, 
-  shape2 = beta_vals
-) |> 
-  max()
+u <- 0.05
+dens_max <- ((alpha_vals - 1) / (alpha_vals + beta_vals - 2)) |> # 最頻値
+  dbeta(x = _, shape1 = alpha_vals, shape2 = beta_vals) |> 
+  max() |> 
+  (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
 
 # ハイパラごとに作図
 for(i in 1:frame_num) {
@@ -62,12 +62,12 @@ for(i in 1:frame_num) {
   alpha <- alpha_vals[i]
   beta  <- beta_vals[i]
   
-  # サンプルの期待値を計算
+  # サンプル(パラメータ)の期待値を計算
   E_phi <- alpha / (alpha + beta)
   
   # パラメータを生成
-  dens_n <- seq(from = 0, to = 1, length.out = N) # 等間隔の確率密度に設定
-  phi_n  <- qbeta(p = dens_n, shape1 = alpha, shape2 = beta) # 分布の形状に応じて設定
+  pctl_n <- seq(from = 0, to = 1, length.out = N) # 等間隔の累積確率に設定
+  phi_n  <- qbeta(p = pctl_n, shape1 = alpha, shape2 = beta) # 分布の形状に応じて設定
   
   # パラメータを格納
   param_df <- tibble::tibble(
@@ -101,7 +101,7 @@ for(i in 1:frame_num) {
       color = "#00A968", linewidth = 1
     ) + # パラメータの生成分布
     geom_vline(
-      mapping = aes(xintercept = E_phi), 
+      xintercept = E_phi, 
       color = "red", linewidth = 1, linetype = "dashed"
     ) + # 期待値の位置
     geom_vline(
@@ -112,11 +112,14 @@ for(i in 1:frame_num) {
     geom_point(
       data    = param_df, 
       mapping = aes(x = phi, y = 0, color = factor(n)), 
-      size = 6
+      size = 3
     ) + # パラメータのサンプル
     scale_color_hue(labels = sample_lbl) + # サンプルのラベル
     guides(color = "none") + # 凡例の体裁
-    coord_cartesian(xlim = c(0, 1), y = c(0, dens_max)) + # 描画範囲
+    coord_cartesian(
+      xlim = c(0, 1), 
+      y = c(0, dens_max)
+    ) + # 描画範囲
     labs(
       title = "Beta distribution", 
       subtitle = beta_param_lbl, 
@@ -155,9 +158,9 @@ for(i in 1:frame_num) {
   # サンプルごとに二項分布を作図
   binom_graph <- ggplot() + 
     geom_vline(
-      mapping = aes(xintercept = M*E_phi), 
+      xintercept = M*E_phi, 
       color = "red", linewidth = 1, linetype = "dashed"
-    ) + # 期待値の位置
+    ) + # パラメータの期待値の位置
     geom_bar(
       data = E_binom_df, 
       mapping = aes(x = x, y = prob), 
@@ -168,7 +171,7 @@ for(i in 1:frame_num) {
       data    = param_df, 
       mapping = aes(xintercept = M*phi, color = factor(n)), 
       linewidth = 1, linetype = "dotted", show.legend = FALSE
-    ) + # サンプルの位置
+    ) + # サンプルごとの期待値の位置
     geom_line(
       data    = res_binom_df, 
       mapping = aes(x = x, y = prob, color = factor(n)), 
@@ -177,12 +180,20 @@ for(i in 1:frame_num) {
     geom_point(
       data    = res_binom_df, 
       mapping = aes(x = x, y = prob, color = factor(n)), 
-      size = 2
+      size = 3, shape = "circle open", show.legend = FALSE
     ) + # サンプルによる分布
-    scale_x_continuous(breaks = x_vec, minor_breaks = FALSE) + # x軸目盛
+    scale_x_continuous(
+      breaks = x_vec, minor_breaks = FALSE, 
+      sec.axis = sec_axis(
+        transform = ~ ./M, name = expression(frac(x, M))
+      )
+    ) + # x軸目盛
     scale_color_hue(labels = sample_lbl) + # サンプルのラベル
-    guides(color = "none") + # 凡例の体裁
-    coord_cartesian(xlim = c(0, M), ylim = c(0, 1)) + # 描画範囲
+    #guides(color = "none") + # 凡例の体裁
+    coord_cartesian(
+      xlim = c(0, M), 
+      ylim = c(0, 1)
+    ) + # 描画範囲
     labs(
       title = "Binomial distribution", 
       subtitle = binom_param_lbl, 
@@ -196,7 +207,7 @@ for(i in 1:frame_num) {
   # グラフを並べて描画
   wrap_graph <- patchwork::wrap_plots(
     beta_graph, binom_graph, 
-    nrow = 2
+    nrow = 2, guides = "collect"
   )
   
   # 画像ファイルを書出
@@ -214,6 +225,6 @@ for(i in 1:frame_num) {
 paste0(dir_path, "/", stringr::str_pad(1:frame_num, width = nchar(frame_num), pad = "0"), ".png") |> # ファイルパスを作成
   magick::image_read() |> # pngファイルを読込
   magick::image_animate(fps = 1, dispose = "previous") |> # gifファイルを作成
-  magick::image_write_video(path = "figure/beta/generate_bernoulli/binom.mp4", framerate = 30) -> tmp_path # mp4ファイルを書出
+  magick::image_write_video(path = "figure/beta/generate_binomial/binom.mp4", framerate = 30) -> tmp_path # mp4ファイルを書出
 
 

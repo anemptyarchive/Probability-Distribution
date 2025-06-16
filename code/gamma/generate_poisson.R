@@ -190,7 +190,10 @@ for(i in 1:frame_num) {
     ) + # サンプルによる分布
     scale_color_hue(labels = sample_lbl) + # サンプルのラベル
     #guides(color = "none") + # 凡例の体裁
-    coord_cartesian(xlim = c(0, lambda_max), ylim = c(0, 1)) + # 描画範囲
+    coord_cartesian(
+      xlim = c(0, lambda_max), 
+      ylim = c(0, 1)
+    ) + # 描画範囲
     labs(
       title = "Poisson istribution", 
       subtitle = pois_param_lbl, 

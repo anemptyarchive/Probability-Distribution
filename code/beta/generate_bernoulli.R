@@ -9,12 +9,10 @@
 # 利用パッケージ
 library(tidyverse)
 library(patchwork)
+library(magick)
 
 # パッケージ名の省略用
 library(ggplot2)
-
-
-# サンプル値とサンプル分布の形状の関係 ------------------------------------------------------
 
 
 # ハイパラとサンプル分布の形状の関係 -------------------------------------------------------------------
@@ -25,7 +23,7 @@ library(ggplot2)
 frame_num <- 100
 
 # ハイパーパラメータを指定
-alpha_vals <- seq(from = 0.1, to = 10, length.out = frame_num)
+alpha_vals <- seq(from = 0, to = 10, length.out = frame_num+1)[-1]
 beta_vals  <- seq(from = 2, to = 1, length.out = frame_num)
 
 # サンプルサイズを指定
@@ -46,12 +44,11 @@ dir_path <- "figure/tmp_folder"
 
 
 # 確率密度軸の範囲を設定
-dens_max <- dbeta(
-  x = (alpha_vals-1) / (alpha_vals+beta_vals-2), 
-  shape1 = alpha_vals, 
-  shape2 = beta_vals
-) |> 
-  max()
+u <- 0.05
+dens_max <- ((alpha_vals-1) / (alpha_vals+beta_vals-2)) |> # 最頻値
+  dbeta(x = _, shape1 = alpha_vals, shape2 = beta_vals) |> 
+  max() |> 
+  (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
 
 # ハイパラごとに作図
 for(i in 1:frame_num) {
@@ -62,12 +59,12 @@ for(i in 1:frame_num) {
   alpha <- alpha_vals[i]
   beta  <- beta_vals[i]
   
-  # サンプルの期待値を計算
+  # サンプル(パラメータ)の期待値を計算
   E_phi <- alpha / (alpha + beta)
   
   # パラメータを生成
-  dens_n <- seq(from = 0, to = 1, length.out = N) # 等間隔の確率密度に設定
-  phi_n  <- qbeta(p = dens_n, shape1 = alpha, shape2 = beta) # 分布の形状に応じて設定
+  pctl_n <- seq(from = 0, to = 1, length.out = N) # 等間隔の累積確率に設定
+  phi_n  <- qbeta(p = pctl_n, shape1 = alpha, shape2 = beta) # 分布の形状に応じて設定
   
   # パラメータを格納
   param_df <- tibble::tibble(
@@ -101,7 +98,7 @@ for(i in 1:frame_num) {
       color = "#00A968", linewidth = 1
     ) + # パラメータの生成分布
     geom_vline(
-      mapping = aes(xintercept = E_phi), 
+      xintercept = E_phi, 
       color = "red", linewidth = 1, linetype = "dashed"
     ) + # 期待値の位置
     geom_vline(
@@ -112,11 +109,14 @@ for(i in 1:frame_num) {
     geom_point(
       data    = param_df, 
       mapping = aes(x = phi, y = 0, color = factor(n)), 
-      size = 6
+      size = 3
     ) + # パラメータのサンプル
     scale_color_hue(labels = sample_lbl) + # サンプルのラベル
     guides(color = "none") + # 凡例の体裁
-    coord_cartesian(xlim = c(0, 1), ylim = c(0, dens_max)) + # 描画範囲
+    coord_cartesian(
+      xlim = c(0, 1), 
+      ylim = c(0, dens_max)
+    ) + # 描画範囲
     labs(
       title = "Beta distribution", 
       subtitle = beta_param_lbl, 
@@ -132,7 +132,7 @@ for(i in 1:frame_num) {
     x    = x_vec, # 確率変数
     prob = dbinom(x = x, size = 1, prob = E_phi) # 確率
   )
-
+  
   # サンプルごとにベルヌーイ分布を計算
   res_bern_df <- tidyr::expand_grid(
     n = 1:N,  # サンプル番号
@@ -149,25 +149,29 @@ for(i in 1:frame_num) {
   
   # サンプルごとにベルヌーイ分布を作図
   bern_graph <- ggplot() + 
+    geom_bar(
+      data    = res_bern_df, 
+      mapping = aes(x = x, y = prob, fill = factor(n)), 
+      stat = "identity", position = "identity"
+    ) + # サンプルによる分布
     geom_hline(
       data    = param_df, 
       mapping = aes(yintercept = phi, color = factor(n)), 
       linewidth = 1, linetype = "dotted", show.legend = FALSE
     ) + # サンプルの位置
     geom_bar(
-      data    = res_bern_df, 
-      mapping = aes(x = x, y = prob, fill = factor(n)), 
-      stat = "identity", position = "identity"
-    ) + # サンプルによる分布
-    geom_bar(
       data = E_bern_df, 
       mapping = aes(x = x, y = prob), 
       stat = "identity", position = "identity", 
       fill = NA, color = "red", linetype = "dashed"
     ) + # 期待値による分布
+    geom_hline(
+      yintercept = E_phi, 
+      color = "red", linewidth = 1, linetype ="dashed"
+    ) + # パラメータの期待値の位置
     scale_x_continuous(breaks = x_vec, minor_breaks = FALSE) + # x軸目盛
     scale_fill_hue(labels = sample_lbl) + # サンプルのラベル
-    guides(fill = "none") + # 凡例の体裁
+    #guides(fill = "none") + # 凡例の体裁
     facet_wrap(
       facets = ~phi, nrow = 2, 
       labeller = label_bquote(phi == .(round(phi, digits = 2)))
@@ -186,7 +190,7 @@ for(i in 1:frame_num) {
   # グラフを並べて描画
   wrap_graph <- patchwork::wrap_plots(
     beta_graph, bern_graph, 
-    nrow = 2
+    nrow = 2, guides = "collect"
   )
   
   # 画像ファイルを書出
