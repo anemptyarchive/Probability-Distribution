@@ -1,7 +1,7 @@
 
 # ポアソン分布 -----------------------------------------------------------------
 
-# 乱数の生成
+# 乱数の可視化
 
 
 # ライブラリの読込 -------------------------------------------------------------
@@ -19,7 +19,7 @@ library(ggplot2)
 ### パラメータの設定 -----
 
 # パラメータを指定
-lambda <- 5
+lambda <- 4
 
 
 ### 乱数の生成 -----
@@ -31,7 +31,9 @@ N <- 3000
 x_n <- rpois(n = N, lambda = lambda)
 
 
-### 1サンプルずつ集計 -----
+### 乱数の可視化 -----
+
+#### 1サンプルずつ集計 -----
 
 # フレーム数を設定
 frame_num <- N
@@ -39,7 +41,7 @@ frame_num <- 300
 
 # x軸の範囲を指定
 u <- 5
-x_max <- x_n[1:frame_num] |> 
+x_max <- x_n[1:frame_num] |> # 集計対象を抽出
   max() |> 
   (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
 
@@ -49,36 +51,38 @@ x_vec <- seq(from = 0, to = x_max, by = 1)
 
 # サンプルを格納
 anim_sample_df <- tibble::tibble(
-  frame_i = 1:frame_num, # サンプル番号
-  x       = x_n[frame_i] # サンプル値
+  frame_i = 1:frame_num, # フレーム番号
+  n = 1:frame_num, # サンプル番号
+  x = x_n[n]       # サンプル値
 )
 
 # サンプルを集計
 anim_freq_df <- tibble::tibble(
-  frame_i = 1:frame_num # サンプルサイズ
+  frame_i = 1:frame_num, # フレーム番号
+  N       = 1:frame_num  # サンプルサイズ
 ) |> 
   dplyr::reframe(
-    n = 1:frame_i, # サンプル番号
-    .by = frame_i
+    n = 1:N, # サンプル番号
+    .by = c(frame_i, N)
   ) |> 
   dplyr::mutate(
     x = x_n[n] # サンプル値
   ) |> 
   dplyr::count(
-    frame_i, x, name = "freq" # 度数
+    frame_i, N, x, name = "freq" # 度数
   ) |> 
   dplyr::mutate(
-    rel_freq = freq / frame_i # 相対度数
+    rel_freq = freq / N # 相対度数
   ) |> 
   tidyr::complete(
-    frame_i = 1:frame_num, x = 0:x_max, 
+    tibble::tibble(frame_i = 1:frame_num, N = 1:frame_num), x = 0:x_max, 
     fill = list(freq = 0, rel_freq = 0)
   ) # 未観測値を補完
 
 # ラベル用の文字列を作成
 anim_label_df <- anim_freq_df |> 
   tidyr::pivot_wider(
-    id_cols      = frame_i, # サンプルサイズ
+    id_cols      = c(frame_i, N), 
     names_from   = x, 
     names_prefix = "x", 
     values_from  = freq
@@ -89,7 +93,7 @@ anim_label_df <- anim_freq_df |>
   dplyr::mutate(
     param_lbl = paste0(
       "list(", 
-      "N == ", frame_i, ", ", 
+      "N == ", N, ", ", 
       "lambda == ", lambda, 
       ")"
     ), # パラメータラベル
@@ -105,7 +109,7 @@ prob_df <- tidyr::tibble(
 
 
 # サンプルの度数を作図
-graph <- ggplot() + 
+anim <- ggplot() + 
   geom_bar(
     data    = anim_freq_df, 
     mapping = aes(x = x, y = freq), 
@@ -114,7 +118,7 @@ graph <- ggplot() +
   ) + # 度数
   geom_point(
     data    = anim_sample_df, 
-    mapping = aes(x = x, y = 0), 
+    mapping = aes(x = x, y = -Inf), 
     color = "orange", size = 4
   ) + # サンプル
   geom_text(
@@ -135,7 +139,7 @@ graph <- ggplot() +
   coord_cartesian(
     xlim = c(0, x_max), 
     clip = "off" # (パラメータラベル用の枠外描画設定)
-  ) + 
+  ) + # 描画範囲
   labs(
     title = "Poisson distribution", 
     subtitle = "", # (パラメータラベル用の空行)
@@ -145,29 +149,32 @@ graph <- ggplot() +
 
 # 動画を作成
 gganimate::animate(
-  plot = graph, 
+  plot = anim, 
   nframes = frame_num, fps = 10, 
   width = 12, height = 8, units = "in", res = 100, 
-  renderer = gganimate::av_renderer(file = "figure/poisson/random_number/freq_1.mp4")
+  renderer = gganimate::av_renderer(file = "figure/poisson/random_number/freq_1smp.mp4")
 )
 
+# 確率軸の範囲を指定
+prob_max <- 0.25
+
 # サンプルの相対度数を作図
-graph <- ggplot() + 
-  geom_bar(
-    data = prob_df, 
-    mapping = aes(x = x, y = prob), 
-    stat = "identity", 
-    fill = NA, color = "darkgreen", linetype = "dashed"
-  ) + # 生成確率
+anim <- ggplot() + 
   geom_bar(
     data    = anim_freq_df, 
-    mapping = aes(x = x, y = rel_freq), 
+    mapping = aes(x = x, y = rel_freq, linetype = "sample"), 
     stat = "identity", 
     fill = "#00A968", alpha = 0.5
   ) + # 相対度数
+  geom_bar(
+    data = prob_df, 
+    mapping = aes(x = x, y = prob, linetype = "generator"), 
+    stat = "identity", 
+    fill = NA, color = "darkgreen"
+  ) + # 生成分布
   geom_point(
     data    = anim_sample_df, 
-    mapping = aes(x = x, y = 0), 
+    mapping = aes(x = x, y = -Inf), 
     color = "orange", size = 4
   ) + # サンプル
   geom_text(
@@ -182,30 +189,37 @@ graph <- ggplot() +
   ) + # 度数のラベル
   gganimate::transition_manual(frames = frame_i) + # フレーム制御
   scale_x_continuous(breaks = x_vec, minor_breaks = FALSE) + # x軸目盛
+  scale_linetype_manual(
+    breaks = c("generator", "sample"), 
+    values = c("dashed", "solid"), 
+    labels = c("generator", "random number"), 
+    name   = "distribution"
+  ) + # 凡例の表示用
   theme(
     plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
   ) + # 図の体裁
   coord_cartesian(
     xlim = c(0, x_max), 
+    ylim = c(0, prob_max), 
     clip = "off" # (パラメータラベル用の枠外描画設定)
-  ) + 
+  ) + # 描画範囲
   labs(
     title = "Poisson distribution", 
     subtitle = "", # (パラメータラベル用の空行)
     x = expression(x), 
-    y = "relative frequency"
+    y = "relative frequency, probability"
   )
 
 # 動画を作成
 gganimate::animate(
-  plot = graph, 
+  plot = anim, 
   nframes = frame_num, fps = 10, 
   width = 12, height = 8, units = "in", res = 100, 
-  renderer = gganimate::av_renderer(file = "figure/poisson/random_number/rel_freq_1.mp4")
+  renderer = gganimate::av_renderer(file = "figure/poisson/random_number/relfreq_1smp.mp4")
 )
 
 
-### 複数サンプルずつ集計 -----
+#### 複数サンプルずつ集計 -----
 
 # フレーム数を指定
 frame_num <- 300
@@ -215,7 +229,7 @@ smp_per_frame <- N %/% frame_num
 
 # x軸の範囲を指定
 u <- 5
-x_max <- x_n[1:(smp_per_frame*frame_num)] |> 
+x_max <- x_n[1:(smp_per_frame*frame_num)] |> # 集計対象を抽出
   max() |> 
   (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
 
@@ -226,30 +240,34 @@ x_vec <- seq(from = 0, to = x_max, by = 1)
 # サンプルを集計
 anim_freq_df <- tibble::tibble(
   frame_i = 1:frame_num, # フレーム番号
-  tmp_N   = smp_per_frame*frame_i # サンプル数
+  N       = smp_per_frame*frame_i # サンプル数
 ) |> 
   dplyr::reframe(
-    n = 1:tmp_N, # サンプル番号
-    .by = c(frame_i, tmp_N)
+    n = 1:N, # サンプル番号
+    .by = c(frame_i, N)
   ) |> 
   dplyr::mutate(
     x = x_n[n] # 観測値
   ) |> 
   dplyr::count(
-    frame_i, tmp_N, x, name = "freq" # 度数
+    frame_i, N, x, name = "freq" # 度数
   ) |> 
   dplyr::mutate(
-    rel_freq = freq / tmp_N # 相対度数
+    rel_freq = freq / N # 相対度数
   ) |> 
   tidyr::complete(
-    frame_i = 1:frame_num, x = 0:x_max, 
+    tibble::tibble(
+      frame_i = 1:frame_num, 
+      N = smp_per_frame*(1:frame_num)
+    ), 
+    x = 0:x_max, 
     fill = list(freq = 0, rel_freq = 0)
   ) # 未観測値を補完
 
 # ラベル用の文字列を作成
 anim_label_df <- anim_freq_df |> 
   tidyr::pivot_wider(
-    id_cols      = frame_i, 
+    id_cols      = c(frame_i, N), 
     names_from   = x, 
     names_prefix = "x", 
     values_from  = freq
@@ -258,10 +276,9 @@ anim_label_df <- anim_freq_df |>
     col = "freq_txt", dplyr::starts_with("x"), sep = ", "
   ) |> # 度数情報を結合
   dplyr::mutate(
-    tmp_N = smp_per_frame*frame_i, # サンプル数
     param_lbl = paste0(
       "list(", 
-      "N == ", tmp_N, ", ", 
+      "N == ", N, ", ", 
       "lambda == ", lambda, 
       ")"
     ), # パラメータラベル
@@ -277,7 +294,7 @@ prob_df <- tidyr::tibble(
 
 
 # サンプルの度数を作図
-graph <- ggplot() + 
+anim <- ggplot() + 
   geom_bar(
     data    = anim_freq_df, 
     mapping = aes(x = x, y = freq), 
@@ -302,7 +319,8 @@ graph <- ggplot() +
   coord_cartesian(
     xlim = c(0, x_max), 
     clip = "off" # (パラメータラベル用の枠外描画設定)
-  ) + 
+  ) + # 描画範囲
+  gganimate::view_follow(fixed_y = FALSE) + # 描画領域
   labs(
     title = "Poisson distribution", 
     subtitle = "", # (パラメータラベル用の空行)
@@ -312,26 +330,36 @@ graph <- ggplot() +
 
 # 動画を作成
 gganimate::animate(
-  plot = graph, 
+  plot = anim, 
   nframes = frame_num, fps = 10, 
   width = 12, height = 8, units = "in", res = 100, 
-  renderer = gganimate::av_renderer(file = "figure/poisson/random_number/freq_n.mp4")
+  renderer = gganimate::av_renderer(file = "figure/poisson/random_number/freq_nsmp.mp4")
 )
 
 # サンプルの相対度数を作図
-graph <- ggplot() + 
-  geom_bar(
-    data = prob_df, 
-    mapping = aes(x = x, y = prob), 
-    stat = "identity", 
-    fill = NA, color = "darkgreen", linetype = "dashed"
-  ) + # 生成確率
+anim <- ggplot() + 
   geom_bar(
     data    = anim_freq_df, 
-    mapping = aes(x = x, y = rel_freq), 
-    stat = "identity", 
+    mapping = aes(x = x, y = rel_freq, linetype = "sample"), 
+    stat = "identity", position = "identity", 
     fill = "#00A968", alpha = 0.5
   ) + # 相対度数
+  geom_bar(
+    data = prob_df, 
+    mapping = aes(x = x, y = prob, linetype = "generator"), 
+    stat = "identity", position = "identity", 
+    fill = NA, color = "darkgreen"
+  ) + # 生成分布
+  geom_line(
+    data = prob_df, 
+    mapping = aes(x = x, y = prob), 
+    color = "darkgreen", linewidth = 1, linetype = "dashed"
+  ) + # 生成分布
+  geom_point(
+    data = prob_df, 
+    mapping = aes(x = x, y = prob), 
+    color = "darkgreen", size = 3
+  ) + # 生成分布
   geom_text(
     data    = anim_label_df, 
     mapping = aes(x = -Inf, y = Inf, label = param_lbl), 
@@ -344,26 +372,32 @@ graph <- ggplot() +
   ) + # 度数のラベル
   gganimate::transition_manual(frames = frame_i) + # フレーム制御
   scale_x_continuous(breaks = x_vec, minor_breaks = FALSE) + # x軸目盛
+  scale_linetype_manual(
+    breaks = c("generator", "sample"), 
+    values = c("dashed", "solid"), 
+    labels = c("generator", "random number"), 
+    name   = "distribution"
+  ) + # 凡例の表示用
   theme(
     plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
   ) + # 図の体裁
   coord_cartesian(
     xlim = c(0, x_max), 
     clip = "off" # (パラメータラベル用の枠外描画設定)
-  ) + 
+  ) + # 描画範囲
   labs(
     title = "Poisson distribution", 
     subtitle = "", # (パラメータラベル用の空行)
     x = expression(x), 
-    y = "relative frequency"
+    y = "relative frequency, probability"
   )
 
 # 動画を作成
 gganimate::animate(
-  plot = graph, 
+  plot = anim, 
   nframes = frame_num, fps = 10, 
   width = 12, height = 8, units = "in", res = 100, 
-  renderer = gganimate::av_renderer(file = "figure/poisson/random_number/rel_freq_n.mp4")
+  renderer = gganimate::av_renderer(file = "figure/poisson/random_number/relfreq_nsmp.mp4")
 )
 
 
