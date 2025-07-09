@@ -8,7 +8,7 @@
 
 # 利用パッケージ
 library(tidyverse)
-library(MCMCpack)
+library(gganimate)
 
 # パッケージ名の省略用
 library(ggplot2)
@@ -19,7 +19,7 @@ library(ggplot2)
 ### パラメータの設定 -----
 
 # フレーム数を指定
-frame_num <- 101
+frame_num <- 301
 
 
 # クラスタ数を指定
@@ -28,7 +28,7 @@ K <- 3
 # フレームごとのK個のパラメータを指定
 lambda_mat <- cbind(
   rep(20, times = frame_num), 
-  seq(from = 0, to = 10, length.out = frame_num), 
+  seq(from = 0, to = 60, length.out = frame_num), 
   rep(40, times = frame_num)
 ) # フレームごとに値を指定
 lambda_mat <- c(20, 30, 40) |> # 値を指定
@@ -36,20 +36,24 @@ lambda_mat <- c(20, 30, 40) |> # 値を指定
   matrix(nrow = frame_num, ncol = K)
 
 # フレームごとの混合比率を指定
-pi_1 <- 0.35 # 固定する値を指定
+pi_1 <- 1/3 # 固定する値を指定
 pi_mat <- cbind(
   rep(pi_1, times = frame_num), 
   seq(from = 0, to = (1-pi_1), length.out = frame_num), 
   (1-pi_1) - seq(from = 0, to = (1-pi_1), length.out = frame_num)
 ) # フレームごとに値を指定
-pi_mat <- c(0.35, 0.25, 0.4) |> # 値を指定
+pi_mat <- c(1/3, 1/3, 1/3) |> # 値を指定
   rep(each = frame_num) |> # 値を固定して複製
   matrix(nrow = frame_num, ncol = K)
 rowSums(pi_mat)
 
 
 # x軸の範囲を指定
-x_max <- ceiling(max(lambda_mat)) * 2
+u <- 5
+x_max <- lambda_mat |> 
+  max() |> 
+  (\(.) {. * 1.5})() |> # 倍率を指定
+  (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
 
 # x軸の値を作成
 x_vec <- seq(from = 0, to = x_max, by = 1)
@@ -57,8 +61,8 @@ x_vec <- seq(from = 0, to = x_max, by = 1)
 
 ### 分布の計算 -----
 
-# クラスタごとの重み付け確率を計算
-anim_weighted_prob_df <- tidyr::expand_grid(
+# 混合ポアソン分布を計算
+anim_prob_df <- tidyr::expand_grid(
   frame_i = 1:frame_num, # フレーム番号
   k = 1:K,  # クラスタ番号
   x = x_vec # 確率変数
@@ -105,18 +109,18 @@ anim_label_df <- anim_param_df |>
 # クラスタのごとの分布を作図
 graph <- ggplot() + 
   geom_bar(
-    data    = anim_weighted_prob_df, 
+    data    = anim_prob_df, 
     mapping = aes(x = x, y = prob, fill = factor(k)), 
     stat = "identity", position = "stack", 
     alpha = 0.5
   ) + # 周辺分布
   geom_line(
-    data    = anim_weighted_prob_df, 
+    data    = anim_prob_df, 
     mapping = aes(x = x, y = prob, color = factor(k)), 
     linewidth = 1
   ) + # 重み付け分布
   geom_point(
-    data    = anim_weighted_prob_df, 
+    data    = anim_prob_df, 
     mapping = aes(x = x, y = prob, color = factor(k)), 
     size = 2.5
   ) + # 重み付け分布
@@ -180,9 +184,9 @@ graph <- ggplot() +
 # 動画を作成
 gganimate::animate(
   plot = graph, 
-  nframes = frame_num, fps = 10, 
+  nframes = frame_num, fps = 30, 
   width = 12, height = 9, units = "in", res = 100, 
-  renderer = gganimate::av_renderer(file = "figure/mixture_poisson/paramter/paramter.mp4")
+  renderer = gganimate::av_renderer(file = "figure/mixture_poisson/parameter/parameter.mp4")
 )
 
 
