@@ -25,9 +25,13 @@ lambda_vals <- seq(from = 0, to = 10, by = 0.1)
 frame_num <- length(lambda_vals)
 
 
-# x軸の範囲を指定
+# x軸の範囲を設定
 x_min <- 0 # (基本的に固定)
-x_max <- ceiling(max(lambda_vals)) * 2
+u <- 5
+x_max <- lambda_vals |> 
+  max() |> 
+  (\(.) {. * 1.5})() |> # 倍率を指定
+  (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
 
 # x軸の値を作成
 x_vec <- seq(from = x_min, to = x_max, by = 1)

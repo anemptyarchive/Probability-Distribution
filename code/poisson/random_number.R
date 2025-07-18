@@ -35,11 +35,11 @@ x_n <- rpois(n = N, lambda = lambda)
 
 #### 1サンプルずつ集計 -----
 
-# フレーム数を設定
+# フレーム数を指定
 frame_num <- N
 frame_num <- 300
 
-# x軸の範囲を指定
+# x軸の範囲を設定
 u <- 5
 x_max <- x_n[1:frame_num] |> # 集計対象を抽出
   max() |> 
@@ -52,19 +52,19 @@ x_vec <- seq(from = 0, to = x_max, by = 1)
 # サンプルを格納
 anim_sample_df <- tibble::tibble(
   frame_i = 1:frame_num, # フレーム番号
-  n = 1:frame_num, # サンプル番号
-  x = x_n[n]       # サンプル値
+  n       = frame_i,     # サンプル番号
+  x       = x_n[n]       # サンプル値
 )
 
 # サンプルを集計
 anim_freq_df <- tibble::tibble(
   frame_i = 1:frame_num, # フレーム番号
-  N       = 1:frame_num  # サンプルサイズ
+  N       = frame_i      # サンプル数
 ) |> 
   dplyr::reframe(
     n = 1:N, # サンプル番号
     .by = c(frame_i, N)
-  ) |> 
+  ) |> # 過去のサンプルを複製
   dplyr::mutate(
     x = x_n[n] # サンプル値
   ) |> 
@@ -75,7 +75,11 @@ anim_freq_df <- tibble::tibble(
     rel_freq = freq / N # 相対度数
   ) |> 
   tidyr::complete(
-    tibble::tibble(frame_i = 1:frame_num, N = 1:frame_num), x = 0:x_max, 
+    tibble::tibble(
+      frame_i = 1:frame_num, 
+      N       = frame_i
+    ), 
+    x = 0:x_max, 
     fill = list(freq = 0, rel_freq = 0)
   ) # 未観測値を補完
 
@@ -155,6 +159,7 @@ gganimate::animate(
   renderer = gganimate::av_renderer(file = "figure/poisson/random_number/freq_1smp.mp4")
 )
 
+
 # 確率軸の範囲を指定
 prob_max <- 0.25
 
@@ -227,7 +232,7 @@ frame_num <- 300
 # 1フレーム当たりのサンプル数を設定
 smp_per_frame <- N %/% frame_num
 
-# x軸の範囲を指定
+# x軸の範囲を設定
 u <- 5
 x_max <- x_n[1:(smp_per_frame*frame_num)] |> # 集計対象を抽出
   max() |> 
@@ -239,13 +244,13 @@ x_vec <- seq(from = 0, to = x_max, by = 1)
 
 # サンプルを集計
 anim_freq_df <- tibble::tibble(
-  frame_i = 1:frame_num, # フレーム番号
+  frame_i = 1:frame_num,          # フレーム番号
   N       = smp_per_frame*frame_i # サンプル数
 ) |> 
   dplyr::reframe(
     n = 1:N, # サンプル番号
     .by = c(frame_i, N)
-  ) |> 
+  ) |> # 過去のサンプルを複製
   dplyr::mutate(
     x = x_n[n] # 観測値
   ) |> 
@@ -258,7 +263,7 @@ anim_freq_df <- tibble::tibble(
   tidyr::complete(
     tibble::tibble(
       frame_i = 1:frame_num, 
-      N = smp_per_frame*(1:frame_num)
+      N       = smp_per_frame*frame_i
     ), 
     x = 0:x_max, 
     fill = list(freq = 0, rel_freq = 0)
@@ -312,6 +317,7 @@ anim <- ggplot() +
     parse = TRUE, hjust = 0, vjust = 1, alpha = 0.5
   ) + # 度数のラベル
   gganimate::transition_manual(frames = frame_i) + # フレーム制御
+  gganimate::view_follow(fixed_y = FALSE) + # 描画領域制御
   scale_x_continuous(breaks = x_vec, minor_breaks = FALSE) + # x軸目盛
   theme(
     plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
@@ -320,7 +326,6 @@ anim <- ggplot() +
     xlim = c(0, x_max), 
     clip = "off" # (パラメータラベル用の枠外描画設定)
   ) + # 描画範囲
-  gganimate::view_follow(fixed_y = FALSE) + # 描画領域
   labs(
     title = "Poisson distribution", 
     subtitle = "", # (パラメータラベル用の空行)
@@ -335,6 +340,7 @@ gganimate::animate(
   width = 12, height = 8, units = "in", res = 100, 
   renderer = gganimate::av_renderer(file = "figure/poisson/random_number/freq_nsmp.mp4")
 )
+
 
 # サンプルの相対度数を作図
 anim <- ggplot() + 
