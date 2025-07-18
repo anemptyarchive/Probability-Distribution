@@ -14,9 +14,9 @@ library(gganimate)
 library(ggplot2)
 
 
-# 乱数の生成 -------------------------------------------------------------------
+# サンプルサイズの影響 ---------------------------------------------------------
 
-### ・サンプリング -----
+### パラメータの設定 -----
 
 # 平均パラメータを指定
 mu <- 2
@@ -24,127 +24,338 @@ mu <- 2
 # 標準偏差パラメータを指定
 sigma <- 2.5
 
-# データ数(サンプルサイズ)を指定
-N <- 1000
 
+### 乱数の生成 -----
 
-# ガウス分布に従う乱数を生成
+# サンプルサイズを指定
+N <- 3000
+
+# ガウス分布の乱数を生成
 x_n <- rnorm(n = N, mean = mu, sd = sigma)
 
 
-### ・乱数の可視化 -----
+### 乱数の可視化 -----
+
+#### 1サンプルずつ集計 -----
+
+# フレーム数を指定
+frame_num <- N
+frame_num <- 300
+
+
+# x軸の範囲を設定
+u <- 5
+x_size <- (x_n[1:frame_num] - mu) |> # 集計対象を抽出
+  abs() |> 
+  max() |> 
+  (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
+sgm_num <- 2
+x_size <- max(x_size, sgm_num*sigma)
+x_min <- mu - x_size
+x_max <- mu + x_size
+
+# x軸の値を作成
+x_vec <- seq(from = x_min, to = x_max, length.out = 1001)
+
 
 # サンプルを格納
-data_df <- tidyr::tibble(x = x_n)
-
-# サンプルのヒストグラムを作成:度数
-ggplot(data = data_df, mapping = aes(x = x, y = ..count..)) + # データ
-  geom_histogram(bins = 30, fill = "#00A968") + # ヒストグラム
-  labs(
-    title = "Gaussian Distribution", 
-    subtitle = paste0("mu=", mu, ", sigma=", sigma, ", N=", N), # (文字列表記用)
-    #subtitle = parse(text = paste0("list(mu==", mu, ", sigma==", sigma, ", N==", N, ")")), # (数式表記用)
-    x = "x", y = "frequency"
-  ) # ラベル
-
-
-# xの値を作成
-x_vals <- seq(from = mu-sigma * 4, to = mu+sigma * 4, length.out = 251)
-
-# ガウス分布を計算
-dens_df <- tidyr::tibble(
-  x = x_vals, # 確率変数
-  density = dnorm(x = x_vals, mean = mu, sd = sigma) # 確率密度
+anim_sample_df <- tibble::tibble(
+  frame_i = 1:frame_num, # フレーム番号
+  n       = frame_i,     # サンプル番号
+  x       = x_n[n]       # サンプル値
 )
 
-# サンプルのヒストグラムを作成:密度
-ggplot() + 
-  geom_histogram(data = data_df, mapping = aes(x = x, y = ..density..), 
-                 bins = 30, fill = "#00A968") + # ヒストグラム
-  geom_line(data = dens_df, mapping = aes(x = x, y = density), 
-            color = "darkgreen", size = 1, linetype = "dashed") + # 元の分布
-  labs(title = "Gaussian Distribution", 
-       subtitle = parse(text = paste0("list(mu==", mu, ", sigma==", sigma, ", N==", N, ")")), # 数式で表示
-       x = "x", y = "density") # ラベル
-
-
-# 乱数と分布の関係：アニメーションによる可視化 --------------------------------------------------
-
-# 平均パラメータを指定
-mu <- 2
-
-# 標準偏差パラメータを指定
-sigma <- 2.5
-
-# データ数(フレーム数)を指定
-N <- 100
-
-
-# ガウス分布に従う乱数を生成
-x_n <- rnorm(n = N, mean = mu, sd = sigma)
-
-# サンプルを複製して格納
-anime_freq_df <- tidyr::tibble(
-  x = rep(x_n, times = N), # サンプル
-  n = rep(1:N, times = N), # データ番号
-  frame = rep(1:N, each = N) # フレーム番号
+# 集計用のサンプルを格納
+anim_freq_df <- tibble::tibble(
+  frame_i = 1:frame_num, # フレーム番号
+  N       = frame_i      # サンプル数
 ) |> 
-  dplyr::filter(n <= frame) |> # サンプリング回数以前のサンプルを抽出
+  dplyr::reframe(
+    n = 1:N, # サンプル番号
+    .by = c(frame_i, N)
+  ) |> # 過去のサンプルを複製
   dplyr::mutate(
-    parameter = paste0("mu=", mu, ", sigma=", sigma, ", N=", frame) |> 
-      factor(levels = paste0("mu=", mu, ", sigma=", sigma, ", N=", 1:N))
-  ) # フレーム切替用ラベルを追加
+    x = x_n[n] # サンプル値
+  )
 
-# サンプルを格納
-anime_data_df <- tidyr::tibble(
-  x = x_n, # サンプル
-  n = 1:N, # データ番号
-  parameter = paste0("mu=", mu, ", sigma=", sigma, ", N=", 1:N) |> 
-    factor(levels = paste0("mu=", mu, ", sigma=", sigma, ", N=", 1:N)) # フレーム切替用ラベル
+# ラベル用の文字列を作成
+anim_label_df <- tibble::tibble(
+  frame_i = 1:frame_num, # フレーム番号
+  param_lbl = paste0(
+    "list(", 
+    "N == ", frame_i, ", ", 
+    "mu == ", mu, ", ", 
+    "sigma == ", sigma, 
+    ")"
+  ), # パラメータラベル
 )
-
-# xの値を作成
-x_vals <- seq(from = mu-sigma * 4, to = mu+sigma * 4, length.out = 251)
 
 # ガウス分布を計算
 dens_df <- tidyr::tibble(
-  x = x_vals, # 確率変数
-  density = dnorm(x = x_vals, mean = mu, sd = sigma) # 確率密度
+  x    = x_vec, # 確率変数
+  dens = dnorm(x = x, mean = mu, sd = sigma) # 確率密度
 )
 
 
-# サンプルのヒストグラムのアニメーションのアニメーションを作図:度数
-anime_freq_graph <- ggplot() + # 
-  geom_histogram(data = anime_freq_df, mapping = aes(x = x), 
-                 breaks = seq(from = min(x_vals), to = max(x_vals), length.out = 30), 
-                 fill = "#00A968") + # ヒストグラム
-  geom_point(data = anime_data_df, mapping = aes(x = x, y = 0), 
-             color = "orange", size = 6) + # サンプル
-  gganimate::transition_manual(parameter) + # フレーム
-  labs(title = "Gaussian Distribution", 
-       subtitle = "{current_frame}", 
-       x = "x", y = "frequency") # ラベル
+# サンプルの度数を作図
+anim <- ggplot() + 
+  geom_histogram(
+    data    = anim_freq_df, 
+    mapping = aes(x = x), 
+    breaks = seq(from = x_min, to = x_max, length.out = 30), 
+    fill = "#00A968"
+  ) + # 度数
+  geom_point(
+    data    = anim_freq_df, 
+    mapping = aes(x = x, y = -Inf), 
+    color = "orange", alpha = 0.5, size = 2
+  ) + # 過去のサンプル
+  geom_point(
+    data    = anim_sample_df, 
+    mapping = aes(x = x, y = -Inf), 
+    color = "orange", size = 4
+  ) + # 新規のサンプル
+  geom_text(
+    data    = anim_label_df, 
+    mapping = aes(x = -Inf, y = Inf, label = param_lbl), 
+    parse = TRUE, hjust = 0, vjust = -0.5
+  ) + # パラメータのラベル
+  gganimate::transition_manual(frames = frame_i) + # フレーム制御
+  theme(
+    plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
+  ) + # 図の体裁
+  coord_cartesian(
+    xlim = c(x_min, x_max), 
+    clip = "off" # (パラメータラベル用の枠外描画設定)
+  ) + # 描画範囲
+  labs(
+    title = "Gaussian distribution", 
+    subtitle = "", # (パラメータラベル用の空行)
+    x = expression(x), 
+    y = "frequency"
+  )
 
-# gif画像を作成
-gganimate::animate(anime_freq_graph, nframes = N, fps = 10, width = 800, height = 600)
+# 動画を作成
+gganimate::animate(
+  plot = anim, 
+  nframes = frame_num, fps = 10, 
+  width = 12, height = 8, units = "in", res = 100, 
+  renderer = gganimate::av_renderer(file = "figure/gaussian/random_number/freq_1smp.mp4")
+)
 
 
-# サンプルのヒストグラムのアニメーションのアニメーションを作図:密度
-anime_freq_graph <- ggplot() + # 
-  geom_histogram(data = anime_freq_df, mapping = aes(x = x, y = ..density..), 
-                 breaks = seq(from = min(x_vals), to = max(x_vals), length.out = 30), 
-                 fill = "#00A968") + # ヒストグラム
-  geom_point(data = anime_data_df, mapping = aes(x = x, y = 0), 
-             color = "orange", size = 6) + # サンプル
-  geom_line(data = dens_df, mapping = aes(x = x, y = density), 
-            color = "darkgreen", size = 1, linetype = "dashed") + # 元の分布
-  gganimate::transition_manual(parameter) + # フレーム
-  coord_cartesian(ylim = c(0, max(dens_df[["density"]])*2)) + # 軸の表示範囲
-  labs(title = "Gaussian Distribution", 
-       subtitle = "{current_frame}", 
-       x = "x", y = "density") # ラベル
+# 確率確率軸の範囲を指定
+dens_max <- 0.25
+u <- 0.1
+dens_max <- dens_df |> 
+  dplyr::pull(dens) |> 
+  max() |> 
+  (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
 
-# gif画像を作成
-gganimate::animate(anime_freq_graph, nframes = N, fps = 10, width = 800, height = 600)
+# サンプルの密度を作図
+anim <- ggplot() + 
+  geom_histogram(
+    data    = anim_freq_df, 
+    mapping = aes(x = x, y = ..density..), 
+    breaks = seq(from = x_min, to = x_max, length.out = 30), 
+    fill = "#00A968"
+  ) + # 密度
+  geom_line(
+    data    = dens_df, 
+    mapping = aes(x = x, y = dens), 
+    color = "darkgreen", linewidth = 1, linetype = "dashed"
+  ) + # 生成分布
+  geom_point(
+    data    = anim_freq_df, 
+    mapping = aes(x = x, y = -Inf), 
+    color = "orange", alpha = 0.5, size = 2
+  ) + # 過去のサンプル
+  geom_point(
+    data    = anim_sample_df, 
+    mapping = aes(x = x, y = -Inf), 
+    color = "orange", size = 4
+  ) + # 新規のサンプル
+  geom_text(
+    data    = anim_label_df, 
+    mapping = aes(x = -Inf, y = Inf, label = param_lbl), 
+    parse = TRUE, hjust = 0, vjust = -0.5
+  ) + # パラメータのラベル
+  gganimate::transition_manual(frames = frame_i) + # フレーム制御
+  theme(
+    plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
+  ) + # 図の体裁
+  coord_cartesian(
+    xlim = c(x_min, x_max), 
+    ylim = c(0, dens_max), 
+    clip = "off" # (パラメータラベル用の枠外描画設定)
+  ) + # 描画範囲
+  labs(
+    title = "Gaussian distribution", 
+    subtitle = "", # (パラメータラベル用の空行)
+    x = expression(x), 
+    y = "density"
+  )
+
+# 動画を作成
+gganimate::animate(
+  plot = anim, 
+  nframes = frame_num, fps = 10, 
+  width = 12, height = 8, units = "in", res = 100, 
+  renderer = gganimate::av_renderer(file = "figure/gaussian/random_number/dens_1smp.mp4")
+)
+
+
+#### 複数サンプルずつ集計 -----
+
+# フレーム数を指定
+frame_num <- 300
+
+# 1フレーム当たりのサンプル数を設定
+smp_per_frame <- N %/% frame_num
+
+# x軸の範囲を設定
+u <- 5
+x_size <- (x_n[1:(smp_per_frame*frame_num)] - mu) |> # 集計対象を抽出
+  abs() |> 
+  max() |> 
+  (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
+sgm_num <- 2
+x_size <- max(x_size, sgm_num*sigma)
+x_min <- mu - x_size
+x_max <- mu + x_size
+
+# x軸の値を作成
+x_vec <- seq(from = x_min, to = x_max, length.out = 1001)
+
+
+# 集計用のサンプルを格納
+anim_freq_df <- tibble::tibble(
+  frame_i = 1:frame_num,          # フレーム番号
+  N       = smp_per_frame*frame_i # サンプル数
+) |> 
+  dplyr::reframe(
+    n = 1:N, # サンプル番号
+    .by = c(frame_i, N)
+  ) |> # 過去のサンプルを複製
+  dplyr::mutate(
+    x = x_n[n] # サンプル値
+  )
+
+# ラベル用の文字列を作成
+anim_label_df <- tibble::tibble(
+  frame_i = 1:frame_num, # フレーム番号
+  param_lbl = paste0(
+    "list(", 
+    "N == ", smp_per_frame*frame_i, ", ", 
+    "mu == ", mu, ", ", 
+    "sigma == ", sigma, 
+    ")"
+  ), # パラメータラベル
+)
+
+# ガウス分布を計算
+dens_df <- tidyr::tibble(
+  x    = x_vec, # 確率変数
+  dens = dnorm(x = x, mean = mu, sd = sigma) # 確率密度
+)
+
+
+# サンプルの度数を作図
+anim <- ggplot() + 
+  geom_histogram(
+    data    = anim_freq_df, 
+    mapping = aes(x = x), 
+    breaks = seq(from = x_min, to = x_max, length.out = 30), 
+    fill = "#00A968"
+  ) + # 度数
+  geom_point(
+    data    = anim_freq_df, 
+    mapping = aes(x = x, y = -Inf), 
+    color = "orange", alpha = 0.5, size = 2
+  ) + # 過去のサンプル
+  geom_text(
+    data    = anim_label_df, 
+    mapping = aes(x = -Inf, y = Inf, label = param_lbl), 
+    parse = TRUE, hjust = 0, vjust = -0.5
+  ) + # パラメータのラベル
+  gganimate::transition_manual(frames = frame_i) + # フレーム制御
+  gganimate::view_follow(fixed_y = FALSE) + # 描画領域制御
+  theme(
+    plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
+  ) + # 図の体裁
+  coord_cartesian(
+    xlim = c(x_min, x_max), 
+    clip = "off" # (パラメータラベル用の枠外描画設定)
+  ) + # 描画範囲
+  labs(
+    title = "Gaussian distribution", 
+    subtitle = "", # (パラメータラベル用の空行)
+    x = expression(x), 
+    y = "frequency"
+  )
+
+# 動画を作成
+gganimate::animate(
+  plot = anim, 
+  nframes = frame_num, fps = 10, 
+  width = 12, height = 8, units = "in", res = 100, 
+  renderer = gganimate::av_renderer(file = "figure/gaussian/random_number/freq_nsmp.mp4")
+)
+
+
+# 確率確率軸の範囲を指定
+dens_max <- 0.25
+u <- 0.1
+dens_max <- dens_df |> 
+  dplyr::pull(dens) |> 
+  max() |> 
+  (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
+
+# サンプルの密度を作図
+anim <- ggplot() + 
+  geom_histogram(
+    data    = anim_freq_df, 
+    mapping = aes(x = x, y = ..density..), 
+    breaks = seq(from = x_min, to = x_max, length.out = 30), 
+    fill = "#00A968"
+  ) + # 密度
+  geom_line(
+    data    = dens_df, 
+    mapping = aes(x = x, y = dens), 
+    color = "darkgreen", linewidth = 1, linetype = "dashed"
+  ) + # 生成分布
+  geom_point(
+    data    = anim_freq_df, 
+    mapping = aes(x = x, y = -Inf), 
+    color = "orange", alpha = 0.5, size = 2
+  ) + # 過去のサンプル
+  geom_text(
+    data    = anim_label_df, 
+    mapping = aes(x = -Inf, y = Inf, label = param_lbl), 
+    parse = TRUE, hjust = 0, vjust = -0.5
+  ) + # パラメータのラベル
+  gganimate::transition_manual(frames = frame_i) + # フレーム制御
+  theme(
+    plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
+  ) + # 図の体裁
+  coord_cartesian(
+    xlim = c(x_min, x_max), 
+    ylim = c(0, dens_max), 
+    clip = "off" # (パラメータラベル用の枠外描画設定)
+  ) + # 描画範囲
+  labs(
+    title = "Gaussian distribution", 
+    subtitle = "", # (パラメータラベル用の空行)
+    x = expression(x), 
+    y = "density"
+  )
+
+# 動画を作成
+gganimate::animate(
+  plot = anim, 
+  nframes = frame_num, fps = 10, 
+  width = 12, height = 8, units = "in", res = 100, 
+  renderer = gganimate::av_renderer(file = "figure/gaussian/random_number/dens_nsmp.mp4")
+)
 
 
