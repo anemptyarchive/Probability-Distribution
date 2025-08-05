@@ -1,10 +1,10 @@
 
 # ポアソン分布 -----------------------------------------------------------------
 
-# パラメータの影響の可視化
+# パラメータの可視化
 
 
-# ライブラリの読込 -------------------------------------------------------------
+# パッケージの読込 -------------------------------------------------------------
 
 # 利用パッケージ
 library(tidyverse)
@@ -21,12 +21,14 @@ library(ggplot2)
 # フレームごとのパラメータを指定
 lambda_vals <- seq(from = 0, to = 10, by = 0.1)
 
-# フレーム数を取得
+# フレーム数を設定
 frame_num <- length(lambda_vals)
 
 
+### 変数の設定 -----
+
 # x軸の範囲を設定
-x_min <- 0 # (基本的に固定)
+x_min <- 0
 u <- 5
 x_max <- lambda_vals |> 
   max() |> 
@@ -39,7 +41,7 @@ x_vec <- seq(from = x_min, to = x_max, by = 1)
 
 ### 分布の計算 -----
 
-# 確率を計算
+# ポアソン分布の確率を計算
 anime_prob_df <- tidyr::expand_grid(
   frame_i = 1:frame_num, # フレーム番号
   x       = x_vec # 確率変数
@@ -90,13 +92,13 @@ gganimate::animate(
   plot = graph, 
   nframes = frame_num, fps = 10, 
   width = 12, height = 8, units = "in", res = 100, 
-  renderer = gganimate::av_renderer(file = "figure/poisson/parameter/paramter.mp4")
+  renderer = gganimate::av_renderer(file = "figure/poisson/parameter/parameter.mp4")
 )
 
 
 ### パラメータと統計量の関係 -----
 
-# パラメータを格納
+# 統計量を計算
 anim_param_df <- tibble::tibble(
   frame_i = 1:frame_num,   # フレーム番号
   lambda  = lambda_vals,   # パラメータ
@@ -106,12 +108,12 @@ anim_param_df <- tibble::tibble(
   param_lbl = paste0("lambda == ", round(lambda, digits = 2)), 
   stat_lbl  = paste0(
     "mean: ", sprintf(fmt = '%.02f', domain = mu), "\n", 
-    "sd:      ", sprintf(fmt = '%.02f', domain = sigma), "\n", # (スペースによる文字位置調整)
+    "sd:      ", sprintf(fmt = '%.02f', domain = sigma), "\n", # (スペースによる位置調整)
     "mode: ", sprintf(fmt = '%.02f', domain = mode)
   )
 )
 
-# 標準偏差の範囲用の設定を作成
+# 標準偏差の範囲を計算
 anim_sd_df <- tidyr::expand_grid(
   frame_i = 1:frame_num, 
   sign    = c(-1, 1) # 符号
@@ -146,11 +148,6 @@ graph <- ggplot() +
   ) + # 確率
   geom_vline(
     data    = anim_param_df, 
-    mapping = aes(xintercept = mode, linetype = "mode"), 
-    linewidth = 1
-  ) + # 最頻値の位置
-  geom_vline(
-    data    = anim_param_df, 
     mapping = aes(xintercept = mu, linetype = "mean"), 
     linewidth = 1
   ) + # 期待値の位置
@@ -169,6 +166,11 @@ graph <- ggplot() +
     mapping = aes(x = label_x, y = -Inf), 
     label = "|", size = 3
   ) + # 標準偏差の指示線
+  geom_vline(
+    data    = anim_param_df, 
+    mapping = aes(xintercept = mode, linetype = "mode"), 
+    linewidth = 1
+  ) + # 最頻値の位置
   geom_label(
     data    = anim_param_df, 　
     mapping = aes(x = lambda, y = Inf, label = "lambda"), 
@@ -226,7 +228,7 @@ gganimate::animate(
 
 ### パラメータとモーメントの関係 -----
 
-# ガウス分布を計算
+# ガウス分布の確率密度を計算
 anime_norm_df <- tidyr::expand_grid(
   frame_i = 1:frame_num, 
   x       = seq(from = min(x_vec), to = max(x_vec), length.out = 1001)
@@ -239,13 +241,12 @@ anime_norm_df <- tidyr::expand_grid(
   )
 
 
-# パラメータを格納
+# 統計量・モーメントを計算
 anim_param_df <- tibble::tibble(
   frame_i = 1:frame_num, 
   lambda  = lambda_vals,    # パラメータ
   mu      = lambda,         # 期待値
   sigma   = sqrt(lambda),   # 標準偏差
-  mode    = floor(lambda),  # 最頻値
   skew    = 1/sqrt(lambda), # 歪度
   kurt    = 1/lambda,       # 尖度
   param_lbl = paste0(
@@ -257,7 +258,7 @@ anim_param_df <- tibble::tibble(
   ), 
   moment_lbl = paste0(
     "skewness: ", sprintf(fmt = '%.03f', domain = skew), "\n", 
-    "kurtosis:     ", sprintf(fmt = '%.03f', domain = kurt) # (スペースによる文字位置調整)
+    "kurtosis:     ", sprintf(fmt = '%.03f', domain = kurt) # (スペースによる位置調整)
   )
 )
 
@@ -281,19 +282,25 @@ anim_sd_df <- tidyr::expand_grid(
 
 # ポアソン分布のアニメーションを作図
 graph <- ggplot() + 
+  geom_bar(
+    data    = anime_prob_df, 
+    mapping = aes(x = x, y = prob), 
+    stat = "identity", position = "identity", 
+    fill = "#00A968", alpha = 0.5
+  ) + # ポアソン分布の確率
+  geom_point(
+    data    = anime_prob_df, 
+    mapping = aes(x = x, y = prob), 
+    color = "#00A968", size = 3
+  ) + # ポアソン分布の確率
   geom_segment(
     data    = anim_param_df, 
-    mapping = aes(x = mode, y = 0, xend = mode, yend = Inf, linetype = "mode"), 
-    linewidth = 0.8, color = "#00A968"
-  ) + # 最頻値の位置
-  geom_segment(
-    data    = anim_param_df, 
-    mapping = aes(x = mu, y = 0, xend = mu, yend = Inf, linetype = "mean"), 
-    linewidth = 0.8
+    mapping = aes(x = mu, y = 0, xend = mu, yend = Inf), 
+    linewidth = 0.8, linetype = "dashed"
   ) + # 期待値の位置
   geom_segment(
     data    = anim_param_df, 
-    mapping = aes(x = mu-sigma, y = -Inf, xend = mu+sigma, yend = -Inf, linetype = "sd"), 
+    mapping = aes(x = mu-sigma, y = -Inf, xend = mu+sigma, yend = -Inf), 
     linewidth = 0.8
   ) + # 標準偏差の範囲
   geom_text(
@@ -312,27 +319,16 @@ graph <- ggplot() +
     parse = TRUE, hjust = 0.5, vjust = -0.7, 
     size = 4
   ) + # 標準偏差のラベル
-  geom_bar(
+  geom_line(
     data    = anime_prob_df, 
-    mapping = aes(x = x, y = prob), 
-    stat = "identity", position = "identity", 
-    fill = "#00A968", alpha = 0.5
-  ) + # ポアソン分布の確率
-  geom_point(
-    data    = anime_prob_df, 
-    mapping = aes(x = x, y = prob), 
-    color = "#00A968", size = 2.5
+    mapping = aes(x = x, y = prob, color = "pois"), 
+    linewidth = 1
   ) + # ポアソン分布の確率
   geom_line(
     data    = anime_norm_df, 
     mapping = aes(x = x, y = dens, color = "norm"), 
     linewidth = 1, linetype = "dashed"
   ) + # ガウス分布の確率密度
-  geom_line(
-    data    = anime_prob_df, 
-    mapping = aes(x = x, y = prob, color = "pois"), 
-    linewidth = 1
-  ) + # ポアソン分布の確率
   geom_text(
     data    = anim_param_df, 
     mapping = aes(x = -Inf, y = Inf, label = param_lbl), 
@@ -350,12 +346,6 @@ graph <- ggplot() +
     values = c("red", "#00A968"), 
     labels = c("Gaussian", "Poisson"), 
     name   = "distribution"
-  ) + # (凡例の表示用)
-  scale_linetype_manual(
-    breaks = c("mean", "sd", "mode"), 
-    values = c("dashed", "solid", "dotdash"), 
-    labels = c("mean", "sd", "mode"), 
-    name   = "statistics"
   ) + # (凡例の表示用)
   guides(
     color    = guide_legend(override.aes = list(linewidth = 0.5)), 

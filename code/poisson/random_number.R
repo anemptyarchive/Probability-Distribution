@@ -4,7 +4,7 @@
 # 乱数の可視化
 
 
-# ライブラリの読込 -------------------------------------------------------------
+# パッケージの読込 -------------------------------------------------------------
 
 # 利用パッケージ
 library(tidyverse)
@@ -31,23 +31,38 @@ N <- 3000
 x_n <- rpois(n = N, lambda = lambda)
 
 
-### 乱数の可視化 -----
-
-#### 1サンプルずつ集計 -----
-
-# フレーム数を指定
-frame_num <- N
-frame_num <- 300
+### 変数の設定 -----
 
 # x軸の範囲を設定
 u <- 5
-x_max <- x_n[1:frame_num] |> # 集計対象を抽出
+x_max <- x_n |> 
+  #(\(.) {.[1:frame_num]})() |> # 「1サンプルずつ」の場合
+  #(\(.) {.[1:(smp_per_frame*frame_num)]})() |> # 「複数サンプルずつ」の場合
   max() |> 
   (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
 
 # x軸の値を作成
 x_vec <- seq(from = 0, to = x_max, by = 1)
 
+
+### 分布の計算 -----
+
+# ポアソン分布を計算
+prob_df <- tidyr::tibble(
+  x    = x_vec, # 確率変数
+  prob = dpois(x = x, lambda = lambda) # 確率
+)
+
+
+### 乱数の可視化 -----
+
+#### 1サンプルずつ集計 -----
+
+# フレーム数を指定
+frame_num <- 300
+
+
+##### サンプルの集計 -----
 
 # サンプルを格納
 anim_sample_df <- tibble::tibble(
@@ -105,19 +120,15 @@ anim_label_df <- anim_freq_df |>
   ) |> 
   dplyr::select(-freq_txt)
 
-# ポアソン分布を計算
-prob_df <- tidyr::tibble(
-  x    = x_vec, # 確率変数
-  prob = dpois(x = x, lambda = lambda) # 確率
-)
 
+##### 度数の作図 -----
 
 # サンプルの度数を作図
 anim <- ggplot() + 
   geom_bar(
     data    = anim_freq_df, 
     mapping = aes(x = x, y = freq), 
-    stat = "identity", 
+    stat = "identity", position = "identity", 
     fill = "#00A968"
   ) + # 度数
   geom_point(
@@ -160,7 +171,9 @@ gganimate::animate(
 )
 
 
-# 確率軸の範囲を指定
+##### 相対度数の作図 -----
+
+# 確率軸の範囲を設定
 prob_max <- 0.25
 
 # サンプルの相対度数を作図
@@ -168,15 +181,15 @@ anim <- ggplot() +
   geom_bar(
     data    = anim_freq_df, 
     mapping = aes(x = x, y = rel_freq, linetype = "sample"), 
-    stat = "identity", 
-    fill = "#00A968", alpha = 0.5
+    stat = "identity", position = "identity", 
+    fill = "#00A968", alpha = 0.5, linewidth = 1
   ) + # 相対度数
   geom_bar(
     data = prob_df, 
     mapping = aes(x = x, y = prob, linetype = "generator"), 
-    stat = "identity", 
+    stat = "identity", position = "identity", 
     fill = NA, color = "darkgreen"
-  ) + # 生成分布
+  ) + # 確率
   geom_point(
     data    = anim_sample_df, 
     mapping = aes(x = x, y = -Inf), 
@@ -203,6 +216,9 @@ anim <- ggplot() +
   theme(
     plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
   ) + # 図の体裁
+  guides(
+    linetype = guide_legend(override.aes = list(linewidth = 0.5)), 
+  ) + # 凡例の体裁
   coord_cartesian(
     xlim = c(0, x_max), 
     ylim = c(0, prob_max), 
@@ -232,15 +248,8 @@ frame_num <- 300
 # 1フレーム当たりのサンプル数を設定
 smp_per_frame <- N %/% frame_num
 
-# x軸の範囲を設定
-u <- 5
-x_max <- x_n[1:(smp_per_frame*frame_num)] |> # 集計対象を抽出
-  max() |> 
-  (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
 
-# x軸の値を作成
-x_vec <- seq(from = 0, to = x_max, by = 1)
-
+##### サンプルの集計 -----
 
 # サンプルを集計
 anim_freq_df <- tibble::tibble(
@@ -291,19 +300,15 @@ anim_label_df <- anim_freq_df |>
   ) |> 
   dplyr::select(-freq_txt)
 
-# ポアソン分布を計算
-prob_df <- tidyr::tibble(
-  x    = x_vec, # 確率変数
-  prob = dpois(x = x, lambda = lambda) # 確率
-)
 
+##### 度数の作図 -----
 
 # サンプルの度数を作図
 anim <- ggplot() + 
   geom_bar(
     data    = anim_freq_df, 
     mapping = aes(x = x, y = freq), 
-    stat = "identity", 
+    stat = "identity", position = "identity", 
     fill = "#00A968"
   ) + # 度数
   geom_text(
@@ -342,6 +347,11 @@ gganimate::animate(
 )
 
 
+##### 相対度数の作図 -----
+
+# 確率軸の範囲を設定
+prob_max <- 0.25
+
 # サンプルの相対度数を作図
 anim <- ggplot() + 
   geom_bar(
@@ -354,18 +364,8 @@ anim <- ggplot() +
     data = prob_df, 
     mapping = aes(x = x, y = prob, linetype = "generator"), 
     stat = "identity", position = "identity", 
-    fill = NA, color = "darkgreen"
-  ) + # 生成分布
-  geom_line(
-    data = prob_df, 
-    mapping = aes(x = x, y = prob), 
-    color = "darkgreen", linewidth = 1, linetype = "dashed"
-  ) + # 生成分布
-  geom_point(
-    data = prob_df, 
-    mapping = aes(x = x, y = prob), 
-    color = "darkgreen", size = 3
-  ) + # 生成分布
+    fill = NA, color = "darkgreen", linewidth = 1
+  ) + # 確率
   geom_text(
     data    = anim_label_df, 
     mapping = aes(x = -Inf, y = Inf, label = param_lbl), 
@@ -387,8 +387,12 @@ anim <- ggplot() +
   theme(
     plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
   ) + # 図の体裁
+  guides(
+    linetype = guide_legend(override.aes = list(linewidth = 0.5)), 
+  ) + # 凡例の体裁
   coord_cartesian(
     xlim = c(0, x_max), 
+    ylim = c(0, prob_max), 
     clip = "off" # (パラメータラベル用の枠外描画設定)
   ) + # 描画範囲
   labs(
