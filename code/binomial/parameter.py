@@ -22,7 +22,7 @@ from matplotlib.animation import FuncAnimation
 ### パラメータの設定 -----
 
 # 試行回数を指定
-M = 10
+M = 9
 
 # フレームごとのパラメータを指定
 phi_vals = np.arange(start=0.0, stop=1.01, step=0.01)
@@ -139,12 +139,12 @@ def update(i):
     ax.vlines(
         x=mean_x, ymin=y_min, ymax=y_max, 
         color='black', linewidth=1.0, linestyles='--', 
-        label=f'$E[x] = \\lambda = {mean_x:.2f}$'
+        label=f'$E[x] = M \\phi = {mean_x:.2f}$'
     ) # 期待値の位置
     ax.vlines(
         x=[mean_x-sd_x, mean_x+sd_x], ymin=y_min, ymax=y_max, 
         color='black', linewidth=1.0, linestyles=':', 
-        label=f'$\\sqrt{{V[x]}} = \\sqrt{{\\lambda}} = {sd_x:.2f}$'
+        label=f'$\\sqrt{{V[x]}} = \\sqrt{{M \\phi (1-\\phi)}} = {sd_x:.2f}$'
     ) # 標準偏差の位置
     ax.hlines(
         y=0.0, xmin=mean_x-sd_x, xmax=mean_x+sd_x, 
@@ -153,7 +153,7 @@ def update(i):
     ax.vlines(
         x=mode_x, ymin=y_min, ymax=y_max, 
         color='black', linewidth=1.0, linestyles='-.', 
-        label=f'$mode[x] = \\lfloor \\lambda \\rfloor = {mode_x:.2f}$'
+        label=f'$mode[x] = \\lfloor (M+1) \\phi \\rfloor = {mode_x:.2f}$'
     ) # 最頻値の位置
     ax.text(
         x=mean_x, y=0.0, 
@@ -227,15 +227,15 @@ def update(i):
     moment_str  = f'skewness: {skew:.3f} \n'
     moment_str += f'kurtosis:    {kurt:.3f}' # (スペースによる位置調整)
 
-    # ポアソン分布を描画
+    # 二項分布分布を描画
     ax.bar(
         x=x_vec, height=pois_prob_vec, 
         color='#00A968', alpha=0.5
-    ) # ポアソン分布の確率
+    ) # 二項分布分布の確率
     ax.scatter(
         x=x_vec, y=pois_prob_vec, 
         color='#00A968', s=30
-    ) # ポアソン分布の確率
+    ) # 二項分布分布の確率
     ax.vlines(
         x=mu, ymin=y_min, ymax=y_max, 
         color='black', linewidth=1.0, linestyles='dashed'
@@ -254,7 +254,7 @@ def update(i):
         x_vec, pois_prob_vec, 
         color='#00A968', linewidth=1.0, 
         label='poisson'
-    ) # ポアソン分布の確率
+    ) # 二項分布分布の確率
     ax.plot(
         norm_x_vec, norm_dens_vec, 
         color='red', linewidth=1.0, linestyle='dashed', 
@@ -393,12 +393,12 @@ def update(i):
     ax.vlines(
         x=mean_x, ymin=y_min, ymax=y_max, 
         color='black', linewidth=1.0, linestyles='--', 
-        label=f'$E[x] = \\lambda = {mean_x:.2f}$'
+        label=f'$E[x] = M \\phi = {mean_x:.2f}$'
     ) # 期待値の位置
     ax.vlines(
         x=[mean_x-sd_x, mean_x+sd_x], ymin=y_min, ymax=y_max, 
         color='black', linewidth=1.0, linestyles=':', 
-        label=f'$\\sqrt{{V[x]}} = \\sqrt{{\\lambda}} = {sd_x:.2f}$'
+        label=f'$\\sqrt{{V[x]}} = \\sqrt{{M \\phi (1-\\phi)}} = {sd_x:.2f}$'
     ) # 標準偏差の位置
     ax.hlines(
         y=0.0, xmin=mean_x-sd_x, xmax=mean_x+sd_x, 
@@ -407,7 +407,7 @@ def update(i):
     ax.vlines(
         x=mode_x, ymin=y_min, ymax=y_max, 
         color='black', linewidth=1.0, linestyles='-.', 
-        label=f'$mode[x] = \\lfloor \\lambda \\rfloor = {mode_x:.2f}$'
+        label=f'$mode[x] = \\lfloor (M+1) \\phi \\rfloor = {mode_x:.2f}$'
     ) # 最頻値の位置
     ax.text(
         x=mean_x, y=0.0, 
