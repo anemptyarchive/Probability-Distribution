@@ -66,6 +66,10 @@ prob_max = np.ceil(prob_max /u)*u # u単位で切り上げ
 fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
 fig.suptitle('Poisson distribution', fontsize=20)
 
+# 初期化処理を定義
+def init():
+    pass
+
 # 作図処理を定義
 def update(i):
 
@@ -89,10 +93,13 @@ def update(i):
     ax.set_ylim(ymin=0.0, ymax=prob_max) # 描画範囲を固定
 
 # 動画を作成
-anime_freq = FuncAnimation(fig=fig, func=update, frames=frame_num, interval=100)
+anim = FuncAnimation(
+    fig=fig, func=update, init_func=init, 
+    frames=frame_num, interval=100
+)
 
 # 動画を書出
-anime_freq.save(
+anim.save(
     filename='../figure/poisson/parameter/parameter.mp4', 
     progress_callback=lambda i, n: print(f'frame: {i} / {n}')
 )
@@ -115,6 +122,10 @@ y_max = prob_max * (1.0+y_margin)
 # 図を初期化
 fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
 fig.suptitle('Poisson distribution', fontsize=20)
+
+# 初期化処理を定義
+def init():
+    pass
 
 # 作図処理を定義
 def update(i):
@@ -169,10 +180,13 @@ def update(i):
     ax.set_ylim(ymin=y_min, ymax=y_max) # (垂線との対応用)
 
 # 動画を作成
-anime_freq = FuncAnimation(fig=fig, func=update, frames=frame_num, interval=100)
+anim = FuncAnimation(
+    fig=fig, func=update, init_func=init, 
+    frames=frame_num, interval=100
+)
 
 # 動画を書出
-anime_freq.save(
+anim.save(
     filename='../figure/poisson/parameter/stats.mp4', 
     progress_callback=lambda i, n: print(f'frame: {i} / {n}')
 )
@@ -196,6 +210,10 @@ y_max = prob_max * (1.0+y_margin)
 fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
 fig.suptitle('Poisson distribution', fontsize=20)
 
+# 初期化処理を定義
+def init():
+    pass
+
 # 作図処理を定義
 def update(i):
 
@@ -211,11 +229,15 @@ def update(i):
     sigma = np.sqrt(lmd) # 標準偏差
 
     # モーメントを計算
-    skew = 1.0 / np.sqrt(lmd) # 歪度
-    kurt = 1.0 / lmd          # 尖度
+    if lmd > 0.0:
+        skew = 1.0 / np.sqrt(lmd) # 歪度
+        kurt = 1.0 / lmd          # 尖度
+    else: # (0除算の回避用)
+        skew = np.inf
+        kurt = np.inf
 
     # ガウス分布の確率密度を計算
-    norm_x_vec = np.linspace(start=x_min, stop=x_max, num=1001)
+    norm_x_vec    = np.linspace(start=x_min, stop=x_max, num=1001)
     norm_dens_vec = norm.pdf(x=norm_x_vec, loc=mu, scale=sigma)
     
     # ラベル用の文字列を作成
@@ -243,7 +265,7 @@ def update(i):
         ax.text(
             x=label_x, y=0.0, 
             s=label_str, ha='center', va='top', 
-            size=8
+            size=10
         ) # 統計量のラベル
     ax.plot(
         x_vec, pois_prob_vec, 
@@ -258,10 +280,10 @@ def update(i):
     ax.text(
         x=x_min, y=prob_max, 
         s=moment_str, ha='left', va='top', 
-        bbox=dict(facecolor='none', edgecolor='black', linewidth=0.5), 
-        size = 8
+        bbox=dict(facecolor='white', alpha=0.8, edgecolor='black', linewidth=0.5), 
+        size = 10
     ) # モーメントのラベル
-    #ax.set_xticks(ticks=x_vec) # x軸目盛
+    ax.set_xticks(ticks=x_vec) # x軸目盛
     ax.grid()
     ax.set_xlabel('x')
     ax.set_ylabel('probability, density')
@@ -270,10 +292,13 @@ def update(i):
     ax.set_ylim(ymin=y_min, ymax=y_max) # (垂線との対応用)
 
 # 動画を作成
-anime_freq = FuncAnimation(fig=fig, func=update, frames=frame_num, interval=100)
+anim = FuncAnimation(
+    fig=fig, func=update, init_func=init, 
+    frames=frame_num, interval=100
+)
 
 # 動画を書出
-anime_freq.save(
+anim.save(
     filename='../figure/poisson/parameter/moment.mp4', 
     progress_callback=lambda i, n: print(f'frame: {i} / {n}')
 )

@@ -22,7 +22,7 @@ from matplotlib.animation import FuncAnimation
 ### パラメータの設定 -----
 
 # 試行回数を指定
-M = 9
+M = 10
 
 # フレームごとのパラメータを指定
 phi_vals = np.arange(start=0.0, stop=1.01, step=0.01)
@@ -36,7 +36,7 @@ frame_num = len(phi_vals)
 ### 変数の設定 -----
 
 # x軸の範囲を設定
-x_min = 0.0
+x_min = 0
 x_max = M
 
 # x軸の値を作成
@@ -66,6 +66,10 @@ prob_max = np.ceil(prob_max /u)*u # u単位で切り上げ
 fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
 fig.suptitle('Binomial distribution', fontsize=20)
 
+# 初期化処理を定義
+def init():
+    pass
+
 # 作図処理を定義
 def update(i):
 
@@ -89,10 +93,13 @@ def update(i):
     ax.set_ylim(ymin=0.0, ymax=prob_max) # 描画範囲を固定
 
 # 動画を作成
-anime_freq = FuncAnimation(fig=fig, func=update, frames=frame_num, interval=100)
+anim = FuncAnimation(
+    fig=fig, func=update, init_func=init, 
+    frames=frame_num, interval=100
+)
 
 # 動画を書出
-anime_freq.save(
+anim.save(
     filename='../figure/binomial/parameter/parameter_phi.mp4', 
     progress_callback=lambda i, n: print(f'frame: {i} / {n}')
 )
@@ -115,6 +122,10 @@ y_max = prob_max * (1.0+y_margin)
 # 図を初期化
 fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
 fig.suptitle('Binomial distribution', fontsize=20)
+
+# 初期化処理を定義
+def init():
+    pass
 
 # 作図処理を定義
 def update(i):
@@ -170,10 +181,13 @@ def update(i):
     ax.set_ylim(ymin=y_min, ymax=y_max) # (垂線との対応用)
 
 # 動画を作成
-anime_freq = FuncAnimation(fig=fig, func=update, frames=frame_num, interval=100)
+anim = FuncAnimation(
+    fig=fig, func=update, init_func=init, 
+    frames=frame_num, interval=100
+)
 
 # 動画を書出
-anime_freq.save(
+anim.save(
     filename='../figure/binomial/parameter/stats_phi.mp4', 
     progress_callback=lambda i, n: print(f'frame: {i} / {n}')
 )
@@ -197,6 +211,10 @@ y_max = prob_max * (1.0+y_margin)
 fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
 fig.suptitle('Binomial distribution', fontsize=20)
 
+# 初期化処理を定義
+def init():
+    pass
+
 # 作図処理を定義
 def update(i):
 
@@ -212,7 +230,7 @@ def update(i):
     sigma = np.sqrt(M * phi * (1.0 - phi)) # 標準偏差
 
     # モーメントを計算
-    if phi > 0.0:
+    if phi > 0.0 or phi < 1.0:
         skew = (1.0 - 2.0 * phi) / np.sqrt(M * phi * (1.0 - phi))        # 歪度
         kurt = (1.0 - 6.0 * phi * (1.0 - phi)) / (M * phi * (1.0 - phi)) # 尖度
     else: # (0除算の回避用)
@@ -276,10 +294,13 @@ def update(i):
     ax.set_ylim(ymin=y_min, ymax=y_max) # (垂線との対応用)
 
 # 動画を作成
-anime_freq = FuncAnimation(fig=fig, func=update, frames=frame_num, interval=100)
+anim = FuncAnimation(
+    fig=fig, func=update, init_func=init, 
+    frames=frame_num, interval=100
+)
 
 # 動画を書出
-anime_freq.save(
+anim.save(
     filename='../figure/binomial/parameter/moment_phi.mp4', 
     progress_callback=lambda i, n: print(f'frame: {i} / {n}')
 )
@@ -295,7 +316,7 @@ anime_freq.save(
 M_max = 100
 
 # パラメータを指定
-phi = 0.4
+phi = 0.5
 
 # フレーム数を設定
 frame_num = M_max + 1
@@ -311,6 +332,10 @@ prob_max = 1.0
 # 図を初期化
 fig, ax = plt.subplots(figsize=(9, 6), dpi=100, facecolor='white')
 fig.suptitle('Binomial distribution', fontsize=20)
+
+# 初期化処理を定義
+def init():
+    pass
 
 # 作図処理を定義
 def update(i):
@@ -340,10 +365,13 @@ def update(i):
     ax.set_ylim(ymin=0.0, ymax=prob_max) # 描画範囲を固定
 
 # 動画を作成
-anime_freq = FuncAnimation(fig=fig, func=update, frames=frame_num, interval=100)
+anim = FuncAnimation(
+    fig=fig, func=update, init_func=init, 
+    frames=frame_num, interval=100
+)
 
 # 動画を書出
-anime_freq.save(
+anim.save(
     filename='../figure/binomial/parameter/parameter_M.mp4', 
     progress_callback=lambda i, n: print(f'frame: {i} / {n}')
 )
@@ -364,6 +392,10 @@ y_max = prob_max * (1.0+y_margin)
 # 図を初期化
 fig, ax = plt.subplots(figsize=(9, 6), dpi=100, facecolor='white')
 fig.suptitle('Binomial distribution', fontsize=20)
+
+# 初期化処理を定義
+def init():
+    pass
 
 # 作図処理を定義
 def update(i):
@@ -424,10 +456,13 @@ def update(i):
     ax.set_ylim(ymin=y_min, ymax=y_max) # (垂線との対応用)
 
 # 動画を作成
-anime_freq = FuncAnimation(fig=fig, func=update, frames=frame_num, interval=100)
+anim = FuncAnimation(
+    fig=fig, func=update, init_func=init, 
+    frames=frame_num, interval=100
+)
 
 # 動画を書出
-anime_freq.save(
+anim.save(
     filename='../figure/binomial/parameter/stats_M.mp4', 
     progress_callback=lambda i, n: print(f'frame: {i} / {n}')
 )
@@ -459,6 +494,10 @@ momemt_lbl = fig.text(
     bbox=dict(facecolor='white', alpha=0.8, edgecolor='black', linewidth=0.5), 
     size = 10
 ) # モーメントのラベル
+
+# 初期化処理を定義
+def init():
+    pass
 
 # 作図処理を定義
 def update(i):
@@ -543,10 +582,13 @@ def update(i):
     ax.set_ylim(ymin=y_min, ymax=y_max) # (垂線との対応用)
 
 # 動画を作成
-anime_freq = FuncAnimation(fig=fig, func=update, frames=frame_num, interval=100)
+anim = FuncAnimation(
+    fig=fig, func=update, init_func=init, 
+    frames=frame_num, interval=100
+)
 
 # 動画を書出
-anime_freq.save(
+anim.save(
     filename='../figure/binomial/parameter/moment_M.mp4', 
     progress_callback=lambda i, n: print(f'frame: {i} / {n}')
 )
