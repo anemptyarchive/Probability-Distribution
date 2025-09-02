@@ -22,14 +22,14 @@ from matplotlib.animation import FuncAnimation
 frame_num = 100
 
 # フレームごとのパラメータを指定
-mu_vals     = np.linspace(start=-5.0, stop=5.0, num=frame_num)
-sigma_vals  = np.linspace(start=1.0, stop=1.0, num=frame_num+1)[1:]
-#lambda_vals = np.linspace(start=0.0, stop=10.0, num=frame_num+1)[1:]
+mu_vals     = np.linspace(start=0.0, stop=0.0, num=frame_num)
+#sigma_vals  = np.linspace(start=0.0, stop=10.0, num=frame_num+1)[1:]
+lambda_vals = np.linspace(start=0.0, stop=10.0, num=frame_num+1)[1:]
 print(mu_vals)
 
 # パラメータを計算
-#sigma_vals  = 1.0 / np.sqrt(lambda_vals)
-lambda_vals = 1.0 / sigma_vals**2
+sigma_vals  = 1.0 / np.sqrt(lambda_vals)
+#lambda_vals = 1.0 / sigma_vals**2
 print(sigma_vals)
 print(lambda_vals)
 
@@ -42,11 +42,12 @@ print(lambda_vals)
 u = 5.0
 x_size = np.max(sigma_vals)
 x_size *= 2.0 # 倍率を指定
-x_size = 5.0
 x_min = np.min(mu_vals) - x_size
 x_max = np.max(mu_vals) + x_size
 x_min = np.floor(x_min /u)*u # u単位で切り下げ
 x_max = np.ceil(x_max /u)*u # u単位で切り上げ
+x_min = -10.0
+x_max = 10.0
 print(x_min, x_max)
 
 # x軸の値を作成
@@ -73,7 +74,7 @@ dens_lt = [
 u = 0.5
 dens_max = np.max(dens_lt)
 dens_max = np.ceil(dens_max /u)*u # u単位で切り上げ
-#dens_max = 1.0
+dens_max = 1.0
 print(dens_max)
 
 # 図を初期化
@@ -115,7 +116,7 @@ anim = FuncAnimation(
 
 # 動画を書出
 anim.save(
-    filename='../figure/gaussian/parameter/parameter.mp4', 
+    filename='../figure/gaussian/parameter/parameter_lambda.gif', 
     progress_callback=lambda i, n: print(f'frame: {i} / {n}')
 )
 
@@ -128,7 +129,7 @@ anim.save(
 u = 0.5
 dens_max = np.max(dens_lt)
 dens_max = np.ceil(dens_max /u)*u # u単位で切り上げ
-#dens_max = 1.0
+dens_max = 1.0
 print(dens_max)
 
 # 余白を追加
@@ -214,7 +215,7 @@ anim = FuncAnimation(
 
 # 動画を書出
 anim.save(
-    filename='../figure/gaussian/parameter/stats.mp4', 
+    filename='../figure/gaussian/parameter/stats_lambda.gif', 
     progress_callback=lambda i, n: print(f'frame: {i} / {n}')
 )
 

@@ -87,7 +87,7 @@ def update(i):
     ) # 確率
     ax.set_xticks(ticks=x_vec) # x軸目盛
     ax.grid()
-    ax.set_xlabel('x')
+    ax.set_xlabel('$x$')
     ax.set_ylabel('probability')
     ax.set_title(f'$\\lambda = {lmd:.1f}$', loc='left')
     ax.set_ylim(ymin=0.0, ymax=prob_max) # 描画範囲を固定
@@ -173,7 +173,7 @@ def update(i):
     ) # 統計量のラベル
     ax.set_xticks(ticks=x_vec) # x軸目盛
     ax.grid()
-    ax.set_xlabel('x')
+    ax.set_xlabel('$x$')
     ax.set_ylabel('probability')
     ax.set_title(f'$\\lambda = {lmd:.1f}$', loc='left')
     ax.legend(title='statistics', prop={'size': 8}, loc='upper left')
@@ -285,7 +285,7 @@ def update(i):
     ) # モーメントのラベル
     ax.set_xticks(ticks=x_vec) # x軸目盛
     ax.grid()
-    ax.set_xlabel('x')
+    ax.set_xlabel('$x$')
     ax.set_ylabel('probability, density')
     ax.set_title(f'$\\lambda = {lmd:.1f}, \mu = {mu:.1f}, \sigma = {sigma:.2f}$', loc='left')
     ax.legend(title='distribution', prop={'size': 8}, loc='upper right')

@@ -81,7 +81,7 @@ u = 5.0
 _, counts = np.unique(ar=x_n[:frame_num], return_counts=True) # 対象を抽出して集計
 freq_max = np.max(counts)
 freq_max = np.ceil(freq_max /u)*u # u単位で切り上げ
-print(freq_max)
+print('frequency:', freq_max)
 
 # 図を初期化
 fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
@@ -190,7 +190,7 @@ def update(n):
     ax.set_xlabel('$x$')
     ax.set_ylabel('relative frequency, probability')
     ax.set_title(f'$N = {n}, r = {r}, \\phi = {phi}$', loc='left')
-    ax.legend(title='distribution')
+    ax.legend(title='distribution', loc='upper right')
     ax.set_ylim(ymin=0.0, ymax=relfreq_max) # (目盛の共通化用)
 
     # 度数軸を設定
@@ -240,7 +240,7 @@ u = 5.0
 _, counts = np.unique(ar=x_n[:(smp_per_frame*frame_num)], return_counts=True) # 対象を抽出して集計
 freq_max = np.max(counts)
 freq_max = np.ceil(freq_max /u)*u # u単位で切り上げ
-print(freq_max)
+print('frequency:', freq_max)
 
 # 図を初期化
 fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
@@ -277,7 +277,7 @@ def update(n):
         width=bin_size, align='center', 
         color='#00A968'
     ) # 度数
-    ax.set_xticks(ticks=x_vec) # x軸目盛
+    #ax.set_xticks(ticks=x_vec) # x軸目盛
     ax.grid()
     ax.set_xlabel('$x$')
     ax.set_ylabel('frequency')
@@ -306,6 +306,7 @@ u = 0.05
 relfreq_max = np.max(prob_vec)
 relfreq_max = np.ceil(relfreq_max /u)*u # u単位で切り上げ
 relfreq_max = 0.25
+print('relative frequency:', relfreq_max)
 
 # 図を初期化
 fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
@@ -342,19 +343,19 @@ def update(n):
     ax.bar(
         x=x_vec, height=freq_vec/n, 
         color='#00A968', alpha=0.5, 
-        label='random number'
+        label='random number', zorder=0
     ) # 相対度数
     ax.bar(
         x=x_vec, height=prob_vec, 
         facecolor='none', edgecolor='green', linewidth=1.0, linestyle='--', 
-        label='generator'
+        label='generator', zorder=1
     ) # 確率
-    ax.set_xticks(ticks=x_vec) # x軸目盛
+    #ax.set_xticks(ticks=x_vec) # x軸目盛
     ax.grid()
     ax.set_xlabel('$x$')
     ax.set_ylabel('relative frequency, probability')
     ax.set_title(f'$N = {n}, r = {r}, \\phi = {phi}$', loc='left')
-    ax.legend(title='distribution')
+    ax.legend(title='distribution', loc='upper right')
     ax.set_ylim(ymin=0.0, ymax=relfreq_max) # (目盛の共通化用)
 
     # 度数軸を設定

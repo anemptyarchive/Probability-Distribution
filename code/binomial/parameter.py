@@ -47,7 +47,7 @@ x_vec = np.arange(start=x_min, stop=x_max+1, step=1)
 
 ### 分布の計算 -----
 
-# 二項分布の確率を計算
+# 確率を計算
 prob_lt = [
     binom.pmf(k=x_vec, n=M, p=phi_vals[i]) for i in range(frame_num)
 ]
@@ -87,7 +87,7 @@ def update(i):
     ) # 確率
     ax.set_xticks(ticks=x_vec) # x軸目盛
     ax.grid()
-    ax.set_xlabel('x')
+    ax.set_xlabel('$x$')
     ax.set_ylabel('probability')
     ax.set_title(f'$M = {M}, \\phi = {phi:.2f}$', loc='left')
     ax.set_ylim(ymin=0.0, ymax=prob_max) # 描画範囲を固定
@@ -173,7 +173,7 @@ def update(i):
     ) # 統計量のラベル
     ax.set_xticks(ticks=x_vec) # x軸目盛
     ax.grid()
-    ax.set_xlabel('x')
+    ax.set_xlabel('$x$')
     ax.set_ylabel('probability')
     ax.set_title(f'$M = {M}, \\phi = {phi:.2f}$', loc='left')
     ax.legend(title='statistics', prop={'size': 8}, loc='upper left')
@@ -286,7 +286,7 @@ def update(i):
     ) # モーメントのラベル
     ax.set_xticks(ticks=x_vec) # x軸目盛
     ax.grid()
-    ax.set_xlabel('x')
+    ax.set_xlabel('$x$')
     ax.set_ylabel('probability, density')
     ax.set_title(f'$M = {M}, \\phi = {phi:.2f}, \mu = {mu:.2f}, \sigma = {sigma:.2f}$', loc='left')
     ax.legend(title='distribution', prop={'size': 8}, loc='upper right')
@@ -359,7 +359,7 @@ def update(i):
     ) # 確率
     #ax.set_xticks(ticks=x_vec) # x軸目盛
     ax.grid()
-    ax.set_xlabel('x')
+    ax.set_xlabel('$x$')
     ax.set_ylabel('probability')
     ax.set_title(f'$M = {M}, \\phi = {phi}$', loc='left')
     ax.set_ylim(ymin=0.0, ymax=prob_max) # 描画範囲を固定
@@ -448,7 +448,7 @@ def update(i):
     ) # 統計量のラベル
     #ax.set_xticks(ticks=x_vec) # x軸目盛
     ax.grid()
-    ax.set_xlabel('x')
+    ax.set_xlabel('$x$')
     ax.set_ylabel('probability')
     ax.set_title(f'$M = {M}, \\phi = {phi}$', loc='left')
     ax.legend(title='statistics', prop={'size': 8}, loc='upper left')
@@ -574,7 +574,7 @@ def update(i):
     ) # ガウス分布の確率密度
     #ax.set_xticks(ticks=x_vec) # x軸目盛
     ax.grid()
-    ax.set_xlabel('x')
+    ax.set_xlabel('$x$')
     ax.set_ylabel('probability, density')
     ax.set_title(f'$M = {M}, \\phi = {phi}, \mu = {mu:.1f}, \sigma = {sigma:.2f}$', loc='left')
     ax.legend(title='distribution', prop={'size': 8}, loc='upper right')

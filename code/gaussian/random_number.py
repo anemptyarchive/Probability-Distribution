@@ -78,13 +78,15 @@ frame_num = 300
 ##### 度数の作図 -----
 
 # 階級数を指定
-bin_num = 20
+bin_num = 40
+print((x_max - x_min) / bin_num) # 階級幅
 
 # 度数軸の範囲を設定
 u = 5.0
 counts, bins = np.histogram(a=x_n[:frame_num], bins=bin_num, range=(x_min, x_max)) # 対象を抽出して集計
 freq_max = np.max(counts)
 freq_max = np.ceil(freq_max /u)*u # u単位で切り上げ
+print('frequency:', freq_max)
 
 # 図を初期化
 fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
@@ -141,7 +143,7 @@ anim.save(
 ##### 密度の作図 -----
 
 # 階級数を指定
-bin_num = 20
+bin_num = 40
 
 # 階級幅を設定
 bin_size = (x_max - x_min) / bin_num
@@ -153,6 +155,7 @@ counts, bins = np.histogram(a=x_n[:frame_num], bins=bin_num, range=(x_min, x_max
 dens_max = np.max(counts)
 dens_max = np.ceil(dens_max /u)*u # u単位で切り上げ
 dens_max = 0.3
+print('density:', dens_max)
 
 # 図を初期化
 fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
@@ -177,7 +180,8 @@ def update(n):
     ax.hist(
         x=x_n[:n], 
         bins=bin_num, range=(x_min, x_max), density=True, 
-        color='#00A968', alpha=0.5, zorder=0
+        color='#00A968', alpha=0.5, 
+        label='random number', zorder=0
     ) # 密度
     ax.plot(
         x_vec, dens_vec, 
@@ -196,6 +200,7 @@ def update(n):
     ax.set_xlabel('$x$')
     ax.set_ylabel('density')
     ax.set_title(f'$N = {n}, \mu = {mu}, \sigma = {sigma}$', loc='left')
+    ax.legend(title='distribution', loc='upper right')
     ax.set_ylim(ymin=0.0, ymax=dens_max) # 描画範囲を固定 # (目盛の共通化用)
 
     # 度数軸を設定
@@ -238,13 +243,15 @@ smp_per_frame = N // frame_num
 ##### 度数の作図 -----
 
 # 階級数を指定
-bin_num = 20
+bin_num = 40
+print((x_max - x_min) / bin_num) # 階級幅
 
 # 度数軸の範囲を設定
 u = 5.0
 counts, bins = np.histogram(a=x_n[:(smp_per_frame*frame_num)], bins=bin_num, range=(x_min, x_max)) # 対象を抽出して集計
 freq_max = np.max(counts)
 freq_max = np.ceil(freq_max /u)*u # u単位で切り上げ
+print('frequency:', freq_max)
 
 # 図を初期化
 fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
@@ -297,7 +304,7 @@ anim.save(
 ##### 密度の作図 -----
 
 # 階級数を指定
-bin_num = 20
+bin_num = 40
 
 # 階級幅を設定
 bin_size = (x_max - x_min) / bin_num
@@ -309,6 +316,7 @@ counts, bins = np.histogram(a=x_n[:frame_num], bins=bin_num, range=(x_min, x_max
 dens_max = np.max(counts)
 dens_max = np.ceil(dens_max /u)*u # u単位で切り上げ
 dens_max = 0.3
+print('density:', dens_max)
 
 # 図を初期化
 fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
