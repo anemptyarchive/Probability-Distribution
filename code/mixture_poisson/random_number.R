@@ -24,7 +24,7 @@ lambda_k <- c(1, 5.5, 10, 16.8)
 # 混合比率を指定
 pi_k <- c(0.2, 0.3, 0.1, 0.4)
 
-# クラスタ数を取得
+# クラスタ数を設定
 K <- length(lambda_k)
 
 
@@ -45,23 +45,44 @@ s_n <- which(t(s_nk) == 1, arr.ind = TRUE) |>
 x_n <- rpois(n = N, lambda = lambda_k[s_n])
 
 
+### 変数の設定 -----
+
+# x軸の範囲を設定
+u <- 5
+x_min <- 0
+x_max <- x_n |> 
+  #(\(.) {.[1:frame_num]})() |> # 「1サンプルずつ」の場合
+  #(\(.) {.[1:(smp_per_frame*frame_num)]})() |> # 「複数サンプルずつ」の場合
+  max() |> 
+  (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
+
+# x軸の値を作成
+x_vec <- seq(from = x_min, to = x_max, by = 1)
+
+
+### 分布の計算 -----
+
+# 混合ポアソン分布の重み付け確率を計算
+cluster_prob_df <- tidyr::expand_grid(
+  k = 1:K,  # クラスタ番号
+  x = x_vec # 確率変数
+) |> # クラスタごとに変数を複製
+  dplyr::mutate(
+    lambda = lambda_k[k], # パラメータ
+    pi     = pi_k[k],     # 混合比率
+    prob   = pi * dpois(x = x, lambda = lambda) # 重み付け確率
+  )
+
+
 ### 乱数の可視化 -----
 
 #### 1サンプルずつ集計 -----
 
 # フレーム数を指定
-frame_num <- N
-frame_num <- 150
+frame_num <- 300
 
-# x軸の範囲を設定
-u <- 5
-x_max <- x_n[1:frame_num] |> # 集計対象を抽出
-  max() |> 
-  (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
 
-# x軸の値を作成
-x_vec <- seq(from = 0, to = x_max, by = 1)
-
+##### サンプルの集計 -----
 
 # サンプルを格納
 anim_sample_df <- tibble::tibble(
@@ -72,7 +93,7 @@ anim_sample_df <- tibble::tibble(
 )
 
 # サンプルを集計
-anim_freq_df <- tibble::tibble(
+anim_cluster_freq_df <- tibble::tibble(
   frame_i = 1:frame_num, # フレーム番号
   N       = frame_i      # サンプル数
 ) |> 
@@ -96,12 +117,12 @@ anim_freq_df <- tibble::tibble(
       N       = frame_i
     ), 
     s = 1:K, 
-    x = 0:x_max, 
+    x = x_vec, 
     fill = list(freq = 0, rel_freq = 0)
   ) # 未観測値を補完
 
 # ラベル用の文字列を作成
-anim_label_df <- anim_freq_df |> 
+anim_label_df <- anim_cluster_freq_df |> 
   dplyr::summarise(
     freq = sum(freq), 
     .by = c(frame_i, N, s)
@@ -113,7 +134,7 @@ anim_label_df <- anim_freq_df |>
     values_from  = freq
   ) |> # 度数列を展開
   tidyr::unite(
-    col = "freq_txt", dplyr::starts_with("s"), sep = ", "
+    col = "freq_str", dplyr::starts_with("s"), sep = ", "
   ) |> # 度数情報を結合
   dplyr::mutate(
     param_lbl = paste0(
@@ -123,26 +144,26 @@ anim_label_df <- anim_freq_df |>
       "pi == (list(", paste0(round(pi_k, digits = 2), collapse = ", "), "))", 
       ")"
     ), # パラメータラベル
-    freq_lbl = paste0("N == (list(", freq_txt, "))") # 度数ラベル
+    freq_lbl = paste0(
+      "N == (list(", freq_str, "))"
+    ) # 度数ラベル
   ) |> 
-  dplyr::select(-freq_txt)
+  dplyr::select(-freq_str)
 
-# 混合ポアソン分布を計算
-prob_df <- tidyr::expand_grid(
-  k = 1:K,  # クラスタ番号
-  x = x_vec # 確率変数
-) |> # クラスタごとに変数を複製
-  dplyr::mutate(
-    lambda = lambda_k[k], # パラメータ
-    pi     = pi_k[k],     # 混合比率
-    prob   = pi * dpois(x = x, lambda = lambda) # 重み付け確率
-  )
 
+# ラベル用の文字列を作成
+cluster_lbl_vec <- paste0(
+  "k == ", 1:K
+) |> 
+  parse(text = _)
+
+
+##### 度数の作図 -----
 
 # サンプルの度数を作図
 anim <- ggplot() + 
   geom_bar(
-    data    = anim_freq_df, 
+    data    = anim_cluster_freq_df, 
     mapping = aes(x = x, y = freq, fill = factor(s)), 
     stat = "identity", position = "stack"
   ) + # 度数
@@ -162,20 +183,19 @@ anim <- ggplot() +
     parse = TRUE, hjust = 0, vjust = 1, alpha = 0.5
   ) + # 度数のラベル
   gganimate::transition_manual(frames = frame_i) + # フレーム制御
-  scale_fill_hue(label = parse(text = paste0("k == ", 1:K))) + # クラスタ番号
-  scale_color_hue(label = parse(text = paste0("k == ", 1:K))) + # クラスタ番号
+  scale_fill_hue(label = cluster_lbl_vec) + # クラスタ番号
+  guides(color = "none") + 
   theme(
     plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
-  ) + # 図の体裁
-  guides(color = "none") + # 凡例の体裁
+  ) + 
   coord_cartesian(
-    xlim = c(0, x_max), 
+    xlim = c(x_min, x_max), 
     clip = "off" # (パラメータラベル用の枠外描画設定)
   ) + 
   labs(
     title = "mixture Poisson distribution", 
     subtitle = "", # (パラメータラベル用の空行)
-    fill = "cluster", color = "cluster", 
+    fill = "cluster", 
     x = expression(x), 
     y = "frequency"
   )
@@ -189,23 +209,31 @@ gganimate::animate(
 )
 
 
+##### 相対度数の作図 -----
+
 # 確率軸の範囲を指定
-prob_max <- 0.2
+u <- 0.2
+relfreq_max <- cluster_prob_df |> 
+  dplyr::summarise(prob = sum(prob), .by = x) |> # 周辺化
+  dplyr::pull(prob) |> 
+  max() |> 
+  (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
+#relfreq_max <- 0.2
 
 # サンプルの相対度数を作図
 anim <- ggplot() + 
   geom_bar(
-    data    = anim_freq_df, 
+    data    = cluster_prob_df, 
+    mapping = aes(x = x, y = prob, color = factor(k), linetype = "generator"), 
+    stat = "identity", position = "stack", 
+    fill = NA, linewidth = 1
+  ) + # 生成確率
+  geom_bar(
+    data    = anim_cluster_freq_df, 
     mapping = aes(x = x, y = rel_freq, fill = factor(s), linetype = "sample"), 
     stat = "identity", position = "stack", 
     alpha = 0.5
   ) + # 相対度数
-  geom_bar(
-    data = prob_df, 
-    mapping = aes(x = x, y = prob, color = factor(k), linetype = "generator"), 
-    stat = "identity", position = "stack", 
-    fill = NA
-  ) + # 生成分布
   geom_point(
     data    = anim_sample_df, 
     mapping = aes(x = x, y = -Inf, color = factor(s)), 
@@ -222,30 +250,35 @@ anim <- ggplot() +
     parse = TRUE, hjust = 0, vjust = 1, alpha = 0.5
   ) + # 度数のラベル
   gganimate::transition_manual(frames = frame_i) + # フレーム制御
-  scale_fill_hue(label = parse(text = paste0("k == ", 1:K))) + # クラスタ番号
-  scale_color_hue(label = parse(text = paste0("k == ", 1:K))) + # クラスタ番号
+  scale_fill_hue(label = cluster_lbl_vec) + # クラスタ番号
   scale_linetype_manual(
     breaks = c("generator", "sample"), 
     values = c("dashed", "solid"), 
     labels = c("generator", "random number"), 
     name   = "distribution"
   ) + # 凡例の表示用
+  guides(
+    color    = "none", 
+    linetype = guide_legend(
+      override.aes = list(
+        color     = "gray35", 
+        linetype  = c("dashed", "blank"), 
+        linewidth = 0.5
+      )
+    )
+  ) + 
   theme(
     plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
-  ) + # 図の体裁
-  guides(
-    color = "none", 
-    linetype = guide_legend(override.aes = list(color = "gray35"))
-  ) + # 凡例の体裁
+  ) + 
   coord_cartesian(
-    xlim = c(0, x_max), 
-    ylim = c(0, prob_max), 
+    xlim = c(x_min, x_max), 
+    ylim = c(0, relfreq_max), 
     clip = "off" # (パラメータラベル用の枠外描画設定)
   ) + 
   labs(
     title = "mixture Poisson distribution", 
     subtitle = "", # (パラメータラベル用の空行)
-    fill = "cluster", color = "cluster", 
+    fill = "cluster", 
     x = expression(x), 
     y = "relative frequency, probability"
   )
@@ -267,18 +300,11 @@ frame_num <- 300
 # 1フレーム当たりのサンプル数を設定
 smp_per_frame <- N %/% frame_num
 
-# x軸の範囲を設定
-u <- 5
-x_max <- x_n[1:(smp_per_frame*frame_num)] |> # 集計対象を抽出
-  max() |> 
-  (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
 
-# x軸の値を作成
-x_vec <- seq(from = 0, to = x_max, by = 1)
-
+##### サンプルの集計 -----
 
 # サンプルを集計
-anim_freq_df <- tibble::tibble(
+anim_cluster_freq_df <- tibble::tibble(
   frame_i = 1:frame_num,          # フレーム番号
   N       = smp_per_frame*frame_i # サンプル数
 ) |> 
@@ -302,12 +328,12 @@ anim_freq_df <- tibble::tibble(
       N       = smp_per_frame*frame_i
     ), 
     s = 1:K, 
-    x = 0:x_max, 
+    x = x_vec, 
     fill = list(freq = 0, rel_freq = 0)
   ) # 未観測値を補完
 
 # ラベル用の文字列を作成
-anim_label_df <- anim_freq_df |> 
+anim_label_df <- anim_cluster_freq_df |> 
   dplyr::summarise(
     freq = sum(freq), 
     .by = c(frame_i, N, s)
@@ -319,7 +345,7 @@ anim_label_df <- anim_freq_df |>
     values_from  = freq
   ) |> # 度数列を展開
   tidyr::unite(
-    col = "freq_txt", dplyr::starts_with("s"), sep = ", "
+    col = "freq_str", dplyr::starts_with("s"), sep = ", "
   ) |> # 度数情報を結合
   dplyr::mutate(
     param_lbl = paste0(
@@ -329,26 +355,26 @@ anim_label_df <- anim_freq_df |>
       "pi == (list(", paste0(round(pi_k, digits = 2), collapse = ", "), "))", 
       ")"
     ), # パラメータラベル
-    freq_lbl = paste0("N == (list(", freq_txt, "))") # 度数ラベル
+    freq_lbl = paste0(
+      "N == (list(", freq_str, "))"
+    ) # 度数ラベル
   ) |> 
-  dplyr::select(-freq_txt)
+  dplyr::select(-freq_str)
 
-# 混合ポアソン分布を計算
-prob_df <- tidyr::expand_grid(
-  k = 1:K,  # クラスタ番号
-  x = x_vec # 確率変数
-) |> # クラスタごとに変数を複製
-  dplyr::mutate(
-    lambda = lambda_k[k], # パラメータ
-    pi     = pi_k[k],     # 混合比率
-    prob   = pi * dpois(x = x, lambda = lambda) # 重み付け確率
-  )
 
+# ラベル用の文字列を作成
+cluster_lbl_vec <- paste0(
+  "k == ", 1:K
+) |> 
+  parse(text = _)
+
+
+##### 度数の作図 -----
 
 # サンプルの度数を作図
 anim <- ggplot() + 
   geom_bar(
-    data    = anim_freq_df, 
+    data    = anim_cluster_freq_df, 
     mapping = aes(x = x, y = freq, fill = factor(s)), 
     stat = "identity", position = "stack"
   ) + # 度数
@@ -364,12 +390,12 @@ anim <- ggplot() +
   ) + # 度数のラベル
   gganimate::transition_manual(frames = frame_i) + # フレーム制御
   gganimate::view_follow(fixed_y = FALSE) + # 描画領域制御
-  scale_fill_hue(label = parse(text = paste0("k == ", 1:K))) + # クラスタ番号
+  scale_fill_hue(label = cluster_lbl_vec) + # クラスタ番号
   theme(
     plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
   ) + # 図の体裁
   coord_cartesian(
-    xlim = c(0, x_max), 
+    xlim = c(x_min, x_max), 
     clip = "off" # (パラメータラベル用の枠外描画設定)
   ) + 
   labs(
@@ -389,16 +415,27 @@ gganimate::animate(
 )
 
 
+##### 相対度数の作図 -----
+
+# 確率軸の範囲を指定
+u <- 0.2
+relfreq_max <- cluster_prob_df |> 
+  dplyr::summarise(prob = sum(prob), .by = x) |> # 周辺化
+  dplyr::pull(prob) |> 
+  max() |> 
+  (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
+#relfreq_max <- 0.2
+
 # サンプルの相対度数を作図
 anim <- ggplot() + 
   geom_bar(
-    data = prob_df, 
+    data    = cluster_prob_df, 
     mapping = aes(x = x, y = prob, color = factor(k), linetype = "generator"), 
     stat = "identity", position = "stack", 
-    fill = NA
-  ) + # 生成分布
+    fill = NA, linewidth = 1
+  ) + # 生成確率
   geom_bar(
-    data    = anim_freq_df, 
+    data    = anim_cluster_freq_df, 
     mapping = aes(x = x, y = rel_freq, fill = factor(s), linetype = "sample"), 
     stat = "identity", position = "stack", 
     alpha = 0.5
@@ -414,23 +451,29 @@ anim <- ggplot() +
     parse = TRUE, hjust = 0, vjust = 1, alpha = 0.5
   ) + # 度数のラベル
   gganimate::transition_manual(frames = frame_i) + # フレーム制御
-  scale_fill_hue(label = parse(text = paste0("k == ", 1:K))) + # クラスタ番号
-  scale_color_hue(label = parse(text = paste0("k == ", 1:K))) + # クラスタ番号
+  scale_fill_hue(label = cluster_lbl_vec) + # クラスタ番号
   scale_linetype_manual(
     breaks = c("generator", "sample"), 
     values = c("dashed", "solid"), 
     labels = c("generator", "random number"), 
     name   = "distribution"
   ) + # 凡例の表示用
+  guides(
+    color    = "none", 
+    linetype = guide_legend(
+      override.aes = list(
+        color     = "gray35", 
+        linetype  = c("dashed", "blank"), 
+        linewidth = 0.5
+      )
+    )
+  ) + 
   theme(
     plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
-  ) + # 図の体裁
-  guides(
-    color = "none", 
-    linetype = guide_legend(override.aes = list(color = "gray35"))
-  ) + # 凡例の体裁
+  ) + 
   coord_cartesian(
-    xlim = c(0, x_max), 
+    xlim = c(x_min, x_max), 
+    ylim = c(0, relfreq_max), 
     clip = "off" # (パラメータラベル用の枠外描画設定)
   ) + 
   labs(

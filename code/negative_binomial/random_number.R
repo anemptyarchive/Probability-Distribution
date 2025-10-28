@@ -14,7 +14,7 @@ library(gganimate)
 library(ggplot2)
 
 
-# 乱数と生成分布の関係 ---------------------------------------------------------
+# サンプルサイズの影響 ---------------------------------------------------------
 
 ### パラメータの設定 -----
 
@@ -134,11 +134,11 @@ anim <- ggplot() +
   scale_x_continuous(breaks = x_vec, minor_breaks = FALSE) + # x軸目盛
   theme(
     plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
-  ) + # 図の体裁
+  ) + 
   coord_cartesian(
     xlim = c(x_min, x_max), 
     clip = "off" # (パラメータラベル用の枠外描画設定)
-  ) + # 描画範囲
+  ) + 
   labs(
     title = "Negative Binomial distribution", 
     subtitle = "", # (パラメータラベル用の空行)
@@ -158,22 +158,27 @@ gganimate::animate(
 ##### 相対度数の作図 -----
 
 # 相対度数軸の範囲を設定
-relfreq_max <- 0.25
+u <- 0.25
+relfreq_max <- prob_df |> 
+  dplyr::pull(prob) |> 
+  max() |> 
+  (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
+#relfreq_max <- 0.25
 
 # サンプルの相対度数を作図
 anim <- ggplot() + 
   geom_bar(
+    data    = prob_df, 
+    mapping = aes(x = x, y = prob, linetype = "generator"), 
+    stat = "identity", position = "identity", 
+    fill = NA, color = "darkgreen", linewidth = 1
+  ) + # 生成確率
+  geom_bar(
     data    = anim_freq_df, 
     mapping = aes(x = x, y = rel_freq, linetype = "sample"), 
     stat = "identity", position = "identity", 
-    fill = "#00A968", alpha = 0.5, linewidth = 1
+    fill = "#00A968", alpha = 0.5
   ) + # 相対度数
-  geom_bar(
-    data = prob_df, 
-    mapping = aes(x = x, y = prob, linetype = "generator"), 
-    stat = "identity", position = "identity", 
-    fill = NA, color = "darkgreen"
-  ) + # 確率
   geom_point(
     data    = anim_sample_df, 
     mapping = aes(x = x, y = -Inf), 
@@ -192,17 +197,17 @@ anim <- ggplot() +
     labels = c("generator", "random number"), 
     name   = "distribution"
   ) + # 凡例の表示用
-  theme(
-    plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
-  ) + # 図の体裁
   guides(
     linetype = guide_legend(override.aes = list(linewidth = 0.5)), 
-  ) + # 凡例の体裁
+  ) + 
+  theme(
+    plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
+  ) + 
   coord_cartesian(
     xlim = c(x_min, x_max), 
     ylim = c(0, relfreq_max), 
     clip = "off" # (パラメータラベル用の枠外描画設定)
-  ) + # 描画範囲
+  ) + 
   labs(
     title = "Negative Binomial distribution", 
     subtitle = "", # (パラメータラベル用の空行)
@@ -267,7 +272,7 @@ anim_label_df <- tibble::tibble(
     "r == ", r, ", ", 
     "phi == ", phi, 
     ")"
-  ), # パラメータラベル
+  ) # パラメータラベル
 )
 
 
@@ -291,11 +296,11 @@ anim <- ggplot() +
   scale_x_continuous(breaks = x_vec, minor_breaks = FALSE) + # x軸目盛
   theme(
     plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
-  ) + # 図の体裁
+  ) + 
   coord_cartesian(
     xlim = c(x_min, x_max), 
     clip = "off" # (パラメータラベル用の枠外描画設定)
-  ) + # 描画範囲
+  ) + 
   labs(
     title = "Negative Binomial distribution", 
     subtitle = "", # (パラメータラベル用の空行)
@@ -315,22 +320,27 @@ gganimate::animate(
 ##### 相対度数の作図 -----
 
 # 相対度数軸の範囲を設定
-relfreq_max <- 0.25
+u <- 0.25
+relfreq_max <- prob_df |> 
+  dplyr::pull(prob) |> 
+  max() |> 
+  (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
+#relfreq_max <- 0.25
 
 # サンプルの相対度数を作図
 anim <- ggplot() + 
+  geom_bar(
+    data    = prob_df, 
+    mapping = aes(x = x, y = prob, linetype = "generator"), 
+    stat = "identity", position = "identity", 
+    fill = NA, color = "darkgreen", linewidth = 1
+  ) + # 生成確率
   geom_bar(
     data    = anim_freq_df, 
     mapping = aes(x = x, y = rel_freq, linetype = "sample"), 
     stat = "identity", position = "identity", 
     fill = "#00A968", alpha = 0.5
   ) + # 相対度数
-  geom_bar(
-    data = prob_df, 
-    mapping = aes(x = x, y = prob, linetype = "generator"), 
-    stat = "identity", position = "identity", 
-    fill = NA, color = "darkgreen", linewidth = 1
-  ) + # 確率
   geom_text(
     data    = anim_label_df, 
     mapping = aes(x = -Inf, y = Inf, label = param_lbl), 
@@ -344,17 +354,17 @@ anim <- ggplot() +
     labels = c("generator", "random number"), 
     name   = "distribution"
   ) + # 凡例の表示用
-  theme(
-    plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
-  ) + # 図の体裁
   guides(
     linetype = guide_legend(override.aes = list(linewidth = 0.5)), 
-  ) + # 凡例の体裁
+  ) + 
+  theme(
+    plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
+  ) + 
   coord_cartesian(
     xlim = c(x_min, x_max), 
     ylim = c(0, relfreq_max), 
     clip = "off" # (パラメータラベル用の枠外描画設定)
-  ) + # 描画範囲
+  ) + 
   labs(
     title = "Negative Binomial distribution", 
     subtitle = "", # (パラメータラベル用の空行)

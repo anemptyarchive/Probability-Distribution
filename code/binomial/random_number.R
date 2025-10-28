@@ -14,7 +14,7 @@ library(gganimate)
 library(ggplot2)
 
 
-# 乱数と生成分布の関係 ---------------------------------------------------------
+# サンプルサイズの影響 ---------------------------------------------------------
 
 ### パラメータの設定 -----
 
@@ -34,13 +34,19 @@ N <- 3000
 x_n <- rbinom(n = N, size = M, prob = phi)
 
 
+### 変数の設定 -----
+
 # x軸の範囲を設定
+x_min <- 0
 x_max <- M
 
 # x軸の値を作成
-x_vec <- seq(from = 0, to = x_max, by = 1)
+x_vec <- seq(from = x_min, to = x_max, by = 1)
 
-# 二項分布を計算
+
+### 分布の計算 -----
+
+# 二項分布の確率を計算
 prob_df <- tidyr::tibble(
   x    = x_vec, # 確率変数
   prob = dbinom(x = x, size = M, prob = phi) # 確率
@@ -52,15 +58,23 @@ prob_df <- tidyr::tibble(
 #### 1サンプルずつ集計 -----
 
 # フレーム数を設定
-frame_num <- N
 frame_num <- 300
 
+
+##### サンプルの集計 -----
 
 # サンプルを格納
 anim_sample_df <- tibble::tibble(
   frame_i = 1:frame_num, # フレーム番号
   n       = frame_i,     # サンプル番号
-  x       = x_n[n]       # サンプル値
+  x       = x_n[n],      # サンプル値
+  param_lbl = paste0(
+    "list(", 
+    "N == ", n, ", ", 
+    "M == ", M, ", ", 
+    "phi == ", phi, 
+    ")"
+  ) # パラメータラベル
 )
 
 # サンプルを集計
@@ -86,33 +100,12 @@ anim_freq_df <- tibble::tibble(
       frame_i = 1:frame_num, 
       N       = frame_i
     ), 
-    x = 0:x_max, 
+    x = x_vec, 
     fill = list(freq = 0, rel_freq = 0)
   ) # 未観測値を補完
 
-# ラベル用の文字列を作成
-anim_label_df <- anim_freq_df |> 
-  tidyr::pivot_wider(
-    id_cols      = c(frame_i, N), 
-    names_from   = x, 
-    names_prefix = "x", 
-    values_from  = freq
-  ) |> # 度数列を展開
-  tidyr::unite(
-    col = "freq_txt", dplyr::starts_with("x"), sep = ", "
-  ) |> # 度数情報を結合
-  dplyr::mutate(
-    param_lbl = paste0(
-      "list(", 
-      "N == ", N, ", ", 
-      "M == ", M, ", ", 
-      "phi == ", phi, 
-      ")"
-    ), # パラメータラベル
-    freq_lbl = paste0("N == (list(", freq_txt, "))") # 度数ラベル
-  ) |> 
-  dplyr::select(-freq_txt)
 
+##### 度数の作図 -----
 
 # サンプルの度数を作図
 anim <- ggplot() + 
@@ -128,24 +121,19 @@ anim <- ggplot() +
     color = "orange", size = 4
   ) + # サンプル
   geom_text(
-    data    = anim_label_df, 
+    data    = anim_sample_df, 
     mapping = aes(x = -Inf, y = Inf, label = param_lbl), 
     parse = TRUE, hjust = 0, vjust = -0.5
   ) + # パラメータのラベル
-  geom_label(
-    data    = anim_label_df, 
-    mapping = aes(x = -Inf, y = Inf, label = freq_lbl), 
-    parse = TRUE, hjust = 0, vjust = 1, alpha = 0.5
-  ) + # 度数のラベル
   gganimate::transition_manual(frames = frame_i) + # フレーム制御
   scale_x_continuous(breaks = x_vec, minor_breaks = FALSE) + # x軸目盛
   theme(
     plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
-  ) + # 図の体裁
+  ) + 
   coord_cartesian(
     xlim = c(0, x_max), 
     clip = "off" # (パラメータラベル用の枠外描画設定)
-  ) + # 描画範囲
+  ) + 
   labs(
     title = "Binomial distribution", 
     subtitle = "", # (パラメータラベル用の空行)
@@ -162,38 +150,40 @@ gganimate::animate(
 )
 
 
-# 確率軸の範囲を指定
-prob_max <- 0.25
+##### 相対度数の作図 -----
+
+# 相対度数軸の範囲を設定
+u <- 0.25
+relfreq_max <- prob_df |> 
+  dplyr::pull(prob) |> 
+  max() |> 
+  (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
+#relfreq_max <- 0.25
 
 # サンプルの相対度数を作図
 anim <- ggplot() + 
   geom_bar(
+    data    = prob_df, 
+    mapping = aes(x = x, y = prob, linetype = "generator"), 
+    stat = "identity", position = "identity", 
+    fill = NA, color = "darkgreen", linewidth = 1
+  ) + # 生成確率
+  geom_bar(
     data    = anim_freq_df, 
     mapping = aes(x = x, y = rel_freq, linetype = "sample"), 
-    stat = "identity", 
+    stat = "identity", position = "identity", 
     fill = "#00A968", alpha = 0.5
   ) + # 相対度数
-  geom_bar(
-    data = prob_df, 
-    mapping = aes(x = x, y = prob, linetype = "generator"), 
-    stat = "identity", 
-    fill = NA, color = "darkgreen"
-  ) + # 生成分布
   geom_point(
     data    = anim_sample_df, 
     mapping = aes(x = x, y = -Inf), 
     color = "orange", size = 4
   ) + # サンプル
   geom_text(
-    data    = anim_label_df, 
+    data    = anim_sample_df, 
     mapping = aes(x = -Inf, y = Inf, label = param_lbl), 
     parse = TRUE, hjust = 0, vjust = -0.5
   ) + # パラメータのラベル
-  geom_label(
-    data    = anim_label_df, 
-    mapping = aes(x = -Inf, y = Inf, label = freq_lbl), 
-    parse = TRUE, hjust = 0, vjust = 1, alpha = 0.5
-  ) + # 度数のラベル
   gganimate::transition_manual(frames = frame_i) + # フレーム制御
   scale_x_continuous(breaks = x_vec, minor_breaks = FALSE) + # x軸目盛
   scale_linetype_manual(
@@ -202,14 +192,17 @@ anim <- ggplot() +
     labels = c("generator", "random number"), 
     name   = "distribution"
   ) + # 凡例の表示用
+  guides(
+    linetype = guide_legend(override.aes = list(linewidth = 0.5)), 
+  ) + 
   theme(
     plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
-  ) + # 図の体裁
+  ) + 
   coord_cartesian(
-    xlim = c(0, x_max), 
-    ylim = c(0, prob_max), 
+    xlim = c(x_min, x_max), 
+    ylim = c(0, relfreq_max), 
     clip = "off" # (パラメータラベル用の枠外描画設定)
-  ) + # 描画範囲
+  ) + 
   labs(
     title = "Binomial distribution", 
     subtitle = "", # (パラメータラベル用の空行)
@@ -235,9 +228,11 @@ frame_num <- 300
 smp_per_frame <- N %/% frame_num
 
 
+##### サンプルの集計 -----
+
 # サンプルを集計
 anim_freq_df <- tibble::tibble(
-  frame_i = 1:frame_num, # フレーム番号
+  frame_i = 1:frame_num,          # フレーム番号
   N       = smp_per_frame*frame_i # サンプル数
 ) |> 
   dplyr::reframe(
@@ -258,40 +253,32 @@ anim_freq_df <- tibble::tibble(
       frame_i = 1:frame_num, 
       N       = smp_per_frame*frame_i
     ), 
-    x = 0:x_max, 
+    x = x_vec, 
     fill = list(freq = 0, rel_freq = 0)
   ) # 未観測値を補完
 
 # ラベル用の文字列を作成
-anim_label_df <- anim_freq_df |> 
-  tidyr::pivot_wider(
-    id_cols      = c(frame_i, N), 
-    names_from   = x, 
-    names_prefix = "x", 
-    values_from  = freq
-  ) |> # 度数列を展開
-  tidyr::unite(
-    col = "freq_txt", dplyr::starts_with("x"), sep = ", "
-  ) |> # 度数情報を結合
-  dplyr::mutate(
-    param_lbl = paste0(
-      "list(", 
-      "N == ", N, ", ", 
-      "M == ", M, ", ", 
-      "phi == ", phi, 
-      ")"
-    ), # パラメータラベル
-    freq_lbl = paste0("N == (list(", freq_txt, "))") # 度数ラベル
-  ) |> 
-  dplyr::select(-freq_txt)
+anim_label_df <- tibble::tibble(
+  frame_i = 1:frame_num,           # フレーム番号
+  N       = smp_per_frame*frame_i, # サンプル数
+  param_lbl = paste0(
+    "list(", 
+    "N == ", N, ", ", 
+    "M == ", M, ", ", 
+    "phi == ", phi, 
+    ")"
+  ) # パラメータラベル
+)
 
+
+##### 度数の作図 -----
 
 # サンプルの度数を作図
 anim <- ggplot() + 
   geom_bar(
     data    = anim_freq_df, 
     mapping = aes(x = x, y = freq), 
-    stat = "identity", 
+    stat = "identity", position = "identity", 
     fill = "#00A968"
   ) + # 度数
   geom_text(
@@ -299,21 +286,16 @@ anim <- ggplot() +
     mapping = aes(x = -Inf, y = Inf, label = param_lbl), 
     parse = TRUE, hjust = 0, vjust = -0.5
   ) + # パラメータのラベル
-  geom_label(
-    data    = anim_label_df, 
-    mapping = aes(x = -Inf, y = Inf, label = freq_lbl), 
-    parse = TRUE, hjust = 0, vjust = 1, alpha = 0.5
-  ) + # 度数のラベル
   gganimate::transition_manual(frames = frame_i) + # フレーム制御
   gganimate::view_follow(fixed_y = FALSE) + # 描画領域制御
   scale_x_continuous(breaks = x_vec, minor_breaks = FALSE) + # x軸目盛
   theme(
     plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
-  ) + # 図の体裁
+  ) + 
   coord_cartesian(
     xlim = c(0, x_max), 
     clip = "off" # (パラメータラベル用の枠外描画設定)
-  ) + # 描画範囲
+  ) + 
   labs(
     title = "Binomial distribution", 
     subtitle = "", # (パラメータラベル用の空行)
@@ -330,40 +312,35 @@ gganimate::animate(
 )
 
 
+##### 相対度数の作図 -----
+
+# 相対度数軸の範囲を設定
+u <- 0.25
+relfreq_max <- prob_df |> 
+  dplyr::pull(prob) |> 
+  max() |> 
+  (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
+#relfreq_max <- 0.25
+
 # サンプルの相対度数を作図
 anim <- ggplot() + 
+  geom_bar(
+    data    = prob_df, 
+    mapping = aes(x = x, y = prob, linetype = "generator"), 
+    stat = "identity", position = "identity", 
+    fill = NA, color = "darkgreen", linewidth = 1
+  ) + # 生成確率
   geom_bar(
     data    = anim_freq_df, 
     mapping = aes(x = x, y = rel_freq, linetype = "sample"), 
     stat = "identity", position = "identity", 
     fill = "#00A968", alpha = 0.5
   ) + # 相対度数
-  geom_bar(
-    data = prob_df, 
-    mapping = aes(x = x, y = prob, linetype = "generator"), 
-    stat = "identity", position = "identity", 
-    fill = NA, color = "darkgreen"
-  ) + # 生成分布
-  geom_line(
-    data = prob_df, 
-    mapping = aes(x = x, y = prob), 
-    color = "darkgreen", linewidth = 1, linetype = "dashed"
-  ) + # 生成分布
-  geom_point(
-    data = prob_df, 
-    mapping = aes(x = x, y = prob), 
-    color = "darkgreen", size = 3
-  ) + # 生成分布
   geom_text(
     data    = anim_label_df, 
     mapping = aes(x = -Inf, y = Inf, label = param_lbl), 
     parse = TRUE, hjust = 0, vjust = -0.5
   ) + # パラメータのラベル
-  geom_label(
-    data    = anim_label_df, 
-    mapping = aes(x = -Inf, y = Inf, label = freq_lbl), 
-    parse = TRUE, hjust = 0, vjust = 1, alpha = 0.5
-  ) + # 度数のラベル
   gganimate::transition_manual(frames = frame_i) + # フレーム制御
   scale_x_continuous(breaks = x_vec, minor_breaks = FALSE) + # x軸目盛
   scale_linetype_manual(
@@ -374,11 +351,14 @@ anim <- ggplot() +
   ) + # 凡例の表示用
   theme(
     plot.subtitle = element_text(size = 40) # (パラメータラベル用の空行サイズ)
-  ) + # 図の体裁
+  ) + 
+  guides(
+    linetype = guide_legend(override.aes = list(linewidth = 0.5)), 
+  ) + 
   coord_cartesian(
-    xlim = c(0, x_max), 
+    xlim = c(x_min, x_max), 
     clip = "off" # (パラメータラベル用の枠外描画設定)
-  ) + # 描画範囲
+  ) + 
   labs(
     title = "Binomial distribution", 
     subtitle = "", # (パラメータラベル用の空行)
