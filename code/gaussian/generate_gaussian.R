@@ -20,13 +20,14 @@ library(ggplot2)
 ### パラメータの設定 -----
 
 # フレーム数を指定
-frame_num <- 101
+frame_num <- 100
 
 # 生成分布のパラメータを指定
-mu_vals    <- seq(from = -5, to = 5, length.out = frame_num)
+mu_vals    <- seq(from = 0, to = 0, length.out = frame_num)
 sigma_vals <- seq(from = 1, to = 1, length.out = frame_num)
-#mu_vals    <- seq(from = 0, to = 0, length.out = frame_num)
-#sigma_vals <- seq(from = 0, to = 10, length.out = frame_num+1)[-1] # (0を除去)
+
+# 変化させるパラメータ用
+sigma_vals <- seq(from = 0, to = 10, length.out = frame_num+1)[-1] # (0を除去)
 
 # サンプル分布のパラメータを指定
 s <- 1
@@ -36,14 +37,14 @@ s <- 1
 
 # m軸の範囲を設定
 u <- 5
-sgm_num <- 1 # 倍率を指定
-m_min <- (mu_vals - sgm_num*sigma_vals) |> # 基準値を指定
+k <- 1
+m_min <- (mu_vals - k*sigma_vals) |> # 中心から標準偏差のk倍
   min() |> 
   (\(.) {floor(. /u)*u})() # u単位で切り下げ
-m_max <- (mu_vals + sgm_num*sigma_vals) |> # 基準値を指定
+m_max <- (mu_vals + k*sigma_vals) |> # 中心から標準偏差のk倍
   max() |> 
   (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
-m_min; m_max
+cat("m size:", m_min, m_max)
 
 # m軸の値を作成
 m_vec <- seq(from = m_min, to = m_max, length.out = 1001)
@@ -51,9 +52,9 @@ head(m_vec)
 
 
 # x軸の範囲を設定
-x_min <- m_min
-x_max <- m_max
-x_min; x_max
+x_min <- m_min # (固定)
+x_max <- m_max # (固定)
+cat("x size:", x_min, x_max)
 
 # x軸の値を作成
 x_vec <- m_vec
@@ -66,10 +67,10 @@ head(x_vec)
 dir_path <- "figure/tmp_folder"
 
 # サンプルサイズを指定
-N <- 10
+N <- 9
 
 
-# 確率密度軸の範囲を設定
+# p(m)軸の範囲を設定
 u <- 0.05
 gen_dens_max <- 1
 gen_dens_max <- dnorm(
@@ -79,6 +80,9 @@ gen_dens_max <- dnorm(
 ) |> 
   max() |> 
   (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
+cat("p(m) size:", gen_dens_max)
+
+# p(x)軸の範囲を設定
 smp_dens_max <- dnorm(
   x    = mu_vals, # 最頻値
   mean = mu_vals, 
@@ -86,7 +90,7 @@ smp_dens_max <- dnorm(
 ) |> 
   max() |> 
   (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
-gen_dens_max; smp_dens_max
+cat("p(x) size:", smp_dens_max)
 
 # ハイパラごとに作図
 for(i in 1:frame_num) {
@@ -94,12 +98,14 @@ for(i in 1:frame_num) {
   ##### パラメータの生成 -----
   
   # 生成分布のパラメータを取得
-  mu    <- mu_vals[i]
-  sigma <- sigma_vals[i]
+  mu    <- mu_vals[i]    # 平均パラメータ
+  sigma <- sigma_vals[i] # 標準偏差パラメータ
   
-  # 期待値を計算
+  # 統計量を計算
   E_m <- mu
+  s_m <- sigma
   E_x <- E_m
+  s_x <- s
   
   # サンプル分布のパラメータを生成
   pctl_min <- pnorm(q = m_min, mean = mu, sd = sigma)             # 描画範囲の最小値を取得
@@ -113,48 +119,45 @@ for(i in 1:frame_num) {
   
   # サンプル分布のパラメータを格納
   smp_data_df <- tibble::tibble(
-    n    = 1:N, # サンプル番号
-    m    = m_n  # サンプル値
+    n = 1:N, # サンプル番号
+    m = m_n  # サンプル値
   )
   
   ##### 生成分布の作図 -----
   
   # 生成分布の確率密度を計算
   gen_dens_df <- tidyr::tibble(
-    m    = m_vec, # 確率変数
-    dens = dnorm(x = m, mean = mu, sd = sigma) # 確率密度
+    m     = m_vec, # 確率変数
+    mu    = mu,    # 平均パラメータ
+    sigma = sigma, # 標準偏差パラメータ
+    dens  = dnorm(x = m, mean = mu, sd = sigma) # 確率密度
   )
   
   # 生成分布のラベルを作成
-  gen_param_lbl <- paste0(
-    "list(", 
-    "mu == ", round(mu, digits = 2), ", ", 
-    "sigma == ", round(sigma, digits = 2), 
-    ")"
+  gen_param_lbl <- sprintf(
+    fmt = "list(mu == '%s', sigma == '%s')", 
+    formatC(mu,    digits = 2, format = "f"), 
+    formatC(sigma, digits = 2, format = "f")
   ) |> 
     parse(text = _)
-  gen_stats_lbl <- paste0(
-    "list(", 
-      "paste(", 
-        "E(m) == mu, {} == ", round(E_m, digits = 2), 
-      "), ", 
-      "paste(", 
-        "V(m) == sigma^2, {} == ", round(sigma^2, digits = 2), 
-      ")", 
-    ")"
+  gen_stats_lbl <- sprintf(
+    fmt = paste0(
+      "list(", 
+      "paste(E(m) == mu, phantom() == '%s'), ", 
+      "paste(s(m) == sigma, phantom() == '%s')", 
+      ")"
+    ), 
+    formatC(E_m, digits = 2, format = "f"), 
+    formatC(s_m, digits = 2, format = "f")
   ) |> 
     parse(text = _)
   
   # 期待値のラベルを作成
-  E_data_lbl  <- expression(E(m))
+  E_data_lbl <- expression(E(m))
   
   # サンプルのラベルを作成
   smp_data_lbl <- paste0(
     "m[", 1:N, "]"
-  ) |> 
-    parse(text = _)
-  smp_param_lbl <- paste0(
-    "m[", 1:N, "] == ", round(m_n, digits = 2)
   ) |> 
     parse(text = _)
   
@@ -177,25 +180,22 @@ for(i in 1:frame_num) {
     geom_point(
       data    = smp_data_df, 
       mapping = aes(x = m, y = 0, color = factor(n)), 
-      size = 4
+      size = 4, show.legend = FALSE
     ) + # サンプル
     scale_x_continuous(
       sec.axis = sec_axis(
-        trans  = ~ ., 
-        breaks = c(E_m, m_n), 
-        labels = c(E_data_lbl, smp_data_lbl), 
+        transform = ~ ., 
+        breaks    = c(E_m, m_n), 
+        labels    = c(E_data_lbl, smp_data_lbl), 
       ) # サンプルのラベル
     ) + 
-    scale_color_hue(labels = smp_param_lbl) + # (凡例の表示用)
     scale_linetype_manual(
       breaks = "generator", 
       values = "solid", 
       labels = gen_param_lbl, 
-      name   = "generator                 " # (スペースによる表示枠の固定)
+      name   = "generator"
     ) + # (凡例の表示用)
     guides(
-      color    = "none", 
-      #color    = guide_legend(override.aes = list(size = 4)), 
       linetype = guide_legend(override.aes = list(linewidth = 0.5))
     ) + 
     theme(
@@ -220,7 +220,9 @@ for(i in 1:frame_num) {
   # 期待値による分布の確率密度を計算
   E_dens_df <- tidyr::tibble(
     x    = x_vec, # 確率変数
-    dens = dnorm(x = x, mean = E_m, sd = s) # 確率密度
+    m    = E_m, # 期待値
+    s    = s,   # 固定値
+    dens = dnorm(x = x, mean = m, sd = s) # 確率密度
   )
   
   # サンプル分布の確率密度を計算
@@ -236,22 +238,23 @@ for(i in 1:frame_num) {
   
   # 期待値のラベルを作成
   E_data_lbl  <- expression(E(m))
-  E_param_lbl <- paste0(
-    "list(", 
-    "E(m) == ", round(E_x, digits = 2), ", ", 
-    "s == ", s, 
-    ")"
+  E_param_lbl <- sprintf(
+    fmt = paste0(
+      "list(E(m) == '%s', s == '%s')"
+    ), 
+    formatC(E_m, digits = 2, format = "f"), 
+    formatC(s,   digits = 2, format = "f")
   ) |> 
     parse(text = _)
-  E_stats_lbl <- paste0(
-    "list(", 
-      "paste(", 
-        "E(x) == mu, {} == ", round(E_x, digits = 2), 
-        "), ", 
-      "paste(", 
-        "V(x) == s^2, {} == ", round(s^2, digits = 2), 
-      ")", 
-    ")"
+  E_stats_lbl <- sprintf(
+    fmt = paste0(
+      "list(", 
+      "paste(E(x) == mu, phantom() == '%s'), ", 
+      "paste(s(x) == s, phantom() == '%s')", 
+      ")"
+    ), 
+    formatC(E_x, digits = 2, format = "f"), 
+    formatC(s_x, digits = 2, format = "f")
   ) |> 
     parse(text = _)
   
@@ -262,8 +265,8 @@ for(i in 1:frame_num) {
     parse(text = _)
   smp_param_lbl <- paste0(
     "list(", 
-    "m[", 1:N, "] == ", round(m_n, digits = 2), ", ", 
-    "s == ", s, 
+    "m[", 1:N, "] == '", formatC(m_n, digits = 2, format = "f"), "', ", 
+    "s == '",            formatC(s,   digits = 2, format = "f"), "'", 
     ")"
   ) |> 
     parse(text = _)
@@ -288,19 +291,19 @@ for(i in 1:frame_num) {
       data    = smp_dens_df, 
       mapping = aes(x = x, y = dens, color = factor(n)), 
       linewidth = 1
-    ) + # サンプルによる分布
+    ) + # サンプル分布
     scale_x_continuous(
       sec.axis = sec_axis(
-        trans  = ~ ., 
-        breaks = c(E_m, m_n), 
-        labels = c(E_data_lbl, smp_data_lbl), 
+        transform = ~ ., 
+        breaks    = c(E_m, m_n), 
+        labels    = c(E_data_lbl, smp_data_lbl), 
       ) # サンプルのラベル
     ) + 
     scale_color_manual(
       breaks = c("expected", 1:N), 
       values = c("red", scales::hue_pal()(n = N)), 
       labels = c(E_param_lbl, smp_param_lbl), 
-      name   = "sample                    " # (スペースによる表示枠の固定)
+      name   = "sample"
     ) + # (凡例の表示用)
     guides(
       color = guide_legend(override.aes = list(linewidth = 0.5))
@@ -323,11 +326,40 @@ for(i in 1:frame_num) {
   
   ##### 対応関係の作図 -----
   
+  # 凡例を取得
+  gen_legend <- cowplot::get_legend(gen_graph)
+  smp_legend <- cowplot::get_legend(smp_graph)
+  
+  # 凡例幅を固定
+  legend_size <- 5
+  gen_legend$widths <- unit(rep(legend_size, times = length(gen_legend$widths)), units = "cm")
+  smp_legend$widths <- unit(rep(legend_size, times = length(smp_legend$widths)), units = "cm")
+  
+  # 凡例を並べて描画:(余白サイズの調整用)
+  legend_graph <- cowplot::plot_grid(
+    gen_legend, smp_legend, 
+    nrow = 2, ncol = 1
+  ) + 
+    theme(
+      plot.background = element_rect(fill = "white", color = NA) # (透過背景の対策用)
+    )
+  
+  # 凡例を除去
+  tmp_gen_graph <- gen_graph + 
+    theme(legend.position = "none")
+  tmp_smp_graph <- smp_graph + 
+    theme(legend.position = "none")
+  
   # グラフを並べて描画
-  comb_graph <- cowplot::plot_grid(
-    gen_graph, smp_graph, 
+  tmp_comb_graph <- cowplot::plot_grid(
+    tmp_gen_graph, tmp_smp_graph, 
     nrow = 2, ncol = 1, 
     align = "hv" # (グラフ位置のズレ対策用)
+  )
+  comb_graph <- cowplot::plot_grid(
+    tmp_comb_graph, legend_graph, 
+    nrow = 1, ncol = 2, 
+    rel_widths = c(1, 0.2) # (凡例位置の調整用)
   )
   
   ##### グラフの出力 -----
@@ -343,10 +375,19 @@ for(i in 1:frame_num) {
   message("\r", i, " / ", frame_num, appendLF = FALSE)
 }
 
+
+### アニメーションの変換 -----
+
+# ファイル名の末尾を指定
+add_str <- ""
+
 # 動画を作成
 paste0(dir_path, "/", stringr::str_pad(1:frame_num, width = nchar(frame_num), pad = "0"), ".png") |> # ファイルパスを作成
   magick::image_read() |> # pngファイルを読込
   magick::image_animate(fps = 1, dispose = "previous") |> # gifファイルを作成
-  magick::image_write_video(path = "figure/gaussian/generate_gaussian/gauss_to_gauss.mp4", framerate = 30) -> tmp_path # mp4ファイルを書出
+  magick::image_write_video(
+    path = "figure/gaussian/generate_gaussian/gauss_to_gauss", add_str, ".mp4", 
+    framerate = 30
+  ) -> tmp_path # mp4ファイルを書出
 
 

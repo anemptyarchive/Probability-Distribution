@@ -40,7 +40,7 @@ k <- 0.25
 lambda_min <- 0
 lambda_max <- (a_vals / b_vals) |> # 期待値
   max() |> 
-  (\(.) {. * k})() |> 
+  (\(.) {. * k})() |> # 定数倍
   (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
 cat("λ size:", lambda_min, lambda_max)
 
@@ -53,7 +53,7 @@ head(lambda_vec)
 # m軸の範囲を設定
 u <- 1
 k <- 1
-mu_size_vals <- (1/sqrt(beta_vals * a_vals / b_vals)) |> # 期待値による標準偏差
+mu_size_vals <- (sqrt(b_vals / a_vals / beta_vals)) |> # 期待値による標準偏差
   (\(.) {. * k})()
 mu_min <- (m_vals - mu_size_vals) |> # 偏差
   min() |> 
@@ -98,9 +98,10 @@ dir_path <- "figure/tmp_folder"
 # サンプルサイズを指定
 N <- 6
 
+
 # p(μ, λ)軸の範囲を設定
 u <- 0.1
-gen_dens_max <- 2.5
+gen_dens_max <- 0.5
 N_dens_vals <- dnorm(
   x    = 0, # 最頻値
   mean = 0, 
@@ -120,11 +121,11 @@ cat("p(μ, λ):", gen_dens_max)
 # 等高線を設定
 level_num     <- 11
 gen_dens_vals <- seq(from = 0, to = gen_dens_max, length.out = level_num)
-head(gen_dens_vals)
+gen_dens_vals
 
 # p(x)軸の範囲を設定
-u <- 0.05
-smp_dens_max <- 1.25
+u <- 0.5
+smp_dens_max <- 1
 smp_dens_max <- dnorm(
   x    = 0, # 最頻値
   mean = 0, 
@@ -133,8 +134,6 @@ smp_dens_max <- dnorm(
   max() |> 
   (\(.) {ceiling(. /u)*u})() # u単位で切り上げ
 cat("p(x):", smp_dens_max)
-
-i <- 30
 
 # ハイパラごとに作図
 for(i in 1:frame_num) {
@@ -147,10 +146,16 @@ for(i in 1:frame_num) {
   a    <- a_vals[i]    # 形状パラメータ
   b    <- b_vals[i]    # 尺度パラメータ
   
-  # 期待値を計算
-  E_mu     <- m
+  # 統計量を計算
   E_lambda <- a / b
+  #s_lambda <- sqrt(a / b^2)
+  s_lambda <- sqrt(a) / b
+  E_mu     <- m
+  #s_mu     <- 1/sqrt(beta * E_lambda)
+  s_mu     <- sqrt(b / a / beta)
   E_x      <- E_mu
+  #s_x      <- 1/sqrt(E_lambda)
+  s_x      <- sqrt(b / a)
   
   # サンプル分布のパラメータを生成
   pctl_min <- pgamma(q = lambda_min, shape = a, rate = b)         # 描画範囲の最小値を取得
@@ -195,9 +200,15 @@ for(i in 1:frame_num) {
     lambda = lambda_vec # 確率変数
   ) |> # 格子点を作成
     dplyr::mutate(
-      N_dens   = dnorm(x = mu, mean = m, sd = 1/sqrt(beta*lambda)), 
-      Gam_dens = dgamma(x = lambda, shape = a, rate = b), 
-      dens     = N_dens * Gam_dens # 確率密度
+      m         = m,                 # 平均パラメータ
+      beta      = beta,              # 係数パラメータ
+      a         = a,                 # 形状パラメータ
+      b         = b,                 # 尺度パラメータ
+      lambda_mu = beta * lambda,     # 精度パラメータ
+      sigma_mu  = 1/sqrt(lambda_mu), # 標準偏差パラメータ
+      N_dens    = dnorm(x = mu, mean = m, sd = sigma_mu), 
+      Gam_dens  = dgamma(x = lambda, shape = a, rate = b), 
+      dens      = N_dens * Gam_dens # 確率密度
     )
   
   # 生成分布のラベルを作成
@@ -208,19 +219,19 @@ for(i in 1:frame_num) {
     formatC(a,    digits = 2, format = "f"),
     formatC(b,    digits = 2, format = "f")
   ) |> parse(text = _)
-  gen_stats_lbl <- paste0(
-    "list(", 
-      "paste(", 
-        "E(mu) == m, {} == '", formatC(E_mu, digits = 2, format = "f"), "'", 
-      "), ", 
-        "s(mu) == sqrt(frac(1, beta * lambda)), ", 
-      "paste(", 
-        "E(lambda) == frac(a, b), {} == '", formatC(E_lambda, digits = 2, format = "f"), "'", 
-      "), ", 
-      "paste(", 
-        "s(lambda) == sqrt(frac(a, b^2)), {} == '", formatC(sqrt(a/b^2), digits = 2, format = "f"), "'", 
-      ")", 
-    ")"
+  gen_stats_lbl <- sprintf(
+    fmt = paste0(
+      "list(", 
+      "paste(E(mu) == m, phantom() == '%s'), ", 
+      "paste(s(mu) == sqrt(frac(b, beta * a)), phantom() == '%s'), ", 
+      "paste(E(lambda) == frac(a, b), phantom() == '%s'), ", 
+      "paste(s(lambda) == sqrt(frac(a, b^2)), phantom() == '%s')", 
+      ")"
+    ), 
+    formatC(E_mu,     digits = 2, format = "f"), 
+    formatC(s_mu,     digits = 2, format = "f"), 
+    formatC(E_lambda, digits = 2, format = "f"), 
+    formatC(s_lambda, digits = 2, format = "f")
   ) |> 
     parse(text = _)
   
@@ -316,8 +327,8 @@ for(i in 1:frame_num) {
   # 期待値による分布の確率密度を計算
   E_dens_df <- tidyr::tibble(
     x      = x_vec, # 確率変数
-    mu     = E_mu, 
-    lambda = E_lambda, 
+    mu     = E_mu,     # 期待値
+    lambda = E_lambda, # 期待値
     sigma  = 1/sqrt(lambda), 
     dens   = dnorm(x = x, mean = mu, sd = sigma) # 確率密度
   )
@@ -337,7 +348,7 @@ for(i in 1:frame_num) {
   # 期待値のラベルを作成
   E_data_mu_lbl     <- expression(E(mu))
   E_data_lambda_lbl <- expression(
-    p(x == mu ~'|'~ mu, E(lambda)^{-1})
+    p(mu ~'|'~ mu, E(lambda)^{-1})
   )
   E_param_lbl <- sprintf(
     fmt = "list(E(mu) == '%s', E(lambda) == '%s')", 
@@ -345,15 +356,15 @@ for(i in 1:frame_num) {
     formatC(E_lambda, digits = 2, format = "f")
   ) |> 
     parse(text = _)
-  E_stats_lbl <- paste0(
-    "list(", 
-      "paste(", 
-        "E(x) == mu, {} == '", formatC(E_x, digits = 2, format = "f"), "'", 
-      "), ", 
-      "paste(", 
-        "V(x) == sqrt(frac(b, a)), {} == '", formatC(1/sqrt(E_lambda), digits = 2, format = "f"), "'", 
-      ")", 
-    ")"
+  E_stats_lbl <- sprintf(
+    fmt = paste0(
+      "list(", 
+      "paste(E(x) == mu, phantom() == '%s'), ", 
+      "paste(s(x) == sqrt(frac(b, a)), phantom() == '%s')", 
+      ")"
+    ), 
+    formatC(E_x, digits = 2, format = "f"), 
+    formatC(s_x, digits = 2, format = "f")
   ) |> 
     parse(text = _)
   
@@ -363,7 +374,7 @@ for(i in 1:frame_num) {
   ) |> 
     parse(text = _)
   smp_data_lambda_lbl <- paste0(
-    "p(x == mu ~'|'~ mu, lambda[", 1:N, "]^{-1})"
+    "p(mu ~'|'~ mu, lambda[", 1:N, "]^{-1})"
   ) |> 
     parse(text = _)
   smp_param_lbl <- paste0(
@@ -411,14 +422,14 @@ for(i in 1:frame_num) {
         transform = ~ ., 
         breaks    = c(E_mu, mu_n), 
         labels    = c(E_data_mu_lbl, smp_data_mu_lbl), 
-      ) # パラメータのラベル
+      ) # サンプルのラベル
     ) + 
     scale_y_continuous(
       sec.axis = sec_axis(
         transform = ~ ., 
         breaks    = c(E_data_df[["dens_max"]], smp_data_df[["dens_max"]]), 
         labels    = c(E_data_lambda_lbl, smp_data_lambda_lbl), 
-      ) # パラメータのラベル
+      ) # サンプルのラベル
     ) + 
     scale_color_manual(
       breaks = c("expected", 1:N), 
@@ -443,7 +454,7 @@ for(i in 1:frame_num) {
       subtitle = E_stats_lbl, 
       color = "sample", 
       x = expression(x), 
-      y = expression(p(x ~"|"~ mu[n], lambda[n]^{-1}))
+      y = expression(p(x ~"|"~ mu, lambda^{-1}))
     )
   
   ##### 軸変換の作図：(λ -> λ) -----
@@ -598,11 +609,16 @@ for(i in 1:frame_num) {
 
 ### アニメーションの変換 -----
 
+# ファイル名の末尾を指定
+add_str <- ""
+
 # 動画を作成
 paste0(dir_path, "/", stringr::str_pad(1:frame_num, width = nchar(frame_num), pad = "0"), ".png") |> # ファイルパスを作成
   magick::image_read() |> # pngファイルを読込
   magick::image_animate(fps = 1, dispose = "previous") |> # gifファイルを作成
-  magick::image_write_video(path = "figure/gaussian_gamma/generate_gaussian/NG_to_gauss.mp4", framerate = 30) -> tmp_path # mp4ファイルを書出
-
+  magick::image_write_video(
+    path = paste0("figure/gaussian_gamma/generate_gaussian/NG_to_gauss", add_str, ".mp4"), 
+    framerate = 30
+  ) -> tmp_path # mp4ファイルを書出
 
 
