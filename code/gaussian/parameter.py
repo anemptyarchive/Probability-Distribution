@@ -19,19 +19,21 @@ from matplotlib.animation import FuncAnimation
 ### パラメータの設定 -----
 
 # フレーム数を指定
-frame_num = 100
+frame_num = 101
 
 # フレームごとのパラメータを指定
-mu_vals     = np.linspace(start=0.0, stop=0.0, num=frame_num)
+mu_vals     = np.linspace(start=-10.0, stop=1.0, num=frame_num)
+sigma_vals  = np.linspace(start=1.0, stop=1.0, num=frame_num)
+lambda_vals = np.linspace(start=1.0, stop=1.0, num=frame_num)
+
 #sigma_vals  = np.linspace(start=0.0, stop=10.0, num=frame_num+1)[1:]
-lambda_vals = np.linspace(start=0.0, stop=10.0, num=frame_num+1)[1:]
-print(mu_vals)
+print(mu_vals[:5])
 
 # パラメータを計算
-sigma_vals  = 1.0 / np.sqrt(lambda_vals)
-#lambda_vals = 1.0 / sigma_vals**2
-print(sigma_vals)
-print(lambda_vals)
+sigma_vals  = 1.0/np.sqrt(lambda_vals)
+#lambda_vals = 1.0/sigma_vals**2
+print(sigma_vals[:5])
+print(lambda_vals[:5])
 
 
 # %%
@@ -39,26 +41,24 @@ print(lambda_vals)
 ### 変数の設定 -----
 
 # x軸の範囲を設定
+k = 2.0
 u = 5.0
-x_size = np.max(sigma_vals)
-x_size *= 2.0 # 倍率を指定
-x_min = np.min(mu_vals) - x_size
-x_max = np.max(mu_vals) + x_size
+x_min = np.min(mu_vals - k*sigma_vals) # 基準値を指定
+x_max = np.max(mu_vals + k*sigma_vals) # 基準値を指定
 x_min = np.floor(x_min /u)*u # u単位で切り下げ
-x_max = np.ceil(x_max /u)*u # u単位で切り上げ
-x_min = -10.0
-x_max = 10.0
-print(x_min, x_max)
+x_max = np.ceil(x_max /u)*u  # u単位で切り上げ
+print('x size:', x_min, x_max)
 
 # x軸の値を作成
 x_vec = np.linspace(start=x_min, stop=x_max, num=1001)
+print(x_vec[:5])
 
 
 # %%
 
 ### 分布の計算 -----
 
-# 確率密度を計算
+# ガウス分布の確率密度を計算
 dens_lt = [
     norm.pdf(x=x_vec, loc=mu_vals[i], scale=sigma_vals[i]) for i in range(frame_num)
 ]
@@ -75,10 +75,10 @@ u = 0.5
 dens_max = np.max(dens_lt)
 dens_max = np.ceil(dens_max /u)*u # u単位で切り上げ
 dens_max = 1.0
-print(dens_max)
+print('p(x) size:', dens_max)
 
 # 図を初期化
-fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
+fig, ax = plt.subplots(figsize=(9, 6), dpi=100, facecolor='white')
 fig.suptitle('Gaussian distribution', fontsize=20)
 
 # 初期化処理を定義
@@ -96,16 +96,19 @@ def update(i):
     sigma = sigma_vals[i]  # 標準偏差パラメータ
     lmd   = lambda_vals[i] # 精度パラメータ
     dens_vec = dens_lt[i]  # 確率密度
+
+    # ラベル用の文字列を作成
+    param_lbl = f'$\mu = {mu:.2f}, \\sigma = {sigma:.2f}, \\lambda = {lmd:.2f}$'
     
     # ガウス分布を描画
     ax.plot(
         x_vec, dens_vec, 
         color='#00A968', linewidth=1.0
     ) # 確率密度
-    ax.grid()
     ax.set_xlabel('$x$')
     ax.set_ylabel('density')
-    ax.set_title(f'$\mu = {mu:.2f}, \\sigma = {sigma:.2f}, \\lambda = {lmd:.2f}$', loc='left')
+    ax.set_title(param_lbl, loc='left')
+    ax.grid()
     ax.set_ylim(ymin=0.0, ymax=dens_max) # 描画範囲を固定
 
 # 動画を作成
@@ -116,8 +119,8 @@ anim = FuncAnimation(
 
 # 動画を書出
 anim.save(
-    filename='../figure/gaussian/parameter/parameter_lambda.gif', 
-    progress_callback=lambda i, n: print(f'frame: {i} / {n}')
+    filename='../../figure/gaussian/parameter/parameter_mu.mp4', 
+    progress_callback=lambda i, n: print(f'\rframe: {i+1} / {n}', end='', flush=True)
 )
 
 
@@ -130,15 +133,15 @@ u = 0.5
 dens_max = np.max(dens_lt)
 dens_max = np.ceil(dens_max /u)*u # u単位で切り上げ
 dens_max = 1.0
-print(dens_max)
+print('p(x) size:', dens_max)
 
-# 余白を追加
+# ラベルの表示用の余白を設定
 y_margin = 0.05
 y_min = -dens_max * y_margin
 y_max = dens_max * (1.0+y_margin)
 
 # 図を初期化
-fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
+fig, ax = plt.subplots(figsize=(9, 6), dpi=100, facecolor='white')
 fig.suptitle('Gaussian distribution', fontsize=20)
 
 # 初期化処理を定義
@@ -157,55 +160,71 @@ def update(i):
     lmd   = lambda_vals[i] # 精度パラメータ
     dens_vec = dens_lt[i]  # 確率密度
 
+    # 統計量を計算
+    mean_x = mu    # 期待値
+    sd_x   = sigma # 標準偏差
+    mode_x = mu    # 最頻値
+
     # 標準偏差の範囲を計算
-    tmp_x_vec = np.linspace(
-        start=mu-sigma if mu-sigma > x_min else x_min, 
-        stop =mu+sigma if mu+sigma < x_max else x_max, 
+    x_pm1sgm_vec = np.linspace(
+        start=mean_x-sd_x if mean_x-sd_x > x_min else x_min, 
+        stop =mean_x+sd_x if mean_x+sd_x < x_max else x_max, 
         num=1001
     ) # 確率変数
-    tmp_dens_vec = norm.pdf(x=tmp_x_vec, loc=mu, scale=sigma) # 確率密度
+    dens_pm1sgm_vec = norm.pdf(x=x_pm1sgm_vec, loc=mu, scale=sigma) # 確率密度
+
+    # ラベル用の文字列を作成
+    param_lbl = f'$\mu = {mu:.2f}, \\sigma = {sigma:.2f}, \\lambda = {lmd:.2f}$'
 
     # ガウス分布を描画
     ax.fill_between(
-        x=tmp_x_vec, y1=0.0, y2=tmp_dens_vec, 
-        color='gray', alpha=0.5
+        x=x_pm1sgm_vec, y1=0.0, y2=dens_pm1sgm_vec, 
+        color='gray', alpha=0.5, 
+        zorder=9
     ) # 標準偏差の範囲
     ax.plot(
         x_vec, dens_vec, 
-        color='#00A968', linewidth=1.0
+        color='#00A968', linewidth=1.0, 
+        zorder=10
     ) # 確率密度
-    ax.vlines(
-        x=mu, ymin=0.0, ymax=y_max, 
-        color='black', linewidth=1.0, linestyles='--', 
-        label=f'$E[x] = \mu = {mu:.2f}$'
+    ax.axvline(
+        x=mean_x, 
+        color='black', linewidth=1.0, linestyle='--', 
+        label=f'$E[x] = \mu = {mu:.2f}$', 
+        zorder=11
     ) # 期待値の位置
-    ax.vlines(
-        x=[mu-sigma, mu+sigma], ymin=0.0, ymax=y_max, 
-        color='black', linewidth=1.0, linestyles=':', 
-        label=f'$\\sqrt{{V[x]}} = \\sigma = {sigma:.2f}$'
-    ) # 標準偏差の位置
-    ax.vlines(
-        x=mu, ymin=0.0, ymax=y_max, 
-        color='black', linewidth=0.0, linestyles='-', 
-        label=f'$mode[x] = \mu = {mu:.2f}$'
+    for i, coord_x in enumerate([mean_x-sd_x, mean_x+sd_x]):
+        ax.axvline(
+            x=coord_x, 
+            color='black', linewidth=1.0, linestyle=':', 
+            label=f'$\\sqrt{{V[x]}} = \\sigma = {sigma:.2f}$' if i == 0 else None, 
+            zorder=11
+        ) # 標準偏差の位置
+    ax.axvline(
+        x=mode_x, 
+        color='black', linewidth=0.0, linestyle='-', 
+        label=f'$mode[x] = \mu = {mu:.2f}$', 
+        zorder=11
     ) # 最頻値の位置
     ax.hlines(
-        y=0.0, xmin=mu-sigma, xmax=mu+sigma, 
-        color='black', linewidth=1.0
+        y=0.0, xmin=mean_x-sd_x, xmax=mean_x+sd_x, 
+        color='black', linewidth=1.0, 
+        zorder=11
     ) # 標準偏差の範囲
     for label_x, label_str in zip([mu-sigma, mu, mu+sigma], ['$-\sigma$', '$\mu$', '$+\sigma$']):
         ax.text(
             x=label_x, y=0.0, 
             s=label_str, ha='center', va='top', 
-            size=10
+            size=10, 
+            zorder=12
         ) # 統計量のラベル
-    ax.grid()
     ax.set_xlabel('$x$')
     ax.set_ylabel('density')
-    ax.set_title(f'$\mu = {mu:.2f}, \\sigma = {sigma:.2f}, \\lambda = {lmd:.2f}$', loc='left')
+    ax.set_title(param_lbl, loc='left')
     ax.legend(title='statistics', prop={'size': 8}, loc='upper left')
-    ax.set_xlim(xmin=x_min-0.5, xmax=x_max+0.5) # (垂線がはみ出す回避用)
-    ax.set_ylim(ymin=y_min, ymax=y_max) # (垂線との対応用)
+    ax.grid(zorder=0)
+    ax.set_xlim(xmin=x_min, xmax=x_max) # (垂線がはみ出すときの対策用)
+    ax.set_ylim(ymin=y_min, ymax=y_max) # (ラベルの表示用)
 
 # 動画を作成
 anim = FuncAnimation(
@@ -215,8 +234,8 @@ anim = FuncAnimation(
 
 # 動画を書出
 anim.save(
-    filename='../figure/gaussian/parameter/stats_lambda.gif', 
-    progress_callback=lambda i, n: print(f'frame: {i} / {n}')
+    filename='../../figure/gaussian/parameter/stats_lambda.mp4', 
+    progress_callback=lambda i, n: print(f'\rframe: {i+1} / {n}', end='', flush=True)
 )
 
 
