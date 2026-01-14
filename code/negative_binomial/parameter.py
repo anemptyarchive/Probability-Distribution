@@ -36,11 +36,12 @@ phi_vals = np.linspace(start=0.5, stop=0.5, num=frame_num)
 # x軸の範囲を設定
 k = 1
 u = 5.0
-x_min = 0.0
+x_min = 0
 tmp_vals = r_vals * (1.0-phi_vals) / phi_vals # 基準値を指定
 x_max = np.max(tmp_vals[np.isfinite(tmp_vals)])
 x_max *= k # 定数倍
 x_max = np.ceil(x_max /u)*u # u単位で切り上げ
+x_max = x_max.astype(np.int64) # 整数型に変換
 print('x size:', x_min, x_max)
 
 # x軸の余白を指定:(「モーメントとの関係」用)

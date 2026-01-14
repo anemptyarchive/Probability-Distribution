@@ -35,10 +35,11 @@ frame_num = len(lambda_vals)
 # x軸の範囲を設定
 k = 1.5
 u = 5.0
-x_min = 0.0
+x_min = 0
 x_max = np.max(lambda_vals) # 基準値を指定
 x_max *= k # 定数倍
 x_max = np.ceil(x_max /u)*u # u単位で切り上げ
+x_max = x_max.astype(np.int64) # 整数型に変換
 print('x size:', x_min, x_max)
 
 # x軸の余白を指定:(「モーメントとの関係」用)

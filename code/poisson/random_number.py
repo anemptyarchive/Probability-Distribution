@@ -42,14 +42,16 @@ x_n = np.random.poisson(lam=lmd, size=N)
 
 # x軸の範囲を指定
 u = 10.0
+x_min = 0 # (固定)
 x_max = np.max(x_n)
 #x_max = np.max(x_n[:frame_num]) # 「1サンプルずつ」の場合
 #x_max = np.max(x_n[:(smp_per_frame*frame_num)]) # 「複数サンプルずつ」の場合
 x_max = np.ceil(x_max /u)*u # u単位で切り上げ
-print(x_max)
+x_max = x_max.astype(np.int64) # 整数型に変換
+print('x size:', x_min, x_max)
 
 # x軸の値を作成
-x_vec = np.arange(start=0, stop=x_max+1, step=1)
+x_vec = np.arange(start=x_min, stop=x_max+1, step=1)
 
 
 # %%
@@ -74,54 +76,60 @@ frame_num = 300
 
 ##### 度数の作図 -----
 
-# 階級幅を設定
-bin_size = 1.0
-
 # 度数軸の範囲を設定
 u = 5.0
 _, counts = np.unique(ar=x_n[:frame_num], return_counts=True) # 対象を抽出して集計
 freq_max = np.max(counts)
 freq_max = np.ceil(freq_max /u)*u # u単位で切り上げ
-print('frequency:', freq_max)
+print('Nx :', freq_max)
 
-# 図を初期化
-fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
-fig.suptitle('Poisson distribution', fontsize=20)
+# 階級幅を設定
+bin_size = 1.0 # (固定)
 
 # 度数を初期化
 freq_vec = np.zeros_like(a=x_vec, dtype='int') # (簡易集計処理用)
+
+# 図を初期化
+fig, ax = plt.subplots(figsize=(9, 6), dpi=100, facecolor='white')
+fig.suptitle('Poisson distribution', fontsize=20)
 
 # 初期化処理を定義
 def init():
     pass
 
 # 作図処理を定義
-def update(n):
+def update(i):
 
     # 前フレームのグラフを初期化
     ax.cla()
 
-    # 値を調整
-    n += 1
+    # 値を設定
+    n = i + 1 # サンプル数
     
     # サンプルを集計
     #freq_vec = np.array([np.sum(x_n[:n] == x) for x in x_vec])
-    freq_vec[x_n[n-1]] += 1 # (簡易集計処理用)
+    freq_vec[x_n[i]] += 1 # (簡易集計処理用)
+
+    # ラベル用の文字列を作成
+    param_lbl = f'$N = {n}, \\lambda = {lmd:.2g}$'
 
     # サンプルの度数を描画
     ax.bar(
         x=x_vec, height=freq_vec, 
-        color='#00A968', zorder=0
+        width=bin_size, align='center', 
+        color='#00A968', 
+        zorder=10
     ) # 度数
     ax.scatter(
-        x=x_n[n-1], y=0.0, 
-        c='orange', s=50, clip_on=False, zorder=1
+        x=x_n[i], y=0.0, 
+        c='orange', s=50, clip_on=False, 
+        zorder=11
     ) # サンプル
     ax.set_xticks(ticks=x_vec) # x軸目盛
-    ax.grid()
     ax.set_xlabel('$x$')
     ax.set_ylabel('frequency')
-    ax.set_title(f'$N = {n}, \\lambda = {lmd}$', loc='left')
+    ax.set_title(param_lbl, loc='left')
+    ax.grid()
     ax.set_ylim(ymin=0.0, ymax=freq_max) # 描画範囲を固定
 
 # 動画を作成
@@ -132,8 +140,8 @@ anim = FuncAnimation(
 
 # 動画を書出
 anim.save(
-    filename='../figure/poisson/random_number/freq_1smp.mp4', 
-    progress_callback=lambda i, n: print(f'frame: {i} / {n}')
+    filename='../../figure/poisson/random_number/freq_1smp.mp4', 
+    progress_callback=lambda i, n: print(f'\rframe: {i+1} / {n}', end='', flush=True)
 )
 
 
@@ -142,63 +150,71 @@ anim.save(
 ##### 相対度数の作図 -----
 
 # 相対度数軸の範囲を設定
-relfreq_max = 0.25
-
-# 図を初期化
-fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
-fig.suptitle('Poisson distribution', fontsize=20)
-ax2 = ax.twinx()
+u = 0.05
+_, counts = np.unique(ar=x_n[:frame_num], return_counts=True) # 対象を抽出して集計
+relfreq_max = np.max(counts) / frame_num
+relfreq_max = np.ceil(relfreq_max /u)*u # u単位で切り上げ
+print('Nx / N size:', relfreq_max)
 
 # 度数を初期化
 freq_vec = np.zeros_like(a=x_vec, dtype='int') # (簡易集計処理用)
+
+# 図を初期化
+fig, ax = plt.subplots(figsize=(9, 6), dpi=100, facecolor='white')
+fig.suptitle('Poisson distribution', fontsize=20)
+ax2 = ax.twinx() # 第2軸の設定用
 
 # 初期化処理を定義
 def init():
     pass
 
 # 作図処理を定義
-def update(n):
+def update(i):
 
     # 前フレームのグラフを初期化
     ax.cla()
     ax2.cla()
 
-    # 値を調整
-    n += 1
+    # 値を設定
+    n = i + 1 # サンプル数
     
     # サンプルを集計
     #freq_vec = np.array([np.sum(x_n[:n] == x) for x in x_vec])
-    freq_vec[x_n[n-1]] += 1 # (簡易集計処理用)
+    freq_vec[x_n[i]] += 1 # (簡易集計処理用)
+
+    # ラベル用の文字列を作成
+    param_lbl = f'$N = {n}, \\lambda = {lmd:.2g}$'
 
     # サンプルの相対度数を描画
     ax.bar(
         x=x_vec, height=freq_vec/n, 
         color='#00A968', alpha=0.5, 
-        label='random number', zorder=0
+        label='random number', zorder=10
     ) # 相対度数
     ax.bar(
         x=x_vec, height=prob_vec, 
         facecolor='none', edgecolor='green', linewidth=1.0, linestyle='--', 
-        label='generator', zorder=1
+        label='generator', zorder=11
     ) # 確率
     ax.scatter(
-        x=x_n[n-1], y=0.0, 
-        c='orange', s=50, clip_on=False, zorder=2
+        x=x_n[i], y=0.0, 
+        c='orange', s=50, clip_on=False, 
+        zorder=12
     ) # サンプル
     ax.set_xticks(ticks=x_vec) # x軸目盛
-    ax.grid()
     ax.set_xlabel('$x$')
     ax.set_ylabel('relative frequency, probability')
-    ax.set_title(f'$N = {n}, \\lambda = {lmd}$', loc='left')
+    ax.set_title(param_lbl, loc='left')
     ax.legend(title='distribution', loc='upper right')
+    ax.grid()
     ax.set_ylim(ymin=0.0, ymax=relfreq_max) # (目盛の共通化用)
 
     # 度数軸を設定
     freq_max     = relfreq_max * n
-    relfreq_vals = ax.get_yticks()  # 相対度数目盛を取得
-    freq_vals    = relfreq_vals * n # 度数目盛に変換
+    relfreq_vals = ax.get_yticks()  # 相対度数軸目盛を取得
+    freq_vals    = relfreq_vals * n # 度数軸目盛に変換
 
-    # 2軸を描画
+    # 第2軸を描画
     ax2.set_yticks(ticks=freq_vals, labels=[f'{y:.1f}' for y in freq_vals]) # 度数軸目盛
     ax2.set_ylabel('frequency')
     ax2.yaxis.set_label_position(position='right') # (ラベルの表示位置が初期化される対策)
@@ -212,8 +228,8 @@ anim = FuncAnimation(
 
 # 動画を書出
 anim.save(
-    filename='../figure/poisson/random_number/relfreq_1smp.mp4', 
-    progress_callback=lambda i, n: print(f'frame: {i} / {n}')
+    filename='../../figure/poisson/random_number/relfreq_1smp.mp4', 
+    progress_callback=lambda i, n: print(f'\rframe: {i+1} / {n}', end='', flush=True)
 )
 
 
@@ -232,44 +248,47 @@ smp_per_frame = N // frame_num
 
 ##### 度数の作図 -----
 
-# 階級幅を設定
-bin_size = 1.0
-
 # 度数軸の範囲を設定
 u = 5.0
 _, counts = np.unique(ar=x_n[:(smp_per_frame*frame_num)], return_counts=True) # 対象を抽出して集計
 freq_max = np.max(counts)
 freq_max = np.ceil(freq_max /u)*u # u単位で切り上げ
-print('frequency:', freq_max)
+print('Nx size:', freq_max)
 
-# 図を初期化
-fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
-fig.suptitle('Poisson distribution', fontsize=20)
+# 階級幅を設定
+bin_size = 1.0 # (固定)
 
 # 度数を初期化
 freq_vec = np.zeros_like(a=x_vec, dtype='int') # (簡易集計処理用)
+
+# 図を初期化
+fig, ax = plt.subplots(figsize=(9, 6), dpi=100, facecolor='white')
+fig.suptitle('Poisson distribution', fontsize=20)
 
 # 初期化処理を定義
 def init():
     pass
 
 # 作図処理を定義
-def update(n):
+def update(i):
 
     # 前フレームのグラフを初期化
     ax.cla()
 
-    # 集計対象を抽出
-    tmp_x_n = x_n[smp_per_frame*n:smp_per_frame*(n+1)] # (簡易集計処理用)
+    # 値を設定
+    n = smp_per_frame * (i+1) # サンプル数
 
-    # 値を調整
-    n = smp_per_frame * (n+1)
+    # 集計対象を抽出
+    tmp_x_n = x_n[smp_per_frame*i:smp_per_frame*(i+1)] # (簡易集計処理用)
     
     # サンプルを集計
     #freq_vec = np.array([np.sum(x_n[:n] == x) for x in x_vec])
     #freq_vec[:] += np.array([np.sum(tmp_x_n == x) for x in x_vec]) # (簡易集計処理用)
     for x in tmp_x_n:
         freq_vec[x] += 1 # (簡易集計処理用)
+
+    # ラベル用の文字列を作成
+    param_lbl = f'$N = {n}, \\lambda = {lmd:.2g}$'
 
     # サンプルの度数を描画
     ax.bar(
@@ -278,10 +297,10 @@ def update(n):
         color='#00A968'
     ) # 度数
     ax.set_xticks(ticks=x_vec) # x軸目盛
-    ax.grid()
     ax.set_xlabel('$x$')
     ax.set_ylabel('frequency')
-    ax.set_title(f'$N = {n}, \\lambda = {lmd}$', loc='left')
+    ax.set_title(param_lbl, loc='left')
+    ax.grid()
     #ax.set_ylim(ymin=0.0, ymax=freq_max) # 描画範囲を固定
 
 # 動画を作成
@@ -292,8 +311,8 @@ anim = FuncAnimation(
 
 # 動画を書出
 anim.save(
-    filename='../figure/poisson/random_number/freq_nsmp.mp4', 
-    progress_callback=lambda i, n: print(f'frame: {i} / {n}')
+    filename='../../figure/poisson/random_number/freq_nsmp.mp4', 
+    progress_callback=lambda i, n: print(f'\rframe: {i+1} / {n}', end='', flush=True)
 )
 
 
@@ -302,35 +321,35 @@ anim.save(
 ##### 相対度数の作図 -----
 
 # 相対度数軸の範囲を設定
-u = 0.05
+u = 0.25
 relfreq_max = np.max(prob_vec)
 relfreq_max = np.ceil(relfreq_max /u)*u # u単位で切り上げ
-relfreq_max = 0.25
-
-# 図を初期化
-fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
-fig.suptitle('Poisson distribution', fontsize=20)
-ax2 = ax.twinx()
+print('Nx / N size:', relfreq_max)
 
 # 度数を初期化
 freq_vec = np.zeros_like(a=x_vec, dtype='int') # (簡易集計処理用)
+
+# 図を初期化
+fig, ax = plt.subplots(figsize=(9, 6), dpi=100, facecolor='white')
+fig.suptitle('Poisson distribution', fontsize=20)
+ax2 = ax.twinx() # 第2軸の設定用
 
 # 初期化処理を定義
 def init():
     pass
 
 # 作図処理を定義
-def update(n):
+def update(i):
     
     # 前フレームのグラフを初期化
     ax.cla()
     ax2.cla()
 
-    # 集計対象を抽出
-    tmp_x_n = x_n[smp_per_frame*n:smp_per_frame*(n+1)] # (簡易集計処理用)
+    # 値を設定
+    n = smp_per_frame * (i+1) # サンプル数
 
-    # 値を調整
-    n = smp_per_frame * (n+1)
+    # 集計対象を抽出
+    tmp_x_n = x_n[smp_per_frame*i:smp_per_frame*(i+1)] # (簡易集計処理用)
     
     # サンプルを集計
     #freq_vec = np.array([np.sum(x_n[:n] == x) for x in x_vec])
@@ -338,31 +357,34 @@ def update(n):
     for x in tmp_x_n:
         freq_vec[x] += 1 # (簡易集計処理用)
 
+    # ラベル用の文字列を作成
+    param_lbl = f'$N = {n}, \\lambda = {lmd:.2g}$'
+
     # サンプルの相対度数を描画
     ax.bar(
         x=x_vec, height=freq_vec/n, 
         color='#00A968', alpha=0.5, 
-        label='random number', zorder=0
+        label='random number', zorder=10
     ) # 相対度数
     ax.bar(
         x=x_vec, height=prob_vec, 
         facecolor='none', edgecolor='green', linewidth=1.0, linestyle='--', 
-        label='generator', zorder=1
+        label='generator', zorder=11
     ) # 確率
     ax.set_xticks(ticks=x_vec) # x軸目盛
-    ax.grid()
     ax.set_xlabel('$x$')
     ax.set_ylabel('relative frequency, probability')
-    ax.set_title(f'$N = {n}, \\lambda = {lmd}$', loc='left')
+    ax.set_title(param_lbl, loc='left')
     ax.legend(title='distribution', loc='upper right')
+    ax.grid()
     ax.set_ylim(ymin=0.0, ymax=relfreq_max) # (目盛の共通化用)
 
     # 度数軸を設定
     freq_max     = relfreq_max * n
-    relfreq_vals = ax.get_yticks()  # 相対度数目盛を取得
-    freq_vals    = relfreq_vals * n # 度数目盛に変換
+    relfreq_vals = ax.get_yticks()  # 相対度数軸目盛を取得
+    freq_vals    = relfreq_vals * n # 度数軸目盛に変換
 
-    # 2軸を描画
+    # 第2軸を描画
     ax2.set_yticks(ticks=freq_vals, labels=[f'{y:.1f}' for y in freq_vals]) # 度数軸目盛
     ax2.set_ylabel('frequency')
     ax2.yaxis.set_label_position(position='right') # (ラベルの表示位置が初期化される対策)
@@ -376,11 +398,11 @@ anim = FuncAnimation(
 
 # 動画を書出
 anim.save(
-    filename='../figure/poisson/random_number/relfreq_nsmp.mp4', 
-    progress_callback=lambda i, n: print(f'frame: {i} / {n}')
+    filename='../../figure/poisson/random_number/relfreq_nsmp.mp4', 
+    progress_callback=lambda i, n: print(f'\rframe: {i+1} / {n}', end='', flush=True)
 )
 
 
- # %%
+# %%
 
 

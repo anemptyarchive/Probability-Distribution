@@ -43,13 +43,13 @@ x_n = np.random.normal(loc=mu, scale=sigma, size=N)
 
 # x軸の範囲を設定
 u = 5.0
-x_size = sigma # 基準値を指定
-x_size *= 4.0 # 倍率を指定
+x_size = np.max(np.abs(x_n - mu))
+#x_max = np.max(np.abs(x_n[:frame_num] - mu)) # 「1サンプルずつ」の場合
+#x_max = np.max(np.abs(x_n[:(smp_per_frame*frame_num)] - mu)) # 「複数サンプルずつ」の場合
+x_size  = np.ceil(x_size /u)*u # u単位で切り上げ
 x_min  = mu - x_size
 x_max  = mu + x_size
-x_min  = np.floor(x_min /u)*u # u単位で切り下げ
-x_max  = np.ceil(x_max /u)*u # u単位で切り上げ
-print(x_min, x_max)
+print('x size:', x_min, x_max)
 
 # x軸の値を作成
 x_vec = np.linspace(start=x_min, stop=x_max, num=1001)
@@ -79,17 +79,17 @@ frame_num = 300
 
 # 階級数を指定
 bin_num = 40
-print((x_max - x_min) / bin_num) # 階級幅
+print('bar size:', (x_max - x_min) / bin_num) # 階級幅
 
 # 度数軸の範囲を設定
 u = 5.0
-counts, bins = np.histogram(a=x_n[:frame_num], bins=bin_num, range=(x_min, x_max)) # 対象を抽出して集計
+counts, _ = np.histogram(a=x_n[:frame_num], bins=bin_num, range=(x_min, x_max)) # 対象を抽出して集計
 freq_max = np.max(counts)
 freq_max = np.ceil(freq_max /u)*u # u単位で切り上げ
-print('frequency:', freq_max)
+print('Nx size:', freq_max)
 
 # 図を初期化
-fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
+fig, ax = plt.subplots(figsize=(9, 6), dpi=100, facecolor='white')
 fig.suptitle('Gaussian distribution', fontsize=20)
 
 # 初期化処理を定義
@@ -97,32 +97,38 @@ def init():
     pass
 
 # 作図処理を定義
-def update(n):
+def update(i):
 
     # 前フレームのグラフを初期化
     ax.cla()
-    
-    # 値を調整
-    n += 1
+
+    # 値を設定
+    n = i + 1 # サンプル数
+
+    # ラベル用の文字列を作成
+    param_lbl = f'$N = {n}, \\mu = {mu:.2g}, \\sigma = {sigma:.2g}$'
     
     # サンプルの度数を描画
     ax.hist(
         x=x_n[:n], 
         bins=bin_num, range=(x_min, x_max), 
-        color='#00A968', zorder=0
+        color='#00A968', 
+        zorder=10
     ) # 度数
     ax.scatter(
-        x=x_n[:(n-1)], y=np.zeros(n-1), 
-        color='orange', alpha=0.5, s=10, clip_on=False, zorder=1
+        x=x_n[:i], y=np.zeros(i), 
+        color='orange', alpha=0.33, s=10, clip_on=False, 
+        zorder=11
     ) # 過去サンプル
     ax.scatter(
-        x=x_n[n-1], y=0.0, 
-        color='orange', s=50, clip_on=False, zorder=2
+        x=x_n[i], y=0.0, 
+        color='orange', s=50, clip_on=False, 
+        zorder=12
     ) # 新サンプル
-    ax.grid()
     ax.set_xlabel('$x$')
     ax.set_ylabel('frequency')
-    ax.set_title(f'$N = {n}, \mu = {mu}, \sigma = {sigma}$', loc='left')
+    ax.set_title(param_lbl, loc='left')
+    ax.grid()
     ax.set_ylim(ymin=0.0, ymax=freq_max) # 描画範囲を固定
 
 # 動画を作成
@@ -133,8 +139,8 @@ anim = FuncAnimation(
 
 # 動画を書出
 anim.save(
-    filename='../figure/gaussian/random_number/freq_1smp.mp4', 
-    progress_callback=lambda i, n: print(f'frame: {i} / {n}')
+    filename='../../figure/gaussian/random_number/freq_1smp.mp4', 
+    progress_callback=lambda i, n: print(f'\rframe: {i+1} / {n}', end='', flush=True)
 )
 
 
@@ -145,70 +151,74 @@ anim.save(
 # 階級数を指定
 bin_num = 40
 
-# 階級幅を設定
+# 階級幅を計算
 bin_size = (x_max - x_min) / bin_num
-print(bin_size)
+print('bar size:', bin_size)
 
 # 密度軸の範囲を設定
 u = 0.5
-counts, bins = np.histogram(a=x_n[:frame_num], bins=bin_num, range=(x_min, x_max), density=True) # 対象を抽出して集計
+counts, _ = np.histogram(a=x_n[:frame_num], bins=bin_num, range=(x_min, x_max), density=True) # 対象を抽出して集計
 dens_max = np.max(counts)
 dens_max = np.ceil(dens_max /u)*u # u単位で切り上げ
-dens_max = 0.3
-print('density:', dens_max)
+print('p(x) size:', dens_max)
 
 # 図を初期化
-fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
+fig, ax = plt.subplots(figsize=(9, 6), dpi=100, facecolor='white')
 fig.suptitle('Gaussian distribution', fontsize=20)
-ax2 = ax.twinx()
+ax2 = ax.twinx() # 第2軸の設定用
 
 # 初期化処理を定義
 def init():
     pass
 
 # 作図処理を定義
-def update(n):
+def update(i):
 
     # 前フレームのグラフを初期化
     ax.cla()
     ax2.cla()
-    
-    # 値を調整
-    n += 1
+
+    # 値を設定
+    n = i + 1 # サンプル数
+
+    # ラベル用の文字列を作成
+    param_lbl = f'$N = {n}, \\mu = {mu:.2g}, \\sigma = {sigma:.2g}$'
 
     # サンプルの密度を描画
     ax.hist(
         x=x_n[:n], 
         bins=bin_num, range=(x_min, x_max), density=True, 
         color='#00A968', alpha=0.5, 
-        label='random number', zorder=0
+        label='random number', zorder=10
     ) # 密度
     ax.plot(
         x_vec, dens_vec, 
         color='green', linewidth=1.0, linestyle='--', 
-        label='generator', zorder=1
+        label='generator', zorder=11
     ) # 確率密度
     ax.scatter(
         x=x_n[:(n-1)], y=np.zeros(n-1), 
-        color='orange', alpha=0.5, s=10, clip_on=False, zorder=2
+        color='orange', alpha=0.33, s=10, clip_on=False, 
+        zorder=12
     ) # 過去サンプル
     ax.scatter(
         x=x_n[n-1], y=0.0, 
-        color='orange', s=50, clip_on=False, zorder=3
+        color='orange', s=50, clip_on=False, 
+        zorder=13
     ) # 新サンプル
-    ax.grid()
     ax.set_xlabel('$x$')
     ax.set_ylabel('density')
-    ax.set_title(f'$N = {n}, \mu = {mu}, \sigma = {sigma}$', loc='left')
+    ax.set_title(param_lbl, loc='left')
     ax.legend(title='distribution', loc='upper right')
-    ax.set_ylim(ymin=0.0, ymax=dens_max) # 描画範囲を固定 # (目盛の共通化用)
+    ax.grid()
+    ax.set_ylim(ymin=0.0, ymax=dens_max) # (目盛の共通化用)
 
     # 度数軸を設定
     freq_max  = dens_max * bin_size * n
-    dens_vals = ax.get_yticks()          # 密度目盛を取得
-    freq_vals = dens_vals * bin_size * n # 度数目盛に変換
+    dens_vals = ax.get_yticks()          # 密度軸目盛を取得
+    freq_vals = dens_vals * bin_size * n # 度数軸目盛に変換
 
-    # 2軸を描画
+    # 第2軸を描画
     ax2.set_yticks(ticks=freq_vals, labels=[f'{y:.1f}' for y in freq_vals]) # 度数軸目盛
     ax2.set_ylabel('frequency')
     ax2.yaxis.set_label_position(position='right') # (ラベルの表示位置が初期化される対策)
@@ -222,8 +232,8 @@ anim = FuncAnimation(
 
 # 動画を書出
 anim.save(
-    filename='../figure/gaussian/random_number/dens_1smp.mp4', 
-    progress_callback=lambda i, n: print(f'frame: {i} / {n}')
+    filename='../../figure/gaussian/random_number/dens_1smp.mp4', 
+    progress_callback=lambda i, n: print(f'\rframe: {i+1} / {n}', end='', flush=True)
 )
 
 
@@ -244,17 +254,17 @@ smp_per_frame = N // frame_num
 
 # 階級数を指定
 bin_num = 40
-print((x_max - x_min) / bin_num) # 階級幅
+print('bar size:', (x_max - x_min) / bin_num) # 階級幅
 
 # 度数軸の範囲を設定
 u = 5.0
-counts, bins = np.histogram(a=x_n[:(smp_per_frame*frame_num)], bins=bin_num, range=(x_min, x_max)) # 対象を抽出して集計
+counts, _ = np.histogram(a=x_n[:(smp_per_frame*frame_num)], bins=bin_num, range=(x_min, x_max)) # 対象を抽出して集計
 freq_max = np.max(counts)
 freq_max = np.ceil(freq_max /u)*u # u単位で切り上げ
-print('frequency:', freq_max)
+print('Nx size:', freq_max)
 
 # 図を初期化
-fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
+fig, ax = plt.subplots(figsize=(9, 6), dpi=100, facecolor='white')
 fig.suptitle('Gaussian distribution', fontsize=20)
 
 # 初期化処理を定義
@@ -262,28 +272,30 @@ def init():
     pass
 
 # 作図処理を定義
-def update(n):
+def update(i):
 
     # 前フレームのグラフを初期化
     ax.cla()
-    
-    # 値を調整
-    n = smp_per_frame * (n+1)
+
+    # 値を設定
+    n = smp_per_frame * (i+1) # サンプル数
     
     # サンプルの度数を描画
     ax.hist(
         x=x_n[:n], 
         bins=bin_num, range=(x_min, x_max), 
-        color='#00A968', zorder=0
+        color='#00A968', 
+        zorder=10
     ) # 度数
     ax.scatter(
         x=x_n[:n], y=np.zeros(n), 
-        color='orange', alpha=0.5, s=10, clip_on=False, zorder=1
+        color='orange', alpha=0.5, s=10, clip_on=False, 
+        zorder=11
     ) # サンプル
-    ax.grid()
     ax.set_xlabel('$x$')
     ax.set_ylabel('frequency')
     ax.set_title(f'$N = {n}, \mu = {mu}, \sigma = {sigma}$', loc='left')
+    ax.grid()
     #ax.set_ylim(ymin=0.0, ymax=freq_max) # 描画範囲を固定
 
 # 動画を作成
@@ -294,7 +306,7 @@ anim = FuncAnimation(
 
 # 動画を書出
 anim.save(
-    filename='../figure/gaussian/random_number/freq_nsmp.mp4', 
+    filename='../../figure/gaussian/random_number/freq_nsmp.mp4', 
     progress_callback=lambda i, n: print(f'frame: {i} / {n}')
 )
 
@@ -308,7 +320,7 @@ bin_num = 40
 
 # 階級幅を設定
 bin_size = (x_max - x_min) / bin_num
-print(bin_size)
+print('bar size:', bin_size)
 
 # 密度軸の範囲を設定
 u = 0.5
@@ -316,7 +328,7 @@ counts, bins = np.histogram(a=x_n[:frame_num], bins=bin_num, range=(x_min, x_max
 dens_max = np.max(counts)
 dens_max = np.ceil(dens_max /u)*u # u単位で切り上げ
 dens_max = 0.3
-print('density:', dens_max)
+print('p(x) size:', dens_max)
 
 # 図を初期化
 fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
@@ -337,6 +349,9 @@ def update(n):
     # 値を調整
     n = smp_per_frame * (n+1)
 
+    # ラベル用の文字列を作成
+    param_lbl = f'$N = {n}, \\mu = {mu:.2g}, \\sigma = {sigma:.2g}$'
+
     # サンプルの密度を描画
     ax.hist(
         x=x_n[:n], 
@@ -356,15 +371,15 @@ def update(n):
     ax.grid()
     ax.set_xlabel('$x$')
     ax.set_ylabel('density')
-    ax.set_title(f'$N = {n}, \mu = {mu}, \sigma = {sigma}$', loc='left')
+    ax.set_title(param_lbl, loc='left')
     ax.set_ylim(ymin=0.0, ymax=dens_max) # 描画範囲を固定 # (目盛の共通化用)
 
     # 度数軸を設定
     freq_max  = dens_max * bin_size * n
-    dens_vals = ax.get_yticks()          # 密度目盛を取得
-    freq_vals = dens_vals * bin_size * n # 度数目盛に変換
+    dens_vals = ax.get_yticks()          # 密度軸目盛を取得
+    freq_vals = dens_vals * bin_size * n # 度数軸目盛に変換
 
-    # 2軸を描画
+    # 第2軸を描画
     ax2.set_yticks(ticks=freq_vals, labels=[f'{y:.1f}' for y in freq_vals]) # 度数軸目盛
     ax2.set_ylabel('frequency')
     ax2.yaxis.set_label_position(position='right') # (ラベルの表示位置が初期化される対策)
@@ -378,8 +393,8 @@ anim = FuncAnimation(
 
 # 動画を書出
 anim.save(
-    filename='../figure/gaussian/random_number/dens_nsmp.mp4', 
-    progress_callback=lambda i, n: print(f'frame: {i} / {n}')
+    filename='../../figure/gaussian/random_number/dens_nsmp.mp4', 
+    progress_callback=lambda i, n: print(f'\rframe: {i+1} / {n}', end='', flush=True)
 )
 
 
