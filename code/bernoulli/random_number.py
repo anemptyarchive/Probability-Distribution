@@ -66,16 +66,24 @@ prob_vec = bernoulli.pmf(k=x_vec, p=phi)
 frame_num = 300
 
 
-# %%
-
-##### 度数の作図 -----
-
 # 度数軸の範囲を設定
 u = 5.0
 _, counts = np.unique(ar=x_n[:frame_num], return_counts=True) # 対象を抽出して集計
 freq_max = np.max(counts)
 freq_max = np.ceil(freq_max /u)*u # u単位で切り上げ
 print('Nx size:', freq_max)
+
+# 相対度数軸の範囲を設定
+u = 1.0
+_, counts = np.unique(ar=x_n[:frame_num], return_counts=True) # 対象を抽出して集計
+relfreq_max = np.max(counts) / frame_num
+relfreq_max = np.ceil(relfreq_max /u)*u # u単位で切り上げ
+print('p(x) size:', relfreq_max)
+
+
+# %%
+
+##### 度数の作図 -----
 
 # 階級幅を設定
 bin_size = 1.0 # (固定)
@@ -142,13 +150,6 @@ anim.save(
 # %%
 
 ##### 相対度数の作図 -----
-
-# 相対度数軸の範囲を設定
-u = 1.0
-_, counts = np.unique(ar=x_n[:frame_num], return_counts=True) # 対象を抽出して集計
-relfreq_max = np.max(counts) / frame_num
-relfreq_max = np.ceil(relfreq_max /u)*u # u単位で切り上げ
-print('Nx / N size:', relfreq_max)
 
 # 度数を初期化
 freq_vec = np.zeros_like(a=x_vec, dtype='int') # (簡易集計処理用)
@@ -238,16 +239,23 @@ frame_num = 300
 smp_per_frame = N // frame_num
 
 
-# %%
-
-##### 度数の作図 -----
-
 # 度数軸の範囲を設定
 u = 5.0
 _, counts = np.unique(ar=x_n[:(smp_per_frame*frame_num)], return_counts=True) # 対象を抽出して集計
 freq_max = np.max(counts)
 freq_max = np.ceil(freq_max /u)*u # u単位で切り上げ
 print('Nx size:', freq_max)
+
+# 相対度数軸の範囲を設定
+u = 1.0
+relfreq_max = np.max(prob_vec)
+relfreq_max = np.ceil(relfreq_max /u)*u # u単位で切り上げ
+print('p(x) size:', relfreq_max)
+
+
+# %%
+
+##### 度数の作図 -----
 
 # 階級幅を設定
 bin_size = 1.0 # (固定)
@@ -273,7 +281,7 @@ def update(i):
     n = smp_per_frame * (i+1) # サンプル数
 
     # 集計対象を抽出
-    tmp_x_n = x_n[smp_per_frame*i:smp_per_frame*(i+1)] # (簡易集計処理用)
+    tmp_x_n = x_n[(smp_per_frame*i):(smp_per_frame*(i+1))] # (簡易集計処理用)
     
     # サンプルを集計
     #freq_vec = np.array([np.sum(x_n[:n] == x) for x in x_vec])
@@ -314,12 +322,6 @@ anim.save(
 
 ##### 相対度数の作図 -----
 
-# 相対度数軸の範囲を設定
-u = 1.0
-relfreq_max = np.max(prob_vec)
-relfreq_max = np.ceil(relfreq_max /u)*u # u単位で切り上げ
-print('Nx / N size:', relfreq_max)
-
 # 度数を初期化
 freq_vec = np.zeros_like(a=x_vec, dtype='int') # (簡易集計処理用)
 
@@ -343,7 +345,7 @@ def update(i):
     n = smp_per_frame * (i+1) # サンプル数
 
     # 集計対象を抽出
-    tmp_x_n = x_n[smp_per_frame*i:smp_per_frame*(i+1)] # (簡易集計処理用)
+    tmp_x_n = x_n[(smp_per_frame*i):(smp_per_frame*(i+1))] # (簡易集計処理用)
     
     # サンプルを集計
     #freq_vec = np.array([np.sum(x_n[:n] == x) for x in x_vec])

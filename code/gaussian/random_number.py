@@ -67,26 +67,45 @@ dens_vec = norm.pdf(x=x_vec, loc=mu, scale=sigma)
 
 ### 乱数の可視化 -----
 
+# 階級数を指定
+bin_num = 40
+
+# 階級幅を計算
+bin_size = (x_max - x_min) / bin_num
+print('bar size:', bin_size)
+
+
+# %%
+
 #### 1サンプルずつ集計 -----
 
 # フレーム数を指定
 frame_num = 300
 
 
-# %%
-
-##### 度数の作図 -----
-
-# 階級数を指定
-bin_num = 40
-print('bar size:', (x_max - x_min) / bin_num) # 階級幅
-
 # 度数軸の範囲を設定
 u = 5.0
-counts, _ = np.histogram(a=x_n[:frame_num], bins=bin_num, range=(x_min, x_max)) # 対象を抽出して集計
+counts, _ = np.histogram(
+    a=x_n[:frame_num], bins=bin_num, range=(x_min, x_max)
+) # 対象を抽出して集計
 freq_max = np.max(counts)
 freq_max = np.ceil(freq_max /u)*u # u単位で切り上げ
 print('Nx size:', freq_max)
+
+# 密度軸の範囲を設定
+u = 0.5
+counts, _ = np.histogram(
+    a=x_n[:frame_num], bins=bin_num, range=(x_min, x_max), 
+    density=True
+) # 対象を抽出して集計
+dens_max = np.max(counts)
+dens_max = np.ceil(dens_max /u)*u # u単位で切り上げ
+print('p(x) size:', dens_max)
+
+
+# %%
+
+##### 度数の作図 -----
 
 # 図を初期化
 fig, ax = plt.subplots(figsize=(9, 6), dpi=100, facecolor='white')
@@ -147,20 +166,6 @@ anim.save(
 # %%
 
 ##### 密度の作図 -----
-
-# 階級数を指定
-bin_num = 40
-
-# 階級幅を計算
-bin_size = (x_max - x_min) / bin_num
-print('bar size:', bin_size)
-
-# 密度軸の範囲を設定
-u = 0.5
-counts, _ = np.histogram(a=x_n[:frame_num], bins=bin_num, range=(x_min, x_max), density=True) # 対象を抽出して集計
-dens_max = np.max(counts)
-dens_max = np.ceil(dens_max /u)*u # u単位で切り上げ
-print('p(x) size:', dens_max)
 
 # 図を初期化
 fig, ax = plt.subplots(figsize=(9, 6), dpi=100, facecolor='white')
@@ -248,20 +253,30 @@ frame_num = 300
 smp_per_frame = N // frame_num
 
 
-# %%
-
-##### 度数の作図 -----
-
-# 階級数を指定
-bin_num = 40
-print('bar size:', (x_max - x_min) / bin_num) # 階級幅
-
 # 度数軸の範囲を設定
 u = 5.0
-counts, _ = np.histogram(a=x_n[:(smp_per_frame*frame_num)], bins=bin_num, range=(x_min, x_max)) # 対象を抽出して集計
+counts, _ = np.histogram(
+    a=x_n[:(smp_per_frame*frame_num)], bins=bin_num, range=(x_min, x_max)
+) # 対象を抽出して集計
 freq_max = np.max(counts)
 freq_max = np.ceil(freq_max /u)*u # u単位で切り上げ
 print('Nx size:', freq_max)
+
+# 密度軸の範囲を設定
+u = 0.5
+counts, _ = np.histogram(
+    a=x_n[:(smp_per_frame*frame_num)], bins=bin_num, range=(x_min, x_max), 
+    density=True
+) # 対象を抽出して集計
+dens_max = np.max(counts)
+dens_max = np.ceil(dens_max /u)*u # u単位で切り上げ
+dens_max = 0.3
+print('p(x) size:', dens_max)
+
+
+# %%
+
+##### 度数の作図 -----
 
 # 図を初期化
 fig, ax = plt.subplots(figsize=(9, 6), dpi=100, facecolor='white')
@@ -279,6 +294,9 @@ def update(i):
 
     # 値を設定
     n = smp_per_frame * (i+1) # サンプル数
+
+    # ラベル用の文字列を作成
+    param_lbl = f'$N = {n}, \\mu = {mu:.2g}, \\sigma = {sigma:.2g}$'
     
     # サンプルの度数を描画
     ax.hist(
@@ -294,7 +312,7 @@ def update(i):
     ) # サンプル
     ax.set_xlabel('$x$')
     ax.set_ylabel('frequency')
-    ax.set_title(f'$N = {n}, \mu = {mu}, \sigma = {sigma}$', loc='left')
+    ax.set_title(param_lbl, loc='left')
     ax.grid()
     #ax.set_ylim(ymin=0.0, ymax=freq_max) # 描画範囲を固定
 
@@ -307,7 +325,7 @@ anim = FuncAnimation(
 # 動画を書出
 anim.save(
     filename='../../figure/gaussian/random_number/freq_nsmp.mp4', 
-    progress_callback=lambda i, n: print(f'frame: {i} / {n}')
+    progress_callback=lambda i, n: print(f'\rframe: {i+1} / {n}', end='', flush=True)
 )
 
 
@@ -315,25 +333,10 @@ anim.save(
 
 ##### 密度の作図 -----
 
-# 階級数を指定
-bin_num = 40
-
-# 階級幅を設定
-bin_size = (x_max - x_min) / bin_num
-print('bar size:', bin_size)
-
-# 密度軸の範囲を設定
-u = 0.5
-counts, bins = np.histogram(a=x_n[:frame_num], bins=bin_num, range=(x_min, x_max), density=True) # 対象を抽出して集計
-dens_max = np.max(counts)
-dens_max = np.ceil(dens_max /u)*u # u単位で切り上げ
-dens_max = 0.3
-print('p(x) size:', dens_max)
-
 # 図を初期化
-fig, ax = plt.subplots(figsize=(8, 6), dpi=100, facecolor='white')
+fig, ax = plt.subplots(figsize=(9, 6), dpi=100, facecolor='white')
 fig.suptitle('Gaussian distribution', fontsize=20)
-ax2 = ax.twinx()
+ax2 = ax.twinx() # 第2軸の設定用
 
 # 初期化処理を定義
 def init():
