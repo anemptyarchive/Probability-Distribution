@@ -67,14 +67,17 @@ prob_lt = [
 
 ### 分布の作図 -----
 
-#### パラメータと形状の関係 -----
-
 # 確率軸の範囲を設定
 u = 0.05
 tmp_arr  = np.array(prob_lt)
 prob_max = np.max(tmp_arr[np.isfinite(tmp_arr)])
 prob_max = np.ceil(prob_max /u)*u # u単位で切り上げ
 print('p(x) size:', prob_max)
+
+
+# %%
+
+#### パラメータと形状の関係 -----
 
 # 図を初期化
 fig, ax = plt.subplots(figsize=(9, 6), dpi=100, facecolor='white')
@@ -126,13 +129,6 @@ anim.save(
 # %%
 
 #### パラメータと統計量の関係 -----
-
-# 確率軸の範囲を設定
-u = 0.05
-tmp_arr  = np.array(prob_lt)
-prob_max = np.max(tmp_arr[np.isfinite(tmp_arr)])
-prob_max = np.ceil(prob_max /u)*u # u単位で切り上げ
-print('p(x) size:', prob_max)
 
 # ラベルの表示用の余白を設定
 y_margin = 0.05
@@ -233,13 +229,6 @@ anim.save(
 # %%
 
 #### パラメータとモーメントの関係 -----
-
-# 確率軸の範囲を設定
-u = 0.05
-tmp_arr  = np.array(prob_lt)
-prob_max = np.max(tmp_arr[np.isfinite(tmp_arr)])
-prob_max = np.ceil(prob_max /u)*u # u単位で切り上げ
-print('p(x) size:', prob_max)
 
 # ラベルの表示用の余白を設定
 y_margin = 0.05
